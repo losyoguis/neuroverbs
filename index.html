@@ -1620,19 +1620,65 @@
   .podium{ grid-template-columns:1fr; }
   .statBox.xpBig .stat-value{ font-size: 3.2rem; }
 }
+
+    /* ===============================
+       ✅ HUD (MENÚ DE PUNTUACIÓN) COMPACTO
+       (solo reduce tamaño; resto igual)
+       =============================== */
+    .stats{
+      padding:10px !important;
+      border-radius:16px !important;
+      gap:8px !important;
+      top:10px !important;
+      width: min(1120px, calc(100% - 28px)) !important;
+    }
+    .statBox{
+      min-width: 92px !important;
+      padding:5px 6px !important;
+      border-radius:12px !important;
+    }
+    .statBox .stat-value{ font-size:1.02rem !important; }
+    .statBox .stat-label{ font-size:.60rem !important; }
+
+    /* Antes era enorme: ahora sigue destacando pero más compacto */
+    .statBox.xpBig{
+      flex: 1.25 !important;
+      min-width: 160px !important;
+      padding:10px 10px !important;
+    }
+    .statBox.xpBig .stat-label{
+      font-size: .95rem !important;
+      letter-spacing:.35px !important;
+    }
+    .statBox.xpBig .stat-value{
+      font-size: 2.4rem !important;
+      line-height: 1.05 !important;
+    }
+
+    /* Meta diaria más delgada */
+    .goalBox{
+      flex: 1 1 260px !important;
+      min-width: 220px !important;
+      padding:8px 10px !important;
+      border-radius:12px !important;
+      gap:6px !important;
+    }
+    .goalLabel{ font-size:.62rem !important; }
+    .goalValue{ font-size:.70rem !important; }
+    .goalBar{ height:10px !important; }
+
 </style>
 </head>
 
 <body class="has-floating-stats">
 
 
-   <!-- ✅✅✅ CONSOLE GOOGLE (FIXED) -->
+   <!-- ✅✅✅ CONSOLE GOOGLE -->
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <div class="authBar" id="authBar">
   <div id="googleBtn"></div>
-
   <div class="userChip" id="userChip" style="display:none;">
     <img id="userPic" alt="Foto" />
     <div class="userMeta">
@@ -1640,337 +1686,242 @@
       <div class="userEmail" id="userEmail">—</div>
     </div>
   </div>
-
-  <div id="authStatus" style="font-weight:900;color:#fff;opacity:.9;font-size:.82rem;">
-  <div class="authDebug" id="authDebug" style="width:100%;text-align:center;font-size:12px;opacity:.9;">
-    <span id="connStatus">🔌 Probando conexión...</span>
-    <button class="lbBtn" type="button" style="margin-left:8px;padding:6px 10px;font-size:12px" onclick="pingServer()">Probar</button>
-  </div>
-
-</div>
 </div>
 
 <script>
-/* ===========================
-   ✅ AUTH + SHEETS + RANKING
-   (robusto para GitHub Pages y embebidos)
-   =========================== */
+// ====== Sheets (Apps Script) ======
+  const WEB_APP_URL = "https://script.google.com/a/macros/iemanueljbetancur.edu.co/s/AKfycby4F1xlAOV6ccKdp3JZ5pe9ed5RovL10xjaRLkdSo9esKTQwFfUiqsbZPXFZq7rJgvI/exec";
+  const OAUTH_CLIENT_ID = "932013722424-9uoc8vlc0b252qeuk5o81bsnj3th0ruk.apps.googleusercontent.com";
 
-const WEB_APP_URL = "https://script.google.com/a/macros/iemanueljbetancur.edu.co/s/AKfycby4F1xlAOV6ccKdp3JZ5pe9ed5RovL10xjaRLkdSo9esKTQwFfUiqsbZPXFZq7rJgvI/exec";
-const OAUTH_CLIENT_ID = "932013722424-9uoc8vlc0b252qeuk5o81bsnj3th0ruk.apps.googleusercontent.com";
+  // Estado de sincronización XP
+  let __lastXpSynced = null;
+  let __pendingDelta = 0;
+  let __flushTimer = null;
 
-// ---- UI helpers
-function setAuthStatus(msg){
-  const el = document.getElementById("authStatus");
-  if(el) el.textContent = msg || "";
-}
-function showUserChip(profile){
-  const chip = document.getElementById("userChip");
-  const pic = document.getElementById("userPic");
-  const name = document.getElementById("userName");
-  const email = document.getElementById("userEmail");
-  if(!chip || !name || !email) return;
-
-  if(pic){
+  function showUserChip(profile){
+    const chip = document.getElementById("userChip");
+    const pic = document.getElementById("userPic");
+    const name = document.getElementById("userName");
+    const email = document.getElementById("userEmail");
+    if(!chip || !pic || !name || !email) return;
     pic.src = profile.picture || "";
     pic.style.display = profile.picture ? "block" : "none";
-  }
-  name.textContent = profile.name || "Usuario";
-  email.textContent = profile.email || "";
-  chip.style.display = "flex";
-}
-
-// ---- JWT decode (solo UI; la validación real se hace en Apps Script con tokeninfo)
-function parseJwt(token){
-  const base64Url = token.split('.')[1];
-  const base64 = base64Url.replace(/-/g,'+').replace(/_/g,'/');
-  const jsonPayload = decodeURIComponent(atob(base64).split('').map(c =>
-    '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
-  ).join(''));
-  return JSON.parse(jsonPayload);
-}
-
-// ---- POST a Sheets (sin CORS, pero llega)
-function postToSheets(payload){
-  // 1) sendBeacon (mejor para no-cors)
-  try{
-    const blob = new Blob([JSON.stringify(payload)], {type:"text/plain;charset=UTF-8"});
-    const ok = navigator.sendBeacon(WEB_APP_URL, blob);
-    if(ok) return true;
-  }catch(e){}
-
-  // 2) fetch keepalive (fallback)
-  try{
-    fetch(WEB_APP_URL, {
-      method: "POST",
-      mode: "no-cors",
-      keepalive: true,
-      headers: {"Content-Type":"text/plain;charset=UTF-8"},
-      body: JSON.stringify(payload)
-    });
-    return true;
-  }catch(e){
-    console.warn("No se pudo enviar a Sheets:", e);
-    return false;
-  }
-}
-
-// ---- Leaderboard JSONP (evita CORS)
-let __lbLastTs = 0;
-
-function cargarLeaderboard(limit=50){
-  const status = document.getElementById("lbStatus");
-  const sec = document.getElementById("leaderboardSection");
-  if(sec) sec.style.display = "block";
-  if(status) status.textContent = "Cargando ranking…";
-
-  const cb = "renderLeaderboard";
-  const url = WEB_APP_URL + "?action=leaderboard&limit=" + encodeURIComponent(limit)
-    + "&callback=" + cb + "&_=" + Date.now();
-
-  const old = document.getElementById("lbJsonp");
-  if(old) old.remove();
-
-  const s = document.createElement("script");
-  s.id = "lbJsonp";
-  s.src = url;
-
-  s.onerror = () => {
-    if(status) status.textContent = "❌ No se pudo cargar el ranking (revisa acceso del Web App).";
-  };
-
-  document.body.appendChild(s);
-
-  // watchdog: si en 4s no llegó callback
-  const t0 = Date.now();
-  setTimeout(() => {
-    if(__lbLastTs < t0 && status){
-      status.textContent = "❌ El ranking no respondió. Verifica que el Web App tenga acceso 'Cualquiera' o 'Dominio'.";
-    }
-  }, 4000);
-}
-
-window.renderLeaderboard = (data) => {
-  __lbLastTs = Date.now();
-
-  const sec = document.getElementById("leaderboardSection");
-  const pod = document.getElementById("podium");
-  const list = document.getElementById("leaderboardList");
-  const st = document.getElementById("lbStatus");
-  if(!sec || !pod || !list || !st) return;
-
-  if(!data || !data.ok){
-    sec.style.display = "block";
-    st.textContent = "❌ No se pudo cargar el ranking.";
-    pod.innerHTML = "";
-    list.innerHTML = "";
-    return;
+    name.textContent = profile.name || "Usuario";
+    email.textContent = profile.email || "";
+    chip.style.display = "flex";
   }
 
-  const rows = Array.isArray(data.leaderboard) ? data.leaderboard : [];
-  sec.style.display = "block";
-
-  if(!rows.length){
-    st.textContent = "Aún no hay participantes con XP. Inicia sesión y gana XP para aparecer.";
-    pod.innerHTML = "";
-    list.innerHTML = "";
-    return;
+  function postToSheets(payload){
+    try{
+      const blob = new Blob([JSON.stringify(payload)], { type: "text/plain" });
+      const ok = navigator.sendBeacon(WEB_APP_URL, blob);
+      if(ok) return;
+    }catch(e){}
+    try{
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify(payload)
+      });
+    }catch(e){}
   }
 
-  st.textContent = "Participantes (Top 50): " + rows.length;
+  function registrarEnSheets(idToken){
+    postToSheets({ action: "upsert", idToken, xpDelta: 0 });
+  }
 
-  const meRaw = localStorage.getItem("user_profile");
-  let meSub = null;
-  try{ meSub = meRaw ? JSON.parse(meRaw).sub : null; }catch(_){}
+  function syncTotalXP(idToken, totalXP){
+    const t = Number(totalXP||0);
+    if(!idToken || !isFinite(t)) return;
+    // Sincroniza el TOTAL (útil para corregir desfaces)
+    postToSheets({ action: "synctotal", idToken, totalXP: Math.max(0, Math.floor(t)) });
+  }
 
-  const top3 = rows.slice(0,3);
-  pod.innerHTML = top3.map((r,i)=>{
-    const medal = i===0?"🥇":i===1?"🥈":"🥉";
-    const nm = (r.name || r.email || "Usuario");
-    const xp = Number(r.xp||0);
-    const pic = r.picture || "";
-    const cls = (meSub && r.sub===meSub) ? "podiumCard lbMe" : "podiumCard";
-    return `
-      <div class="${cls}">
-        <div class="podiumRank">${medal} #${i+1}</div>
-        <img class="podiumPic" src="${pic}" onerror="this.style.display='none'">
-        <div class="podiumName" title="${nm}">${nm}</div>
-        <div class="podiumXP">${xp} XP</div>
-      </div>
-    `;
-  }).join("");
+  function queueXpDelta(idToken, delta){
+    const d = Number(delta||0);
+    if(!idToken || !isFinite(d) || d<=0) return;
+    __pendingDelta += d;
+    if(__flushTimer) return;
+    __flushTimer = setTimeout(() => {
+      const send = __pendingDelta;
+      __pendingDelta = 0;
+      __flushTimer = null;
+      if(send>0) postToSheets({ action:"upsert", idToken, xpDelta: send });
+    }, 1200);
+  }
 
-  const shown = rows.slice(0,50);
-  list.innerHTML = shown.map((r,i)=>{
-    const nm = (r.name || r.email || "Usuario");
-    const xp = Number(r.xp||0);
-    const pic = r.picture || "";
-    const cls = (meSub && r.sub===meSub) ? "lbRow lbMe" : "lbRow";
-    return `
-      <div class="${cls}">
-        <div class="lbLeft">
-          <div class="lbNum">${i+1}</div>
-          <img class="lbAvatar" src="${pic}" onerror="this.style.display='none'">
-          <div class="lbName" title="${nm}">${nm}</div>
-        </div>
-        <div class="lbXP">${xp} XP</div>
-      </div>
-    `;
-  }).join("");
-};
+  // ====== Leaderboard JSONP (evita CORS) ======
+  function cargarLeaderboard(limit=50){
+    const cb = "renderLeaderboard";
+    const url = WEB_APP_URL + "?action=leaderboard&limit=" + encodeURIComponent(limit) + "&callback=" + cb + "&_=" + Date.now();
+    const old = document.getElementById("lbJsonp");
+    if(old) old.remove();
+    const s = document.createElement("script");
+    s.id = "lbJsonp";
+    s.src = url;
+    document.body.appendChild(s);
+  }
 
-// ---- XP watcher: detecta cambios en #xp (tu HUD) y manda delta
-let __lastSeenXp = null;
-function getCurrentXpFromHud(){
-  const el = document.getElementById("xp");
-  if(!el) return null;
-  const n = Number(String(el.textContent||"").replace(/[^0-9]/g,""));
-  return isFinite(n) ? n : null;
-}
+  window.renderLeaderboard = (data) => {
+    const sec = document.getElementById("leaderboardSection");
+    const pod = document.getElementById("podium");
+    const list = document.getElementById("leaderboardList");
+    const st = document.getElementById("lbStatus");
+    if(!sec || !pod || !list || !st) return;
 
-function startXpWatcher(){
-  setInterval(() => {
-    const idToken = localStorage.getItem("google_id_token");
-    if(!idToken) return;
-
-    const xp = getCurrentXpFromHud();
-    if(xp === null) return;
-
-    if(__lastSeenXp === null){
-      __lastSeenXp = xp;
-      // primera vez: registrar (sin sumar) y cargar ranking
-      postToSheets({action:"upsert", idToken, xpDelta: 0});
-      setTimeout(()=>cargarLeaderboard(50), 1200);
+    if(!data || !data.ok){
+      sec.style.display = "block";
+      st.textContent = "No se pudo cargar el ranking.";
+      pod.innerHTML = "";
+      list.innerHTML = "";
       return;
     }
 
-    if(xp > __lastSeenXp){
-      const delta = xp - __lastSeenXp;
-      __lastSeenXp = xp;
-      postToSheets({action:"upsert", idToken, xpDelta: delta});
-      // refrescar ranking suave
-      setTimeout(()=>cargarLeaderboard(50), 1200);
-    } else if(xp < __lastSeenXp){
-      // si por alguna razón baja, solo actualiza el punto de referencia
-      __lastSeenXp = xp;
-    }
-  }, 1200);
-}
+    const meRaw = localStorage.getItem("user_profile");
+    let meSub = null;
+    try{ meSub = meRaw ? JSON.parse(meRaw).sub : null; }catch(_){}
 
-// ---- Login callback
-function onGoogleCredential(response){
-  try{
+    const rows = Array.isArray(data.leaderboard) ? data.leaderboard : [];
+    sec.style.display = "block";
+    st.textContent = rows.length ? ("Participantes: " + rows.length + " (Top 50)") : "Aún no hay participantes con XP. Gana XP para aparecer.";
+
+    // Podio
+    const top3 = rows.slice(0,3);
+    pod.innerHTML = top3.map((r,i)=>{
+      const medal = i===0?"🥇":i===1?"🥈":"🥉";
+      const nm = (r.name || r.email || "Usuario");
+      const xp = Number(r.xp||0);
+      const pic = r.picture || "";
+      const cls = (meSub && r.sub===meSub) ? "podiumCard lbMe" : "podiumCard";
+      return `
+        <div class="${cls}">
+          <div class="podiumRank">${medal} #${i+1}</div>
+          <img class="podiumPic" src="${pic}" onerror="this.style.display='none'">
+          <div class="podiumName" title="${nm}">${nm}</div>
+          <div class="podiumXP">${xp} XP</div>
+        </div>
+      `;
+    }).join("");
+
+    // Lista Top 50
+    const shown = rows.slice(0,50);
+    list.innerHTML = shown.map((r,i)=>{
+      const nm = (r.name || r.email || "Usuario");
+      const xp = Number(r.xp||0);
+      const pic = r.picture || "";
+      const cls = (meSub && r.sub===meSub) ? "lbRow lbMe" : "lbRow";
+      return `
+        <div class="${cls}">
+          <div class="lbLeft">
+            <div class="lbNum">${i+1}</div>
+            <img class="lbAvatar" src="${pic}" onerror="this.style.display='none'">
+            <div class="lbName" title="${nm}">${nm}</div>
+          </div>
+          <div class="lbXP">${xp} XP</div>
+        </div>
+      `;
+    }).join("");
+  };
+
+  function parseJwt(token) {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(c =>
+      '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+    ).join(''));
+    return JSON.parse(jsonPayload);
+  }
+
+  function onGoogleCredential(response) {
     const idToken = response.credential;
-    const u = parseJwt(idToken);
+    const user = parseJwt(idToken);
 
+    // Guardar sesión
     localStorage.setItem("google_id_token", idToken);
     localStorage.setItem("user_profile", JSON.stringify({
-      sub: u.sub,
-      name: u.name,
-      email: u.email,
-      picture: u.picture
+      sub: user.sub,
+      name: user.name,
+      email: user.email,
+      picture: user.picture
     }));
 
-    showUserChip({sub:u.sub, name:u.name, email:u.email, picture:u.picture});
-    setAuthStatus("✅ Sesión iniciada");
+    console.log("OK login:", user.email);
 
-    // registra usuario en Sheets
-    postToSheets({action:"upsert", idToken, xpDelta: 0});
+    // UI
+    showUserChip({
+      sub: user.sub,
+      name: user.name,
+      email: user.email,
+      picture: user.picture
+    });
 
-    // carga ranking
-    setTimeout(()=>cargarLeaderboard(50), 1200);
-  }catch(e){
-    console.error(e);
-    setAuthStatus("❌ Error en login");
-  }
+    const lbStatus = document.getElementById("lbStatus");
+    if(lbStatus) lbStatus.textContent = "Sincronizando con Sheets…";
+
+    // Registrar / actualizar en Sheets
+    try{ registrarEnSheets(idToken); }catch(e){ console.warn(e); }
+
+    // Sincronizar XP total inicial (por si ya hay XP local)
+    try{ syncTotalXP(idToken, (typeof window.xp === "number" ? window.xp : (Number(document.getElementById('xp')?.innerText)||0))); }catch(_ ){}
+
+    // Cargar ranking (con un pequeño delay para dar tiempo a la escritura)
+    document.getElementById('leaderboardSection').style.display='block';
+    setTimeout(()=>cargarLeaderboard(50), 900);
 }
 
-// ---- Init robusto (no pisa otros onload)
-let __gsiTries = 0;
-let __gsiInited = false;
+  let __gsiInitTries = 0;
+function initGoogleAuthAndSync(){
+    // Restaurar sesión guardada (si el usuario ya había iniciado sesión)
+    try{
+      const raw = localStorage.getItem('user_profile');
+      if(raw){
+        const u = JSON.parse(raw);
+        showUserChip(u);
+        document.getElementById('leaderboardSection').style.display='block';
+        cargarLeaderboard(50);
+      }
+    }catch(_){}
 
-function initGoogleAuth(){
-  // restaurar sesión previa (solo UI + ranking)
-  try{
-    const raw = localStorage.getItem("user_profile");
-    if(raw){
-      const u = JSON.parse(raw);
-      showUserChip(u);
-      setAuthStatus("🔁 Sesión detectada");
-      setTimeout(()=>cargarLeaderboard(50), 800);
-    } else {
-      setAuthStatus("🔐 Inicia sesión para competir");
+    const btn = document.getElementById("googleBtn");
+    if(btn && !btn.__placeholder){
+      btn.__placeholder = true;
+      btn.innerHTML = '<div style="opacity:.9;font-weight:700;">Cargando login…</div>';
     }
-  }catch(_){}
 
-  const btn = document.getElementById("googleBtn");
-  if(btn && !btn.__placeholder){
-    btn.__placeholder = true;
-    btn.innerHTML = '<div style="opacity:.9;font-weight:900;color:#fff;">Cargando botón de Google…</div>';
-  }
-
-  if(!(window.google && google.accounts && google.accounts.id)){
-    __gsiTries++;
-    if(__gsiTries < 60) return setTimeout(initGoogleAuth, 250);
-    setAuthStatus("❌ No cargó Google Identity (revisa bloqueadores / CSP).");
-    if(btn) btn.innerHTML = '<button class="lbBtn" type="button" onclick="location.reload()">Reintentar</button>';
-    return;
-  }
-
-  try{
-    if(!__gsiInited){
-      google.accounts.id.initialize({
-        client_id: OAUTH_CLIENT_ID,
-        callback: onGoogleCredential,
-        ux_mode: "popup"
-      });
-      __gsiInited = true;
+    // Esperar a que cargue la librería GIS (a veces tarda con async/defer o en embeds)
+    if(!(window.google && google.accounts && google.accounts.id)){
+      __gsiInitTries++;
+      if(__gsiInitTries < 40){
+        return setTimeout(initGoogleAuthAndSync, 250);
+      }
+      console.warn("Google Identity Services no cargó (gsi/client). Revisa red/CSP/embebido.");
+      if(btn) btn.innerHTML = '<button class="lbBtn" type="button" onclick="location.reload()">Reintentar Login</button>';
+      return;
     }
-    if(btn && !btn.__rendered){
-      btn.innerHTML = "";
-      google.accounts.id.renderButton(btn, {theme:"outline", size:"large", shape:"pill", text:"signin_with"});
-      btn.__rendered = true;
-      setAuthStatus("🔐 Listo para iniciar sesión");
+
+    // Renderizar botón Google (solo una vez)
+    try{
+      if(btn && !btn.__rendered){
+        btn.innerHTML = "";
+        google.accounts.id.initialize({
+          client_id: "932013722424-9uoc8vlc0b252qeuk5o81bsnj3th0ruk.apps.googleusercontent.com",
+          callback: onGoogleCredential,
+          ux_mode: "popup"
+        });
+        google.accounts.id.renderButton(
+          btn,
+          { theme: "outline", size: "large", shape: "pill", text: "signin_with" }
+        );
+        btn.__rendered = true;
+      }
+    }catch(err){
+      console.error("Error init Google Auth:", err);
+      if(btn) btn.innerHTML = '<button class="lbBtn" type="button" onclick="location.reload()">Reintentar Login</button>';
     }
-  }catch(e){
-    console.error(e);
-    setAuthStatus("❌ Error inicializando Google Auth");
-    if(btn) btn.innerHTML = '<button class="lbBtn" type="button" onclick="location.reload()">Reintentar</button>';
-  }
 }
 
-
-// ---- Ping server via JSONP (diagnóstico)
-function pingServer(){
-  const cb = "__pingCb_" + Math.random().toString(16).slice(2);
-  window[cb] = (data)=>{
-    try{ delete window[cb]; }catch(_){}
-    const el = document.getElementById("connStatus");
-    if(!el) return;
-    if(data && data.ok){
-      el.textContent = "✅ Conexión OK (" + (data.time || "pong") + ")";
-    } else {
-      el.textContent = "❌ Sin conexión / permisos del Web App";
-    }
-  };
-  const s = document.createElement("script");
-  s.src = WEB_APP_URL + "?action=ping&callback=" + encodeURIComponent(cb) + "&t=" + Date.now();
-  s.onerror = ()=>{
-    const el = document.getElementById("connStatus");
-    if(el) el.textContent = "❌ Error cargando ping (bloqueo o permisos)";
-  };
-  document.body.appendChild(s);
-}
-
-// Arranque sin pisar otras cargas
-document.addEventListener("DOMContentLoaded", () => {
-  pingServer();
-  initGoogleAuth();
-  startXpWatcher();
-});
-window.addEventListener("load", () => {
-  initGoogleAuth();
-});
+  window.addEventListener('DOMContentLoaded', initGoogleAuthAndSync);
+  window.addEventListener('load', initGoogleAuthAndSync);
 </script>
 
 <div class="leaderboardWrap" id="leaderboardSection" style="display:none;">
