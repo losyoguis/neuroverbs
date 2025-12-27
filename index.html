@@ -1641,7 +1641,13 @@
     </div>
   </div>
 
-  <div id="authStatus" style="font-weight:900;color:#fff;opacity:.9;font-size:.82rem;"></div>
+  <div id="authStatus" style="font-weight:900;color:#fff;opacity:.9;font-size:.82rem;">
+  <div class="authDebug" id="authDebug" style="width:100%;text-align:center;font-size:12px;opacity:.9;">
+    <span id="connStatus">🔌 Probando conexión...</span>
+    <button class="lbBtn" type="button" style="margin-left:8px;padding:6px 10px;font-size:12px" onclick="pingServer()">Probar</button>
+  </div>
+
+</div>
 </div>
 
 <script>
@@ -1933,8 +1939,32 @@ function initGoogleAuth(){
   }
 }
 
+
+// ---- Ping server via JSONP (diagnóstico)
+function pingServer(){
+  const cb = "__pingCb_" + Math.random().toString(16).slice(2);
+  window[cb] = (data)=>{
+    try{ delete window[cb]; }catch(_){}
+    const el = document.getElementById("connStatus");
+    if(!el) return;
+    if(data && data.ok){
+      el.textContent = "✅ Conexión OK (" + (data.time || "pong") + ")";
+    } else {
+      el.textContent = "❌ Sin conexión / permisos del Web App";
+    }
+  };
+  const s = document.createElement("script");
+  s.src = WEB_APP_URL + "?action=ping&callback=" + encodeURIComponent(cb) + "&t=" + Date.now();
+  s.onerror = ()=>{
+    const el = document.getElementById("connStatus");
+    if(el) el.textContent = "❌ Error cargando ping (bloqueo o permisos)";
+  };
+  document.body.appendChild(s);
+}
+
 // Arranque sin pisar otras cargas
 document.addEventListener("DOMContentLoaded", () => {
+  pingServer();
   initGoogleAuth();
   startXpWatcher();
 });
