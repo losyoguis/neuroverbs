@@ -4380,17 +4380,12 @@ function connectKeyFor(v){
   return `${voiceMode}|${currentRound}|${v.g}|${v.d}|${c1}`;
 }
 function addConnectXP(v){
-  const k = connectKeyFor(v);
-  if(connectAwarded.has(k)) return 0;
-  connectAwarded.add(k);
+  // ✅ Ahora se permite ganar XP cada vez que aciertes (repetible)
   return awardXP(25, "connect");
 }
 
 function addSpellingXP(v){
-  const k = spellKeyFor(v);
-  if(spellAwarded.has(k)) return 0;
-  spellAwarded.add(k);
-  persistState();
+  // ✅ Repetible: cada acierto suma XP
   return awardXP(15, "spelling");
 }
 
@@ -4400,10 +4395,8 @@ function spellKeyFor(v){
   return `${voiceMode}|${currentRound}|${v.g}|${v.d}|${c1}|SPELL`;
 }
 function addPracticeXP(v, qid){
-  const k = practiceKeyFor(v,qid);
-  if(practiceAwarded.has(k)) return false;
-  practiceAwarded.add(k);
-  const gained = awardXP(PRACTICE_XP, "practice");
+  // ✅ Repetible: cada respuesta correcta suma XP (sin límite por pregunta)
+  awardXP(PRACTICE_XP, "practice");
   bumpMastery(v.c1, 1); // práctica también sube dominio
   return true;
 }
