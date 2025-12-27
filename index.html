@@ -1703,7 +1703,58 @@
     }, 1200);
   }
 
-  // ====== Leaderboard JSONP (evita CORS) ======
+  // ====== Leaderboard JSONP
+
+  // ====== Perfil (mi XP) por JSONP (evita CORS) ======
+  // Lee SIEMPRE el XP real guardado en Sheets para que el HUD coincida con la base de datos.
+  function cargarMiPerfil(){
+    try{
+      const meRaw = localStorage.getItem("user_profile");
+      if(!meRaw) return;
+      const me = JSON.parse(meRaw);
+      if(!me || !me.sub) return;
+
+      const cb = "renderMeProfile";
+      const url = WEB_APP_URL
+        + "?action=user"
+        + "&sub=" + encodeURIComponent(String(me.sub))
+        + "&callback=" + cb
+        + "&_=" + Date.now();
+
+      const old = document.getElementById("meJsonp");
+      if(old) old.remove();
+      const s = document.createElement("script");
+      s.id = "meJsonp";
+      s.src = url;
+      document.body.appendChild(s);
+    }catch(_){}
+  }
+
+  window.renderMeProfile = (data) => {
+    try{
+      if(!data || !data.ok || !data.user) return;
+      const srvXp = Number(data.user.xp || 0);
+      if(!isFinite(srvXp)) return;
+      window.__meXpFromServer = srvXp;
+
+      // Fuerza que el XP de la app (HUD) sea el mismo de Sheets
+      if(typeof xp === "number"){
+        xp = srvXp;
+      }
+      // Evita re-enviar delta por el watcher
+      window.__xpLastSeen = srvXp;
+
+      if(typeof actualizarStats === "function"){
+        actualizarStats();
+      } else {
+        // fallback mínimo
+        const el = document.getElementById("xp");
+        if(el) el.innerText = String(Math.floor(srvXp));
+      }
+    }catch(_){}
+  };
+
+ (evita CORS) ======
   
   // ====== Leaderboard JSONP (evita CORS) ======
   // Para 100k usuarios NO cargamos "todo" de una sola: usamos paginación.
@@ -1716,6 +1767,8 @@
     window.__lbOffset = 0;
     window.__lbHasMore = true;
     cargarLeaderboardPage(window.__lbLimit, window.__lbOffset, false);
+    // también refresca mi XP real (Sheets) para que el TOTAL XP coincida
+    try{ setTimeout(cargarMiPerfil, 700); }catch(_){ }
   }
 
   function loadMoreLeaderboard(){
@@ -1779,7 +1832,9 @@
     pod.innerHTML = top3.map((r,i)=>{
       const medal = i===0?"🥇":i===1?"🥈":"🥉";
       const nm = (r.name || r.email || "Usuario");
-      const xp = Number(r.xp||0);
+      let xpVal = Number(r.xp||0);
+      if(meSub && r.sub===meSub && isFinite(window.__meXpFromServer)) xpVal = Number(window.__meXpFromServer);
+      const xp = xpVal;
       const pic = r.picture || "";
       const cls = (meSub && r.sub===meSub) ? "podiumCard lbMe" : "podiumCard";
       return `
@@ -1796,7 +1851,9 @@
     const shown = rows;
     list.innerHTML = shown.map((r,i)=>{
       const nm = (r.name || r.email || "Usuario");
-      const xp = Number(r.xp||0);
+      let xpVal = Number(r.xp||0);
+      if(meSub && r.sub===meSub && isFinite(window.__meXpFromServer)) xpVal = Number(window.__meXpFromServer);
+      const xp = xpVal;
       const pic = r.picture || "";
       const cls = (meSub && r.sub===meSub) ? "lbRow lbMe" : "lbRow";
       return `
@@ -1849,6 +1906,9 @@
 
     // Registrar / actualizar en Sheets
     try{ registrarEnSheets(idToken); }catch(e){ console.warn(e); }
+
+    // Traer mi XP real desde Sheets y sincronizar el HUD
+    try{ setTimeout(cargarMiPerfil, 900); }catch(_){ }
 
     // Cargar ranking (con un pequeño delay para dar tiempo a la escritura)
     document.getElementById('leaderboardSection').style.display='block';
@@ -5327,9 +5387,10 @@ function validateSpelling(){
 
 <script>
 (function(){
-  let lastSeen = null;
+  let lastSeen = (typeof window.__xpLastSeen === 'number' ? window.__xpLastSeen : null);
   setInterval(() => {
     try{
+      if(typeof window.__xpLastSeen === 'number' && isFinite(window.__xpLastSeen)) lastSeen = window.__xpLastSeen;
       const el = document.getElementById("xp");
       if(!el) return;
       const current = parseInt((el.innerText||"0").replace(/[^0-9]/g,""),10) || 0;
@@ -5347,6 +5408,7 @@ function validateSpelling(){
         // si reinicia, ajusta base
         lastSeen = current;
       }
+      try{ window.__xpLastSeen = lastSeen; }catch(_){ }
     }catch(_){}
   }, 1200);
 })();
