@@ -811,34 +811,6 @@
       background:rgba(255,255,255,.18);
       border:1px solid rgba(11,18,32,.15);
     }
-
-    /* ==========================
-       ✅ TARJETA DESTACADA: TOTAL XP
-       (Diseño como en tu captura)
-       ========================== */
-    .statBox.xpBox{
-      min-width: 260px;
-      padding: 16px 16px;
-      border-radius: 22px;
-      background: linear-gradient(180deg, rgba(230,160,78,0.95), rgba(214,136,46,0.95));
-      border: 2px solid rgba(255,255,255,0.28);
-      box-shadow: 0 10px 24px rgba(0,0,0,0.18);
-      gap: 6px;
-    }
-    .statBox.xpBox .stat-label{
-      font-size: 20px;
-      font-weight: 900;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      color: rgba(0,0,0,0.75);
-    }
-    .statBox.xpBox .stat-value{
-      font-size: 64px;
-      line-height: 1;
-      font-weight: 1000;
-      color: rgba(0,0,0,0.82);
-    }
-
     .statBox .stat-value{font-size:1.15rem;}
     .statBox .stat-label{font-size:.68rem;}
 
@@ -1498,189 +1470,148 @@
     }
 
   
-    /* ===== Leaderboard (Sheets) ===== */
-    .leaderboardCard{
-      margin-top: 14px;
-      border-radius: 18px;
-      padding: 14px 14px 10px;
-      background: rgba(255,255,255,0.10);
-      border: 1px solid rgba(255,255,255,0.22);
-      box-shadow: 0 10px 24px rgba(0,0,0,.18);
-      backdrop-filter: blur(10px);
-    }
-    .lbHeader{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      margin-bottom:8px;
-    }
-    .lbTitle{
-      font-weight: 900;
-      letter-spacing: .3px;
-      font-size: 16px;
-    }
-    .lbBtn{
-      appearance:none;
-      border:none;
-      cursor:pointer;
-      border-radius: 999px;
-      padding: 9px 12px;
-      font-weight: 800;
-      background: rgba(0,0,0,.22);
-      color: #fff;
-      border: 1px solid rgba(255,255,255,.25);
-    }
-    .lbBtn:active{ transform: translateY(1px); }
-    .lbSub{
-      display:flex;
-      justify-content:space-between;
-      gap:10px;
-      align-items:center;
-      font-size: 12px;
-      opacity: .92;
-      margin-bottom: 10px;
-      flex-wrap: wrap;
-    }
-    .lbHint{ opacity: .85; }
-    .lbList{
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      display:flex;
-      flex-direction:column;
-      gap: 8px;
-    }
-    .lbItem{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap: 10px;
-      border-radius: 14px;
-      padding: 10px 10px;
-      background: rgba(0,0,0,.14);
-      border: 1px solid rgba(255,255,255,.12);
-    }
-    .lbLeft{
-      display:flex;
-      align-items:center;
-      gap: 10px;
-      min-width: 0;
-    }
-    .lbRank{
-      width: 28px;
-      height: 28px;
-      border-radius: 10px;
-      display:grid;
-      place-items:center;
-      font-weight: 900;
-      background: rgba(255,255,255,.12);
-      border: 1px solid rgba(255,255,255,.18);
-      flex: 0 0 auto;
-    }
-    .lbAvatar{
-      width: 32px;
-      height: 32px;
-      border-radius: 999px;
-      object-fit: cover;
-      border: 2px solid rgba(255,255,255,.35);
-      background: rgba(255,255,255,.10);
-      flex: 0 0 auto;
-    }
-    .lbName{
-      font-weight: 800;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 56vw;
-    }
-    .lbRight{
-      display:flex;
-      align-items:center;
-      gap: 8px;
-      flex: 0 0 auto;
-      font-weight: 900;
-    }
-    .lbXp{
-      padding: 6px 10px;
-      border-radius: 999px;
-      background: rgba(0,0,0,.18);
-      border: 1px solid rgba(255,255,255,.14);
-    }
-    .lbMe{
-      outline: 2px solid rgba(255,255,255,.35);
-      box-shadow: 0 0 0 4px rgba(0,0,0,.10);
-    }
+/* ====== AUTH BAR (Google button + usuario) ====== */
+.authBar{
+  width:min(1100px, 96vw);
+  margin: 14px auto 10px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  flex-wrap:wrap;
+  z-index:10;
+  position:relative;
+}
+#googleBtn{ display:flex; justify-content:center; }
+.userChip{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 12px;
+  border-radius:999px;
+  background: rgba(255,255,255,.10);
+  border: 1px solid rgba(255,255,255,.20);
+  backdrop-filter: blur(10px);
+  color:#fff;
+  max-width: 92vw;
+}
+.userChip img{
+  width:34px; height:34px;
+  border-radius:999px;
+  object-fit:cover;
+  border:2px solid rgba(255,255,255,.35);
+}
+.userMeta{ display:flex; flex-direction:column; line-height:1.05; }
+.userName{ font-weight:900; font-size:.95rem; max-width: 55vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.userEmail{ font-weight:700; font-size:.8rem; color: rgba(255,255,255,.82); max-width: 55vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
-    /* ===== Podio Top 3 ===== */
-    .lbPodium{
-      display:grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin-top: 10px;
-      margin-bottom: 10px;
-    }
-    .podiumItem{
-      border-radius: 16px;
-      padding: 10px 10px 12px;
-      background: rgba(0,0,0,.16);
-      border: 1px solid rgba(255,255,255,.14);
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      text-align:center;
-      gap: 6px;
-      min-height: 120px;
-    }
-    .podiumFirst{ transform: translateY(-6px); }
-    .podiumSecond{ transform: translateY(6px); }
-    .podiumThird{ transform: translateY(10px); }
-    .podiumMedal{
-      font-size: 1.3rem;
-      line-height: 1;
-      font-weight: 900;
-    }
-    .podiumAvatar{
-      width: 44px;
-      height: 44px;
-      border-radius: 999px;
-      object-fit: cover;
-      border: 2px solid rgba(255,255,255,.22);
-      background: rgba(255,255,255,.10);
-    }
-    .podiumName{
-      font-weight: 900;
-      font-size: .88rem;
-      line-height: 1.05;
-      max-width: 100%;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .podiumXp{
-      font-weight: 900;
-      font-size: .9rem;
-      opacity: .95;
-    }
-    @media (max-width: 520px){
-      .lbPodium{ grid-template-columns: 1fr; }
-      .podiumFirst,.podiumSecond,.podiumThird{ transform:none; }
-    }
+/* ====== XP CARD (como tu imagen) ====== */
+.statBox.xpBig{
+  flex: 1.6;
+  min-width: 220px;
+  padding: 18px 16px;
+}
+.statBox.xpBig .stat-label{
+  font-size: 1.2rem;
+  letter-spacing:.7px;
+}
+.statBox.xpBig .stat-value{
+  font-size: 3.6rem;
+  line-height: 1;
+}
 
+/* ====== LEADERBOARD ====== */
+.leaderboardWrap{
+  width:min(1100px, 96vw);
+  margin: 8px auto 18px;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 18px;
+  padding: 14px 14px 10px;
+  backdrop-filter: blur(10px);
+  color:#fff;
+}
+.lbHeader{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-bottom:10px;
+}
+.lbHeader h3{
+  margin:0;
+  font-size:1.05rem;
+  font-weight:950;
+}
+.lbHeader .lbActions{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.lbBtn{
+  border:none;
+  cursor:pointer;
+  padding:10px 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.14);
+  color:#fff;
+  font-weight:900;
+}
+.lbBtn:hover{ background: rgba(255,255,255,.20); }
+.lbNote{ font-size:.85rem; color: rgba(255,255,255,.82); margin:0; }
 
-      .signedInPill{
-        display:flex; align-items:center; gap:10px;
-        padding:10px 14px; border-radius:999px;
-        background: rgba(255,255,255,0.14);
-        border: 1px solid rgba(255,255,255,0.22);
-        backdrop-filter: blur(10px);
-        max-width: 560px; margin: 0 auto;
-      }
-      .signedInPill img{ width:40px; height:40px; border-radius:50%; object-fit:cover; }
-      .signedInName{ font-weight:800; color:#fff; line-height:1.1; }
-      .signedInEmail{ font-size:12px; opacity:.85; color:#fff; line-height:1.1; }
+.podium{
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap:10px;
+  margin: 10px 0 12px;
+}
+.podiumCard{
+  background: rgba(0,0,0,.18);
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 16px;
+  padding: 10px 10px;
+  text-align:center;
+}
+.podiumRank{ font-size:1.1rem; font-weight:950; margin-bottom:6px; }
+.podiumName{ font-weight:950; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.podiumXP{ font-weight:900; opacity:.9; }
+.podiumPic{
+  width:44px; height:44px; border-radius:999px; object-fit:cover;
+  border:2px solid rgba(255,255,255,.25);
+  margin: 4px auto 6px;
+}
 
-    </style>
+.lbList{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  max-height: 420px;
+  overflow:auto;
+  padding-right: 4px;
+}
+.lbRow{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  background: rgba(0,0,0,.16);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 14px;
+  padding: 10px 12px;
+}
+.lbLeft{ display:flex; align-items:center; gap:10px; min-width:0; }
+.lbNum{ width:28px; text-align:center; font-weight:950; opacity:.9; }
+.lbAvatar{ width:32px; height:32px; border-radius:999px; object-fit:cover; border:2px solid rgba(255,255,255,.22); }
+.lbName{ font-weight:900; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.lbXP{ font-weight:950; }
+.lbMe{ outline: 2px solid rgba(242,139,22,.65); }
+@media (max-width: 720px){
+  .podium{ grid-template-columns:1fr; }
+  .statBox.xpBig .stat-value{ font-size: 3.2rem; }
+}
+</style>
 </head>
 
 <body class="has-floating-stats">
@@ -1690,9 +1621,149 @@
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 
-<div id="googleBtn"></div>
+<div class="authBar" id="authBar">
+  <div id="googleBtn"></div>
+  <div class="userChip" id="userChip" style="display:none;">
+    <img id="userPic" alt="Foto" />
+    <div class="userMeta">
+      <div class="userName" id="userName">Usuario</div>
+      <div class="userEmail" id="userEmail">—</div>
+    </div>
+  </div>
+</div>
 
 <script>
+// ====== Sheets (Apps Script) ======
+  const WEB_APP_URL = "https://script.google.com/a/macros/iemanueljbetancur.edu.co/s/AKfycbzBaBdjCCyS5Ctb0ageUPJeP_O3JFuBXoqARryIOJ9YwuhqgZe0B7DhXd-sm2bGmVPJ/exec";
+  const OAUTH_CLIENT_ID = "932013722424-9uoc8vlc0b252qeuk5o81bsnj3th0ruk.apps.googleusercontent.com";
+
+  // Estado de sincronización XP
+  let __lastXpSynced = null;
+  let __pendingDelta = 0;
+  let __flushTimer = null;
+
+  function showUserChip(profile){
+    const chip = document.getElementById("userChip");
+    const pic = document.getElementById("userPic");
+    const name = document.getElementById("userName");
+    const email = document.getElementById("userEmail");
+    if(!chip || !pic || !name || !email) return;
+    pic.src = profile.picture || "";
+    pic.style.display = profile.picture ? "block" : "none";
+    name.textContent = profile.name || "Usuario";
+    email.textContent = profile.email || "";
+    chip.style.display = "flex";
+  }
+
+  function postToSheets(payload){
+    try{
+      const blob = new Blob([JSON.stringify(payload)], { type: "text/plain" });
+      const ok = navigator.sendBeacon(WEB_APP_URL, blob);
+      if(ok) return;
+    }catch(e){}
+    try{
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify(payload)
+      });
+    }catch(e){}
+  }
+
+  function registrarEnSheets(idToken){
+    postToSheets({ action: "upsert", idToken, xpDelta: 0 });
+  }
+
+  function syncTotalXP(idToken, totalXP){
+    postToSheets({ action: "syncTotal", idToken, totalXP: Number(totalXP||0) });
+  }
+
+  function queueXpDelta(idToken, delta){
+    const d = Number(delta||0);
+    if(!idToken || !isFinite(d) || d<=0) return;
+    __pendingDelta += d;
+    if(__flushTimer) return;
+    __flushTimer = setTimeout(() => {
+      const send = __pendingDelta;
+      __pendingDelta = 0;
+      __flushTimer = null;
+      if(send>0) postToSheets({ action:"upsert", idToken, xpDelta: send });
+    }, 1200);
+  }
+
+  // ====== Leaderboard JSONP (evita CORS) ======
+  function cargarLeaderboard(limit=50){
+    const cb = "renderLeaderboard";
+    const url = WEB_APP_URL + "?action=leaderboard&limit=" + encodeURIComponent(limit) + "&callback=" + cb + "&_=" + Date.now();
+    const old = document.getElementById("lbJsonp");
+    if(old) old.remove();
+    const s = document.createElement("script");
+    s.id = "lbJsonp";
+    s.src = url;
+    document.body.appendChild(s);
+  }
+
+  window.renderLeaderboard = (data) => {
+    const sec = document.getElementById("leaderboardSection");
+    const pod = document.getElementById("podium");
+    const list = document.getElementById("leaderboardList");
+    const st = document.getElementById("lbStatus");
+    if(!sec || !pod || !list || !st) return;
+
+    if(!data || !data.ok){
+      sec.style.display = "block";
+      st.textContent = "No se pudo cargar el ranking.";
+      pod.innerHTML = "";
+      list.innerHTML = "";
+      return;
+    }
+
+    const meRaw = localStorage.getItem("user_profile");
+    let meSub = null;
+    try{ meSub = meRaw ? JSON.parse(meRaw).sub : null; }catch(_){}
+
+    const rows = Array.isArray(data.leaderboard) ? data.leaderboard : [];
+    sec.style.display = "block";
+    st.textContent = rows.length ? ("Participantes: " + rows.length + " (Top 50)") : "Aún no hay participantes con XP. Gana XP para aparecer.";
+
+    // Podio
+    const top3 = rows.slice(0,3);
+    pod.innerHTML = top3.map((r,i)=>{
+      const medal = i===0?"🥇":i===1?"🥈":"🥉";
+      const nm = (r.name || r.email || "Usuario");
+      const xp = Number(r.xp||0);
+      const pic = r.picture || "";
+      const cls = (meSub && r.sub===meSub) ? "podiumCard lbMe" : "podiumCard";
+      return `
+        <div class="${cls}">
+          <div class="podiumRank">${medal} #${i+1}</div>
+          <img class="podiumPic" src="${pic}" onerror="this.style.display='none'">
+          <div class="podiumName" title="${nm}">${nm}</div>
+          <div class="podiumXP">${xp} XP</div>
+        </div>
+      `;
+    }).join("");
+
+    // Lista Top 50
+    const shown = rows.slice(0,50);
+    list.innerHTML = shown.map((r,i)=>{
+      const nm = (r.name || r.email || "Usuario");
+      const xp = Number(r.xp||0);
+      const pic = r.picture || "";
+      const cls = (meSub && r.sub===meSub) ? "lbRow lbMe" : "lbRow";
+      return `
+        <div class="${cls}">
+          <div class="lbLeft">
+            <div class="lbNum">${i+1}</div>
+            <img class="lbAvatar" src="${pic}" onerror="this.style.display='none'">
+            <div class="lbName" title="${nm}">${nm}</div>
+          </div>
+          <div class="lbXP">${xp} XP</div>
+        </div>
+      `;
+    }).join("");
+  };
+
   function parseJwt(token) {
     const base64Url = token.split('.')[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -1702,127 +1773,7 @@
     return JSON.parse(jsonPayload);
   }
 
-const WEB_APP_URL = "https://script.google.com/a/macros/iemanueljbetancur.edu.co/s/AKfycbxZwOwimHNVWIFXIbFyDy_IqZbQsPpgTuUcDWb9VVge5Mdba_Wu48Hci7gFQLtTbhPG/exec";
-
-  // ✅ Envío robusto a Apps Script (sin CORS). Usa sendBeacon si está disponible.
-  function postToSheets(payload) {
-    try {
-      const data = JSON.stringify(payload);
-      if (navigator.sendBeacon) {
-        const blob = new Blob([data], { type: "text/plain;charset=utf-8" });
-        navigator.sendBeacon(WEB_APP_URL, blob);
-        return;
-      }
-      fetch(WEB_APP_URL, { method: "POST", mode: "no-cors", body: data }).catch(()=>{});
-    } catch (e) {}
-  }
-
-
-  // ✅ Registra/actualiza el usuario en Google Sheets (Apps Script)
-  function registrarEnSheets(idToken) {
-    postToSheets({ action: "upsert", idToken, xpDelta: 0 });
-  })
-      });
-    } catch(e) {}
-  }
-
-  // ✅ Suma XP en Sheets (llámalo cuando el usuario gane puntos)
-  function sumarXPEnSheets(delta) {
-    const idToken = localStorage.getItem("google_id_token");
-    if (!idToken) return;
-    const d = Number(delta || 0);
-    if (!Number.isFinite(d) || d === 0) return;
-    postToSheets({ action: "upsert", idToken, xpDelta: d });
-  })
-      });
-    } catch(e) {}
-  }
-
-  // ✅ Leaderboard (JSONP) para leer ranking sin CORS
-  // Uso: cargarLeaderboard(50) y recibe en window.renderLeaderboard(data)
-  function cargarLeaderboard(limit = 50) {
-    const cb = "renderLeaderboard";
-    const url = `${WEB_APP_URL}?action=leaderboard&limit=${encodeURIComponent(limit)}&callback=${cb}`;
-    const old = document.getElementById("jsonpLeaderboard");
-    if(old) old.remove();
-    const s = document.createElement("script");
-    s.id = "jsonpLeaderboard";
-    s.src = url;
-    document.body.appendChild(s);
-  }
-
-  // Callback por defecto (puedes reemplazarlo)
-  window.renderLeaderboard = function(data) {
-    if(!data || !data.ok){
-      console.warn("Leaderboard error", data && data.error);
-      const st = document.getElementById("lbStatus");
-      if(st) st.textContent = "No se pudo cargar el ranking.";
-      return;
-    }
-    const list = Array.isArray(data.leaderboard) ? data.leaderboard : [];
-    window.__leaderboard = list;
-
-    const ol = document.getElementById("lbList");
-    const st = document.getElementById("lbStatus");
-    const topN = document.getElementById("lbTopN");
-    if(topN) topN.textContent = String(Math.min(list.length || 0, 50));
-
-    const me = (() => {
-      try { return JSON.parse(localStorage.getItem("user_profile") || "null"); } catch(e){ return null; }
-    })();
-
-    if(st){
-      st.textContent = list.length ? "Actualizado." : "Aún no hay participantes con XP.";
-    }
-    if(!ol) return;
-
-    // ===== Podio (Top 3) =====
-    const podiumEl = document.getElementById("lbPodium");
-    const podium = list.slice(0, 3);
-    if(podiumEl){
-      podiumEl.innerHTML = podium.map((u, i) => {
-        const place = i + 1;
-        const medal = i===0 ? "🥇" : i===1 ? "🥈" : "🥉";
-        const name = (u && (u.name || u.email)) ? String(u.name || u.email) : "Usuario";
-        const xp = (u && typeof u.xp !== "undefined") ? Number(u.xp || 0) : 0;
-        const pic = (u && u.picture) ? String(u.picture) : "";
-        const cls = place === 1 ? "podiumFirst" : place === 2 ? "podiumSecond" : "podiumThird";
-        return `
-          <div class="podiumItem ${cls}">
-            <div class="podiumMedal">${medal}</div>
-            ${pic ? `<img class="podiumAvatar" src="${pic}" alt="avatar">` : `<div class="podiumAvatar" aria-hidden="true"></div>`}
-            <div class="podiumName" title="${name.replace(/"/g,'&quot;')}">${name}</div>
-            <div class="podiumXp">⭐ ${xp}</div>
-          </div>
-        `;
-      }).join("");
-    }
-
-    const show = list.slice(0, 50);
-
-    ol.innerHTML = show.map((u, i) => {
-      const name = (u && (u.name || u.email)) ? String(u.name || u.email) : "Usuario";
-      const xp = (u && typeof u.xp !== "undefined") ? Number(u.xp || 0) : 0;
-      const pic = (u && u.picture) ? String(u.picture) : "";
-      const isMe = me && u && (u.sub && me.sub && u.sub === me.sub);
-      const medal = i===0 ? "🥇" : i===1 ? "🥈" : i===2 ? "🥉" : String(i+1);
-      return `
-        <li class="lbItem ${isMe ? "lbMe" : ""}">
-          <div class="lbLeft">
-            <div class="lbRank">${medal}</div>
-            ${pic ? `<img class="lbAvatar" src="${pic}" alt="avatar">` : `<div class="lbAvatar" aria-hidden="true"></div>`}
-            <div class="lbName" title="${name.replace(/"/g,'&quot;')}">${name}</div>
-          </div>
-          <div class="lbRight">
-            <span class="lbXp">⭐ ${xp}</span>
-          </div>
-        </li>
-      `;
-    }).join("");
-  };
-
-
-    function onGoogleCredential(response) {
+  function onGoogleCredential(response) {
     const idToken = response.credential;
     const user = parseJwt(idToken);
 
@@ -1836,22 +1787,27 @@ const WEB_APP_URL = "https://script.google.com/a/macros/iemanueljbetancur.edu.co
 
     console.log("OK login:", user.email);
 
-    // ✅ Sincroniza usuario (Sheets) y actualiza ranking
+    // ✅ Mostrar usuario, registrar en Sheets, sincronizar XP y cargar ranking
+    showUserChip(user);
     registrarEnSheets(idToken);
-    // Dale un pequeño margen para que el registro se escriba antes de leer el ranking
-    setTimeout(() => cargarLeaderboard(50), 600);
-
-    // ✅ UI: muestra usuario logueado en lugar del botón (opcional)
-    const btnWrap = document.getElementById("googleBtn");
-    if (btnWrap) {
-      const pic = user.picture ? `<img src="${user.picture}" alt="foto" />` : "";
-      btnWrap.innerHTML = `<div class="signedInPill">${pic}<div><div class="signedInName">${user.name || "Usuario"}</div><div class="signedInEmail">${user.email || ""}</div></div></div>`;
-    }
+    try{ syncTotalXP(idToken, (typeof window.xp === "number" ? window.xp : 0)); }catch(_){ syncTotalXP(idToken, 0); }
+    cargarLeaderboard(50);
 
     // aquí pintas tu UI (nombre/foto) y continúas tu app
   }
 
   window.onload = () => {
+    // Si ya hay sesión guardada, muestra chip y carga ranking
+    try{
+      const raw = localStorage.getItem('user_profile');
+      if(raw){
+        const u = JSON.parse(raw);
+        showUserChip(u);
+        document.getElementById('leaderboardSection').style.display='block';
+        cargarLeaderboard(50);
+      }
+    }catch(_){ }
+
     google.accounts.id.initialize({
       client_id: "932013722424-9uoc8vlc0b252qeuk5o81bsnj3th0ruk.apps.googleusercontent.com",
       callback: onGoogleCredential,
@@ -1863,25 +1819,21 @@ const WEB_APP_URL = "https://script.google.com/a/macros/iemanueljbetancur.edu.co
       { theme: "outline", size: "large", shape: "pill", text: "signin_with" }
     );
   };
-
-
-  // ✅ Post-login hook: registra en Sheets y carga ranking una sola vez después del login
-  (function(){
-    let done = false;
-    function tick(){
-      if(done) return;
-      const token = localStorage.getItem("google_id_token");
-      if(token){
-        done = true;
-        try { registrarEnSheets(token); } catch(e) {}
-        try { cargarLeaderboard(50); } catch(e) {}
-      }
-    }
-    setInterval(tick, 800);
-    tick();
-  })();
-
 </script>
+
+<div class="leaderboardWrap" id="leaderboardSection" style="display:none;">
+  <div class="lbHeader">
+    <h3>🏆 Ranking (Top 50)</h3>
+    <div class="lbActions">
+      <button class="lbBtn" type="button" onclick="cargarLeaderboard(50)">Actualizar</button>
+    </div>
+  </div>
+  <p class="lbNote" id="lbStatus">Inicia sesión para ver el ranking.</p>
+  <div class="podium" id="podium"></div>
+  <div class="lbList" id="leaderboardList"></div>
+</div>
+
+
 
 
 
@@ -1893,8 +1845,8 @@ const WEB_APP_URL = "https://script.google.com/a/macros/iemanueljbetancur.edu.co
   <!-- ✅✅✅ BARRA DE PUNTOS FUERA DE .app -->
   
   <div class="stats" id="statsBar">
-    <div class="statBox" data-tip="🔥 Días seguidos practicando. Si fallas o faltas, puede bajar (Freeze te protege)."><span class="stat-label">Racha</span><span class="stat-value" id="streak">0</span></div>
-    <div class="statBox xpBox" data-tip="⭐ Puntos acumulados por respuestas correctas en la app."><span class="stat-label">TOTAL XP</span><span class="stat-value" id="xp">0</span></div>
+    <div class="statBox" xpBig" data-tip="🔥 Días seguidos practicando. Si fallas o faltas, puede bajar (Freeze te protege)."><span class="stat-label">Racha</span><span class="stat-value" id="streak">0</span></div>
+    <div class="statBox" data-tip="⭐ Puntos acumulados por respuestas correctas en la app."><span class="stat-label">Total XP</span><span class="stat-value" id="xp">0</span></div>
     <div class="statBox" data-tip="🎯 Porcentaje de aciertos: correctas ÷ intentos."><span class="stat-label">Precisión</span><span class="stat-value" id="acc">100%</span></div>
 
     <div class="statBox" data-tip="🧬 Subes de nivel cada 250 XP (aprox.)."><span class="stat-label">Nivel</span><span class="stat-value" id="level">1</span></div>
@@ -1910,21 +1862,6 @@ const WEB_APP_URL = "https://script.google.com/a/macros/iemanueljbetancur.edu.co
     </div>
   </div>
 
-
-
-  <!-- 🏆 LEADERBOARD / RANKING (Sheets) -->
-  <section class="leaderboardCard" aria-label="Ranking">
-    <div class="lbHeader">
-      <div class="lbTitle">🏆 Ranking (Top <span id="lbTopN">50</span>)</div>
-      <button class="lbBtn" id="lbRefreshBtn" type="button">Actualizar</button>
-    </div>
-    <div class="lbSub">
-      <span id="lbStatus">Inicia sesión para aparecer en el ranking.</span>
-      <span class="lbHint">Tip: el ranking se actualiza cuando alguien gana XP.</span>
-    </div>
-    <div class="lbPodium" id="lbPodium" aria-label="Podio"></div>
-    <ol class="lbList" id="lbList"></ol>
-  </section>
 
   <!-- ✅✅✅ BOTÓN INFERIOR SIEMPRE VISIBLE: ASISTENTE IA -->
   <a class="ebook-float" href="https://chatgpt.com/g/g-688f92ef15e88191a178208283c76eb6-neuro-aprendizaje-de-los-verbos-irregulares" target="_blank" rel="noopener">ASISTENTE IA 🤖</a>
@@ -2753,13 +2690,11 @@ function awardXP(base, reason="xp"){
   const gained = Math.max(1, Math.round(base * mult));
   xp += gained;
   dailyXP += gained;
-  sumarXPEnSheets(gained);
 
   // Bonos por hitos de racha (cada 5 aciertos seguidos)
   if(reason==="connect" && streak>0 && streak % 5 === 0){
     xp += 10;
     dailyXP += 10;
-    sumarXPEnSheets(10);
     toastAchievement("🔥", "Bonus de racha", `+10 XP por racha ${streak}.`);
   }
 
@@ -3734,6 +3669,23 @@ function actualizarStats(){
   document.getElementById('xp').innerText = xp;
   document.getElementById('acc').innerText = (att===0 ? 100 : Math.round((corr/att)*100)) + "%";
   updateGamificationUI();
+
+  // ✅ Sincronizar XP a Sheets (delta) y refrescar ranking
+  try{
+    const idToken = localStorage.getItem("google_id_token");
+    if(idToken){
+      if(__lastXpSynced === null) __lastXpSynced = xp;
+      const delta = xp - __lastXpSynced;
+      if(delta > 0){
+        __lastXpSynced = xp;
+        queueXpDelta(idToken, delta);
+        if(!window.__lbDebounce){
+          window.__lbDebounce = setTimeout(()=>{ window.__lbDebounce=null; cargarLeaderboard(50); }, 1200);
+        }
+      }
+    }
+  }catch(_){}
+
   persistState();
 }
 
@@ -5300,6 +5252,20 @@ function validateSpelling(){
   actualizarStats();
 }
 
+</script>
+
+
+
+<script>
+  // ✅ Re-sincronización total periódica (mejor esfuerzo)
+  setInterval(() => {
+    try{
+      const idToken = localStorage.getItem("google_id_token");
+      if(!idToken) return;
+      const total = (typeof window.xp === "number") ? window.xp : (parseInt(document.getElementById("xp")?.innerText||"0",10)||0);
+      syncTotalXP(idToken, total);
+    }catch(_){}
+  }, 30000);
 </script>
 
 </body>
