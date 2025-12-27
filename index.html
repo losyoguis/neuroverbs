@@ -1479,10 +1479,19 @@
   justify-content:center;
   gap:12px;
   flex-wrap:wrap;
-  z-index:10;
-  position:relative;
+
+  position: sticky;
+  top: 10px;
+  z-index: 99999;
+
+  background: rgba(0,0,0,.18);
+  border: 1px solid rgba(255,255,255,.18);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 10px 12px;
 }
-#googleBtn{ display:flex; justify-content:center; }
+#googleBtn{ display:flex; justify-content:center; min-height:44px; }
 .userChip{
   display:flex;
   align-items:center;
@@ -1674,7 +1683,11 @@
     postToSheets({ action: "upsert", idToken, xpDelta: 0 });
   }
 
-  function syncTotalXP(idToken, totalXP){ /* no-op (tu script actual no tiene syncTotal) */ });
+  function syncTotalXP(idToken, totalXP){
+    const t = Number(totalXP||0);
+    if(!idToken || !isFinite(t)) return;
+    // Sincroniza el TOTAL (útil para corregir desfaces)
+    postToSheets({ action: "synctotal", idToken, totalXP: Math.max(0, Math.floor(t)) });
   }
 
   function queueXpDelta(idToken, delta){
@@ -1795,11 +1808,8 @@
     // aquí pintas tu UI (nombre/foto) y continúas tu app
   }
 
-  const __prevOnload = window.onload;
-  window.onload = (ev) => {
-    try{ if(typeof __prevOnload === 'function') __prevOnload(ev); }catch(_){ }
-
-    // Si ya hay sesión guardada, muestra chip y carga ranking
+  function initGoogleAuthAndSync(){
+    // Restaurar sesión guardada (si el usuario ya había iniciado sesión)
     try{
       const raw = localStorage.getItem('user_profile');
       if(raw){
@@ -1808,19 +1818,32 @@
         document.getElementById('leaderboardSection').style.display='block';
         cargarLeaderboard(50);
       }
-    }catch(_){ }
+    }catch(_){}
 
-    google.accounts.id.initialize({
-      client_id: "932013722424-9uoc8vlc0b252qeuk5o81bsnj3th0ruk.apps.googleusercontent.com",
-      callback: onGoogleCredential,
-      ux_mode: "popup"   // CLAVE para evitar problemas en embebidos
-    });
+    // Renderizar botón Google (si la librería cargó bien)
+    try{
+      if(window.google && google.accounts && google.accounts.id){
+        google.accounts.id.initialize({
+          client_id: "932013722424-9uoc8vlc0b252qeuk5o81bsnj3th0ruk.apps.googleusercontent.com",
+          callback: onGoogleCredential,
+          ux_mode: "popup"
+        });
+        const btn = document.getElementById("googleBtn");
+        if(btn){
+          google.accounts.id.renderButton(
+            btn,
+            { theme: "outline", size: "large", shape: "pill", text: "signin_with" }
+          );
+        }
+      } else {
+        console.warn("Google Identity Services no cargó (gsi/client).");
+      }
+    }catch(err){
+      console.error("Error init Google Auth:", err);
+    }
+  }
 
-    google.accounts.id.renderButton(
-      document.getElementById("googleBtn"),
-      { theme: "outline", size: "large", shape: "pill", text: "signin_with" }
-    );
-  };
+  window.addEventListener('load', initGoogleAuthAndSync);
 </script>
 
 <div class="leaderboardWrap" id="leaderboardSection" style="display:none;">
