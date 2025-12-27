@@ -5569,13 +5569,18 @@ function validateSpelling(){
         let left = r.left + (r.width/2) - (tw/2);
         left = clamp(left, margin, window.innerWidth - tw - margin);
 
-        // Por defecto arriba del elemento; si no cabe, abajo
-        let top = r.top - th - 12;
-        let arrowAtTop = false;
-        if(top < margin){
-          top = r.bottom + 12;
-          arrowAtTop = true;
+        // Preferimos mostrar ABAJO (se ve mejor). Si no cabe, lo pasamos ARRIBA.
+        let top = r.bottom + 12;
+        let arrowAtTop = true;
+
+        // Si abajo se sale de la pantalla, intentamos arriba
+        if (top + th + margin > window.innerHeight) {
+          top = r.top - th - 12;
+          arrowAtTop = false;
         }
+
+        // Ajuste final para que nunca quede fuera del viewport
+        top = clamp(top, margin, window.innerHeight - th - margin);
 
         tip.style.left = left + 'px';
         tip.style.top  = top + 'px';
