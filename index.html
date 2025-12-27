@@ -1674,8 +1674,7 @@
     postToSheets({ action: "upsert", idToken, xpDelta: 0 });
   }
 
-  function syncTotalXP(idToken, totalXP){
-    postToSheets({ action: "syncTotal", idToken, totalXP: Number(totalXP||0) });
+  function syncTotalXP(idToken, totalXP){ /* no-op (tu script actual no tiene syncTotal) */ });
   }
 
   function queueXpDelta(idToken, delta){
@@ -1796,7 +1795,10 @@
     // aquí pintas tu UI (nombre/foto) y continúas tu app
   }
 
-  window.onload = () => {
+  const __prevOnload = window.onload;
+  window.onload = (ev) => {
+    try{ if(typeof __prevOnload === 'function') __prevOnload(ev); }catch(_){ }
+
     // Si ya hay sesión guardada, muestra chip y carga ranking
     try{
       const raw = localStorage.getItem('user_profile');
@@ -5256,17 +5258,32 @@ function validateSpelling(){
 
 
 
+
 <script>
-  // ✅ Re-sincronización total periódica (mejor esfuerzo)
+(function(){
+  let lastSeen = null;
   setInterval(() => {
     try{
-      const idToken = localStorage.getItem("google_id_token");
-      if(!idToken) return;
-      const total = (typeof window.xp === "number") ? window.xp : (parseInt(document.getElementById("xp")?.innerText||"0",10)||0);
-      syncTotalXP(idToken, total);
+      const el = document.getElementById("xp");
+      if(!el) return;
+      const current = parseInt((el.innerText||"0").replace(/[^0-9]/g,""),10) || 0;
+      if(lastSeen === null){ lastSeen = current; return; }
+      if(current > lastSeen){
+        const delta = current - lastSeen;
+        lastSeen = current;
+        const idToken = localStorage.getItem("google_id_token");
+        if(idToken){
+          // usa la cola ya existente
+          try{ queueXpDelta(idToken, delta); }catch(_){}
+          try{ cargarLeaderboard(50); }catch(_){}
+        }
+      } else if(current < lastSeen){
+        // si reinicia, ajusta base
+        lastSeen = current;
+      }
     }catch(_){}
-  }, 30000);
+  }, 1200);
+})();
 </script>
-
 </body>
 </html>
