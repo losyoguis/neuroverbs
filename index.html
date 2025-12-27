@@ -1620,6 +1620,45 @@
   .podium{ grid-template-columns:1fr; }
   .statBox.xpBig .stat-value{ font-size: 3.2rem; }
 }
+
+
+    /* ====== AJUSTE: reducir altura del menú de puntuación (~1/3) ====== */
+    .stats{
+      padding: 10px !important;
+      border-radius: 16px !important;
+    }
+    .statBox{
+      padding: 8px 10px !important;
+    }
+    .statBox.xpBig{
+      padding: 12px 12px !important;
+      min-width: 200px !important;
+    }
+    .statBox.xpBig .stat-label{
+      font-size: .95rem !important;
+    }
+    .statBox.xpBig .stat-value{
+      font-size: 2.45rem !important;
+      line-height: 1 !important;
+    }
+    .statBox .stat-value{
+      font-size: 1.0rem !important;
+    }
+    .goalBox{
+      padding: 7px 10px !important;
+      gap: 6px !important;
+    }
+    .goalBar{
+      height: 8px !important;
+    }
+
+    @media (max-width: 700px){
+      .stats{ padding: 8px !important; }
+      .statBox{ padding: 7px 9px !important; }
+      .statBox.xpBig{ padding: 10px 10px !important; }
+      .statBox.xpBig .stat-value{ font-size: 2.15rem !important; }
+    }
+
 </style>
 </head>
 
