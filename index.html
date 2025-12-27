@@ -1620,53 +1620,6 @@
   .podium{ grid-template-columns:1fr; }
   .statBox.xpBig .stat-value{ font-size: 3.2rem; }
 }
-
-    /* ===============================
-       ✅ HUD (MENÚ DE PUNTUACIÓN) COMPACTO
-       (solo reduce tamaño; resto igual)
-       =============================== */
-    .stats{
-      padding:10px !important;
-      border-radius:16px !important;
-      gap:8px !important;
-      top:10px !important;
-      width: min(1120px, calc(100% - 28px)) !important;
-    }
-    .statBox{
-      min-width: 92px !important;
-      padding:5px 6px !important;
-      border-radius:12px !important;
-    }
-    .statBox .stat-value{ font-size:1.02rem !important; }
-    .statBox .stat-label{ font-size:.60rem !important; }
-
-    /* Antes era enorme: ahora sigue destacando pero más compacto */
-    .statBox.xpBig{
-      flex: 1.25 !important;
-      min-width: 160px !important;
-      padding:10px 10px !important;
-    }
-    .statBox.xpBig .stat-label{
-      font-size: .95rem !important;
-      letter-spacing:.35px !important;
-    }
-    .statBox.xpBig .stat-value{
-      font-size: 2.4rem !important;
-      line-height: 1.05 !important;
-    }
-
-    /* Meta diaria más delgada */
-    .goalBox{
-      flex: 1 1 260px !important;
-      min-width: 220px !important;
-      padding:8px 10px !important;
-      border-radius:12px !important;
-      gap:6px !important;
-    }
-    .goalLabel{ font-size:.62rem !important; }
-    .goalValue{ font-size:.70rem !important; }
-    .goalBar{ height:10px !important; }
-
 </style>
 </head>
 
@@ -1690,7 +1643,7 @@
 
 <script>
 // ====== Sheets (Apps Script) ======
-  const WEB_APP_URL = "https://script.google.com/a/macros/iemanueljbetancur.edu.co/s/AKfycby4F1xlAOV6ccKdp3JZ5pe9ed5RovL10xjaRLkdSo9esKTQwFfUiqsbZPXFZq7rJgvI/exec";
+  const WEB_APP_URL = "https://script.google.com/a/macros/iemanueljbetancur.edu.co/s/AKfycbzBaBdjCCyS5Ctb0ageUPJeP_O3JFuBXoqARryIOJ9YwuhqgZe0B7DhXd-sm2bGmVPJ/exec";
   const OAUTH_CLIENT_ID = "932013722424-9uoc8vlc0b252qeuk5o81bsnj3th0ruk.apps.googleusercontent.com";
 
   // Estado de sincronización XP
@@ -1782,6 +1735,27 @@
     try{ meSub = meRaw ? JSON.parse(meRaw).sub : null; }catch(_){}
 
     const rows = Array.isArray(data.leaderboard) ? data.leaderboard : [];
+
+    // ✅ Mantener TOTAL XP (HUD) siempre igual al XP del ranking (Sheets)
+    try{
+      if(meSub){
+        const meRow = rows.find(r => r && r.sub === meSub);
+        if(meRow && meRow.xp != null){
+          const serverXp = Number(meRow.xp || 0);
+          if(Number.isFinite(serverXp) && typeof xp !== "undefined" && xp !== serverXp){
+            window.__suppressXpSync = true;     // evita que esto cuente como "XP ganado"
+            xp = serverXp;
+            __lastXpSynced = serverXp;
+            if(typeof persistState === "function") persistState();
+            if(typeof actualizarStats === "function") actualizarStats();
+            window.__suppressXpSync = false;
+          } else if(Number.isFinite(serverXp)) {
+            __lastXpSynced = serverXp;
+          }
+        }
+      }
+    }catch(_){}
+
     sec.style.display = "block";
     st.textContent = rows.length ? ("Participantes: " + rows.length + " (Top 50)") : "Aún no hay participantes con XP. Gana XP para aparecer.";
 
@@ -3545,12 +3519,7 @@ function init(){
   pinStatsBar();
   loadState();
 
-  
-  // ✅ Asegura que XP/racha/precisión se pinten al iniciar (evita "delta" por recarga)
-  try{ actualizarStats(); }catch(_){ }
-  // ✅ Baseline para sincronización: no contar XP restaurado como XP ganado
-  try{ if(typeof __lastXpSynced !== "undefined") __lastXpSynced = (typeof xp==="number"?xp: (Number(document.getElementById("xp")?.innerText)||0)); }catch(_){ }
-const gNames=[
+  const gNames=[
     "GRUPO 1: (Day 1-8) - Patrón t/d",
     "GRUPO 2: C2=C3",
     "GRUPO 3: Todas diferentes"
@@ -3777,9 +3746,12 @@ function actualizarStats(){
   document.getElementById('xp').innerText = xp;
   document.getElementById('acc').innerText = (att===0 ? 100 : Math.round((corr/att)*100)) + "%";
   updateGamificationUI();
+  const __suppress = !!window.__suppressXpSync;
 
   // ✅ Sincronizar XP a Sheets (delta) y refrescar ranking
-  try{
+    if(__suppress){ __lastXpSynced = xp; persistState(); return; }
+
+try{
     const idToken = localStorage.getItem("google_id_token");
     if(idToken){
       if(__lastXpSynced === null) __lastXpSynced = xp;
@@ -5368,35 +5340,23 @@ function validateSpelling(){
 <script>
 (function(){
   let lastSeen = null;
-  const start = Date.now();
-  const GRACE_MS = 6000; // ✅ evita sumar XP al recargar (ignora cambios iniciales)
   setInterval(() => {
     try{
       const el = document.getElementById("xp");
       if(!el) return;
       const current = parseInt((el.innerText||"0").replace(/[^0-9]/g,""),10) || 0;
-
-      // Baseline inicial
-      if(lastSeen === null){
-        lastSeen = current;
-        return;
-      }
-
-      // Durante el arranque, solo ajusta baseline (NO sincroniza deltas)
-      if(Date.now() - start < GRACE_MS){
-        lastSeen = current;
-        return;
-      }
-
+      if(lastSeen === null){ lastSeen = current; return; }
       if(current > lastSeen){
         const delta = current - lastSeen;
         lastSeen = current;
         const idToken = localStorage.getItem("google_id_token");
         if(idToken){
+          // usa la cola ya existente
           try{ queueXpDelta(idToken, delta); }catch(_){}
           try{ cargarLeaderboard(50); }catch(_){}
         }
       } else if(current < lastSeen){
+        // si reinicia, ajusta base
         lastSeen = current;
       }
     }catch(_){}
