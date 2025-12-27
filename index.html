@@ -1667,7 +1667,20 @@
       .podiumFirst,.podiumSecond,.podiumThird{ transform:none; }
     }
 
-</style>
+
+      .signedInPill{
+        display:flex; align-items:center; gap:10px;
+        padding:10px 14px; border-radius:999px;
+        background: rgba(255,255,255,0.14);
+        border: 1px solid rgba(255,255,255,0.22);
+        backdrop-filter: blur(10px);
+        max-width: 560px; margin: 0 auto;
+      }
+      .signedInPill img{ width:40px; height:40px; border-radius:50%; object-fit:cover; }
+      .signedInName{ font-weight:800; color:#fff; line-height:1.1; }
+      .signedInEmail{ font-size:12px; opacity:.85; color:#fff; line-height:1.1; }
+
+    </style>
 </head>
 
 <body class="has-floating-stats">
@@ -1691,37 +1704,36 @@
 
 const WEB_APP_URL = "https://script.google.com/a/macros/iemanueljbetancur.edu.co/s/AKfycbxZwOwimHNVWIFXIbFyDy_IqZbQsPpgTuUcDWb9VVge5Mdba_Wu48Hci7gFQLtTbhPG/exec";
 
+  // ✅ Envío robusto a Apps Script (sin CORS). Usa sendBeacon si está disponible.
+  function postToSheets(payload) {
+    try {
+      const data = JSON.stringify(payload);
+      if (navigator.sendBeacon) {
+        const blob = new Blob([data], { type: "text/plain;charset=utf-8" });
+        navigator.sendBeacon(WEB_APP_URL, blob);
+        return;
+      }
+      fetch(WEB_APP_URL, { method: "POST", mode: "no-cors", body: data }).catch(()=>{});
+    } catch (e) {}
+  }
+
+
   // ✅ Registra/actualiza el usuario en Google Sheets (Apps Script)
   function registrarEnSheets(idToken) {
-    try {
-      fetch(WEB_APP_URL, {
-        method: "POST",
-        mode: "no-cors",
-        body: JSON.stringify({
-          action: "upsert",
-          idToken: idToken,
-          xpDelta: 0
-        })
+    postToSheets({ action: "upsert", idToken, xpDelta: 0 });
+  })
       });
     } catch(e) {}
   }
 
   // ✅ Suma XP en Sheets (llámalo cuando el usuario gane puntos)
-  function sumarXPEnSheets(xpDelta) {
+  function sumarXPEnSheets(delta) {
     const idToken = localStorage.getItem("google_id_token");
-    if(!idToken) return;
-    const delta = Number(xpDelta || 0);
-    if(!Number.isFinite(delta) || delta === 0) return;
-
-    try {
-      fetch(WEB_APP_URL, {
-        method: "POST",
-        mode: "no-cors",
-        body: JSON.stringify({
-          action: "upsert",
-          idToken: idToken,
-          xpDelta: delta
-        })
+    if (!idToken) return;
+    const d = Number(delta || 0);
+    if (!Number.isFinite(d) || d === 0) return;
+    postToSheets({ action: "upsert", idToken, xpDelta: d });
+  })
       });
     } catch(e) {}
   }
@@ -1823,6 +1835,19 @@ const WEB_APP_URL = "https://script.google.com/a/macros/iemanueljbetancur.edu.co
     }));
 
     console.log("OK login:", user.email);
+
+    // ✅ Sincroniza usuario (Sheets) y actualiza ranking
+    registrarEnSheets(idToken);
+    // Dale un pequeño margen para que el registro se escriba antes de leer el ranking
+    setTimeout(() => cargarLeaderboard(50), 600);
+
+    // ✅ UI: muestra usuario logueado en lugar del botón (opcional)
+    const btnWrap = document.getElementById("googleBtn");
+    if (btnWrap) {
+      const pic = user.picture ? `<img src="${user.picture}" alt="foto" />` : "";
+      btnWrap.innerHTML = `<div class="signedInPill">${pic}<div><div class="signedInName">${user.name || "Usuario"}</div><div class="signedInEmail">${user.email || ""}</div></div></div>`;
+    }
+
     // aquí pintas tu UI (nombre/foto) y continúas tu app
   }
 
