@@ -1776,20 +1776,32 @@ async function fetchAndApplyUserFromSheets() {
 
     const serverXp = Number(data.user.xp || 0);
     if (!Number.isFinite(serverXp)) return;
-
-    // Suprimir cualquier delta durante el ajuste
-    window.__suppressXpSyncUntil = Date.now() + 5000;
-    window.__lastXpSynced = serverXp;
-
-    // Variables globales de tu app: 'xp' se usa en actualizarStats()
-    if (typeof xp !== "undefined") xp = serverXp;
-
-    if (typeof persistState === "function") persistState();
-    if (typeof actualizarStats === "function") actualizarStats();
-  } catch (e) {
+    applyServerXpSafely(serverXp, "user_endpoint");
+    } catch (e) {
     console.warn("No pude leer XP desde Sheets:", e);
   }
 }
+
+// Aplica XP del servidor al HUD sin generar "deltas" extra.
+// Solo sube el XP si el servidor va por delante (nunca lo baja aquí para evitar parpadeos por retardos).
+function applyServerXpSafely(serverXp, source) {
+  const sXp = Number(serverXp || 0);
+  if (!Number.isFinite(sXp)) return;
+
+  const localXp = Number(typeof xp !== "undefined" ? (xp || 0) : 0);
+  if (sXp <= localXp) return;
+
+  // Evitar que cualquier lógica de delta intente reenviar este cambio
+  window.__suppressXpSyncUntil = Date.now() + 2500;
+  window.__lastXpSynced = sXp;
+
+  if (typeof xp !== "undefined") xp = sXp;
+
+  try { persistState(); } catch (_) {}
+  try { actualizarStats(); } catch (_) {}
+  if (source) console.log("[XP] HUD actualizado desde servidor:", sXp, "source=", source);
+}
+
 
 // =========================
 // Leaderboard paginado (10 por página)
@@ -1899,6 +1911,15 @@ function renderLeaderboard(data) {
       </div>
     `;
   }).join("");
+
+  // Si el usuario actual está en esta página del ranking, sincroniza el HUD con su XP del servidor
+  try {
+    const prof = JSON.parse(localStorage.getItem("user_profile") || "null");
+    if (prof && prof.sub && Array.isArray(rows)) {
+      const me = rows.find(r => String(r.sub) === String(prof.sub));
+      if (me) applyServerXpSafely(me.xp, "leaderboard_page");
+    }
+  } catch (_) {}
 }
 
 function escapeHtml(s) {
@@ -5418,31 +5439,8 @@ function validateSpelling(){
 
 
 
-<script>
-(function(){
-  let lastSeen = null;
-  setInterval(() => {
-    try{
-      const el = document.getElementById("xp");
-      if(!el) return;
-      const current = parseInt((el.innerText||"0").replace(/[^0-9]/g,""),10) || 0;
-      if(lastSeen === null){ lastSeen = current; return; }
-      if(current > lastSeen){
-        const delta = current - lastSeen;
-        lastSeen = current;
-        const idToken = localStorage.getItem("google_id_token");
-        if(idToken){
-          // usa la cola ya existente
-          try{ queueXpDelta(idToken, delta); }catch(_){}
-          try{ cargarLeaderboard(50); }catch(_){}
-        }
-      } else if(current < lastSeen){
-        // si reinicia, ajusta base
-        lastSeen = current;
-      }
-    }catch(_){}
-  }, 1200);
-})();
-</script>
+
+<!-- XP sync watcher removed: XP is synced only from exercise actions + server fetch to avoid double-counting -->
+
 </body>
 </html>
