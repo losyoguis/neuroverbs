@@ -1652,6 +1652,7 @@ const OAUTH_CLIENT_ID = "932013722424-9uoc8vlc0b252qeuk5o81bsnj3th0ruk.apps.goog
 // Leaderboard paging
 const LB_PAGE_SIZE = 10;
 let __lbOffset = 0;
+let __lbTotal = 0; // total participantes (desde servidor)
 
 // XP sync guard
 window.__lastXpSynced = null;          // usado por awardXP()
@@ -1798,11 +1799,16 @@ function resetLeaderboardPaging() {
 }
 
 function lbPrev() {
+  // No permitir ir a páginas negativas
+  if (__lbOffset <= 0) return;
   __lbOffset = Math.max(0, __lbOffset - LB_PAGE_SIZE);
   cargarLeaderboardPage();
 }
 
 function lbNext() {
+  // No permitir ir más allá del total
+  const total = Number(__lbTotal || 0);
+  if (total && (__lbOffset + LB_PAGE_SIZE) >= total) return;
   __lbOffset = __lbOffset + LB_PAGE_SIZE;
   cargarLeaderboardPage();
 }
@@ -1848,8 +1854,18 @@ function renderLeaderboard(data) {
 
   const rows = Array.isArray(data.leaderboard) ? data.leaderboard : [];
   const total = Number(data.total || 0);
-  const start = rows.length ? (__lbOffset + 1) : 0;
-  const end = rows.length ? (__lbOffset + rows.length) : 0;
+  __lbTotal = total;
+
+  // Si el offset quedó por fuera del total (ej. le dieron "Siguiente" cuando no había más páginas), corrige y recarga
+  const maxOffset = total ? Math.max(0, (Math.ceil(total / LB_PAGE_SIZE) - 1) * LB_PAGE_SIZE) : 0;
+  if (total && __lbOffset > maxOffset) {
+    __lbOffset = maxOffset;
+    cargarLeaderboardPage();
+    return;
+  }
+
+  const start = rows.length ? Math.min(__lbOffset + 1, total || (__lbOffset + 1)) : 0;
+  const end = rows.length ? Math.min(__lbOffset + rows.length, total || (__lbOffset + rows.length)) : 0;
 
   sec.style.display = "block";
   if (rows.length) {
@@ -1859,6 +1875,12 @@ function renderLeaderboard(data) {
   }
 
   if (pageInfo) pageInfo.textContent = String(Math.floor(__lbOffset / LB_PAGE_SIZE) + 1);
+
+  // Habilitar / deshabilitar flechas
+  const prevBtn = document.getElementById("lbPrevBtn");
+  const nextBtn = document.getElementById("lbNextBtn");
+  if (prevBtn) prevBtn.disabled = (__lbOffset <= 0);
+  if (nextBtn) nextBtn.disabled = (total ? (__lbOffset + LB_PAGE_SIZE >= total) : true);
 
   // Render cards
   list.innerHTML = rows.map((r, i) => {
@@ -1976,9 +1998,9 @@ window.addEventListener("load", () => {
   <div class="lbHeader">
     <h3 style="margin:0;">🏆 Ranking (Todos - paginado)</h3>
     <div class="lbControls" style="display:flex; gap:10px; align-items:center;">
-      <button class="lbBtn" type="button" onclick="lbPrev()">◀</button>
+      <button id="lbPrevBtn" class="lbBtn" type="button" onclick="lbPrev()">◀</button>
       <span id="lbPageInfo" style="opacity:.9; font-weight:700;">1</span>
-      <button class="lbBtn" type="button" onclick="lbNext()">▶</button>
+      <button id="lbNextBtn" class="lbBtn" type="button" onclick="lbNext()">▶</button>
       <button class="lbBtn" type="button" onclick="cargarLeaderboard()">Actualizar</button>
     </div>
   </div>
