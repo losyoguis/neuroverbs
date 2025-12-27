@@ -811,6 +811,34 @@
       background:rgba(255,255,255,.18);
       border:1px solid rgba(11,18,32,.15);
     }
+
+    /* ==========================
+       ✅ TARJETA DESTACADA: TOTAL XP
+       (Diseño como en tu captura)
+       ========================== */
+    .statBox.xpBox{
+      min-width: 260px;
+      padding: 16px 16px;
+      border-radius: 22px;
+      background: linear-gradient(180deg, rgba(230,160,78,0.95), rgba(214,136,46,0.95));
+      border: 2px solid rgba(255,255,255,0.28);
+      box-shadow: 0 10px 24px rgba(0,0,0,0.18);
+      gap: 6px;
+    }
+    .statBox.xpBox .stat-label{
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: rgba(0,0,0,0.75);
+    }
+    .statBox.xpBox .stat-value{
+      font-size: 64px;
+      line-height: 1;
+      font-weight: 1000;
+      color: rgba(0,0,0,0.82);
+    }
+
     .statBox .stat-value{font-size:1.15rem;}
     .statBox .stat-label{font-size:.68rem;}
 
@@ -1469,7 +1497,177 @@
       }
     }
 
-  </style>
+  
+    /* ===== Leaderboard (Sheets) ===== */
+    .leaderboardCard{
+      margin-top: 14px;
+      border-radius: 18px;
+      padding: 14px 14px 10px;
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(255,255,255,0.22);
+      box-shadow: 0 10px 24px rgba(0,0,0,.18);
+      backdrop-filter: blur(10px);
+    }
+    .lbHeader{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:8px;
+    }
+    .lbTitle{
+      font-weight: 900;
+      letter-spacing: .3px;
+      font-size: 16px;
+    }
+    .lbBtn{
+      appearance:none;
+      border:none;
+      cursor:pointer;
+      border-radius: 999px;
+      padding: 9px 12px;
+      font-weight: 800;
+      background: rgba(0,0,0,.22);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,.25);
+    }
+    .lbBtn:active{ transform: translateY(1px); }
+    .lbSub{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:center;
+      font-size: 12px;
+      opacity: .92;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .lbHint{ opacity: .85; }
+    .lbList{
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display:flex;
+      flex-direction:column;
+      gap: 8px;
+    }
+    .lbItem{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      border-radius: 14px;
+      padding: 10px 10px;
+      background: rgba(0,0,0,.14);
+      border: 1px solid rgba(255,255,255,.12);
+    }
+    .lbLeft{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      min-width: 0;
+    }
+    .lbRank{
+      width: 28px;
+      height: 28px;
+      border-radius: 10px;
+      display:grid;
+      place-items:center;
+      font-weight: 900;
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.18);
+      flex: 0 0 auto;
+    }
+    .lbAvatar{
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      object-fit: cover;
+      border: 2px solid rgba(255,255,255,.35);
+      background: rgba(255,255,255,.10);
+      flex: 0 0 auto;
+    }
+    .lbName{
+      font-weight: 800;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 56vw;
+    }
+    .lbRight{
+      display:flex;
+      align-items:center;
+      gap: 8px;
+      flex: 0 0 auto;
+      font-weight: 900;
+    }
+    .lbXp{
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.14);
+    }
+    .lbMe{
+      outline: 2px solid rgba(255,255,255,.35);
+      box-shadow: 0 0 0 4px rgba(0,0,0,.10);
+    }
+
+    /* ===== Podio Top 3 ===== */
+    .lbPodium{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+      margin-bottom: 10px;
+    }
+    .podiumItem{
+      border-radius: 16px;
+      padding: 10px 10px 12px;
+      background: rgba(0,0,0,.16);
+      border: 1px solid rgba(255,255,255,.14);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      text-align:center;
+      gap: 6px;
+      min-height: 120px;
+    }
+    .podiumFirst{ transform: translateY(-6px); }
+    .podiumSecond{ transform: translateY(6px); }
+    .podiumThird{ transform: translateY(10px); }
+    .podiumMedal{
+      font-size: 1.3rem;
+      line-height: 1;
+      font-weight: 900;
+    }
+    .podiumAvatar{
+      width: 44px;
+      height: 44px;
+      border-radius: 999px;
+      object-fit: cover;
+      border: 2px solid rgba(255,255,255,.22);
+      background: rgba(255,255,255,.10);
+    }
+    .podiumName{
+      font-weight: 900;
+      font-size: .88rem;
+      line-height: 1.05;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .podiumXp{
+      font-weight: 900;
+      font-size: .9rem;
+      opacity: .95;
+    }
+    @media (max-width: 520px){
+      .lbPodium{ grid-template-columns: 1fr; }
+      .podiumFirst,.podiumSecond,.podiumThird{ transform:none; }
+    }
+
+</style>
 </head>
 
 <body class="has-floating-stats">
@@ -1491,7 +1689,128 @@
     return JSON.parse(jsonPayload);
   }
 
-  function onGoogleCredential(response) {
+const WEB_APP_URL = "https://script.google.com/a/macros/iemanueljbetancur.edu.co/s/AKfycbxZwOwimHNVWIFXIbFyDy_IqZbQsPpgTuUcDWb9VVge5Mdba_Wu48Hci7gFQLtTbhPG/exec";
+
+  // ✅ Registra/actualiza el usuario en Google Sheets (Apps Script)
+  function registrarEnSheets(idToken) {
+    try {
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify({
+          action: "upsert",
+          idToken: idToken,
+          xpDelta: 0
+        })
+      });
+    } catch(e) {}
+  }
+
+  // ✅ Suma XP en Sheets (llámalo cuando el usuario gane puntos)
+  function sumarXPEnSheets(xpDelta) {
+    const idToken = localStorage.getItem("google_id_token");
+    if(!idToken) return;
+    const delta = Number(xpDelta || 0);
+    if(!Number.isFinite(delta) || delta === 0) return;
+
+    try {
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify({
+          action: "upsert",
+          idToken: idToken,
+          xpDelta: delta
+        })
+      });
+    } catch(e) {}
+  }
+
+  // ✅ Leaderboard (JSONP) para leer ranking sin CORS
+  // Uso: cargarLeaderboard(50) y recibe en window.renderLeaderboard(data)
+  function cargarLeaderboard(limit = 50) {
+    const cb = "renderLeaderboard";
+    const url = `${WEB_APP_URL}?action=leaderboard&limit=${encodeURIComponent(limit)}&callback=${cb}`;
+    const old = document.getElementById("jsonpLeaderboard");
+    if(old) old.remove();
+    const s = document.createElement("script");
+    s.id = "jsonpLeaderboard";
+    s.src = url;
+    document.body.appendChild(s);
+  }
+
+  // Callback por defecto (puedes reemplazarlo)
+  window.renderLeaderboard = function(data) {
+    if(!data || !data.ok){
+      console.warn("Leaderboard error", data && data.error);
+      const st = document.getElementById("lbStatus");
+      if(st) st.textContent = "No se pudo cargar el ranking.";
+      return;
+    }
+    const list = Array.isArray(data.leaderboard) ? data.leaderboard : [];
+    window.__leaderboard = list;
+
+    const ol = document.getElementById("lbList");
+    const st = document.getElementById("lbStatus");
+    const topN = document.getElementById("lbTopN");
+    if(topN) topN.textContent = String(Math.min(list.length || 0, 50));
+
+    const me = (() => {
+      try { return JSON.parse(localStorage.getItem("user_profile") || "null"); } catch(e){ return null; }
+    })();
+
+    if(st){
+      st.textContent = list.length ? "Actualizado." : "Aún no hay participantes con XP.";
+    }
+    if(!ol) return;
+
+    // ===== Podio (Top 3) =====
+    const podiumEl = document.getElementById("lbPodium");
+    const podium = list.slice(0, 3);
+    if(podiumEl){
+      podiumEl.innerHTML = podium.map((u, i) => {
+        const place = i + 1;
+        const medal = i===0 ? "🥇" : i===1 ? "🥈" : "🥉";
+        const name = (u && (u.name || u.email)) ? String(u.name || u.email) : "Usuario";
+        const xp = (u && typeof u.xp !== "undefined") ? Number(u.xp || 0) : 0;
+        const pic = (u && u.picture) ? String(u.picture) : "";
+        const cls = place === 1 ? "podiumFirst" : place === 2 ? "podiumSecond" : "podiumThird";
+        return `
+          <div class="podiumItem ${cls}">
+            <div class="podiumMedal">${medal}</div>
+            ${pic ? `<img class="podiumAvatar" src="${pic}" alt="avatar">` : `<div class="podiumAvatar" aria-hidden="true"></div>`}
+            <div class="podiumName" title="${name.replace(/"/g,'&quot;')}">${name}</div>
+            <div class="podiumXp">⭐ ${xp}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    const show = list.slice(0, 50);
+
+    ol.innerHTML = show.map((u, i) => {
+      const name = (u && (u.name || u.email)) ? String(u.name || u.email) : "Usuario";
+      const xp = (u && typeof u.xp !== "undefined") ? Number(u.xp || 0) : 0;
+      const pic = (u && u.picture) ? String(u.picture) : "";
+      const isMe = me && u && (u.sub && me.sub && u.sub === me.sub);
+      const medal = i===0 ? "🥇" : i===1 ? "🥈" : i===2 ? "🥉" : String(i+1);
+      return `
+        <li class="lbItem ${isMe ? "lbMe" : ""}">
+          <div class="lbLeft">
+            <div class="lbRank">${medal}</div>
+            ${pic ? `<img class="lbAvatar" src="${pic}" alt="avatar">` : `<div class="lbAvatar" aria-hidden="true"></div>`}
+            <div class="lbName" title="${name.replace(/"/g,'&quot;')}">${name}</div>
+          </div>
+          <div class="lbRight">
+            <span class="lbXp">⭐ ${xp}</span>
+          </div>
+        </li>
+      `;
+    }).join("");
+  };
+
+
+    function onGoogleCredential(response) {
     const idToken = response.credential;
     const user = parseJwt(idToken);
 
@@ -1519,6 +1838,24 @@
       { theme: "outline", size: "large", shape: "pill", text: "signin_with" }
     );
   };
+
+
+  // ✅ Post-login hook: registra en Sheets y carga ranking una sola vez después del login
+  (function(){
+    let done = false;
+    function tick(){
+      if(done) return;
+      const token = localStorage.getItem("google_id_token");
+      if(token){
+        done = true;
+        try { registrarEnSheets(token); } catch(e) {}
+        try { cargarLeaderboard(50); } catch(e) {}
+      }
+    }
+    setInterval(tick, 800);
+    tick();
+  })();
+
 </script>
 
 
@@ -1532,7 +1869,7 @@
   
   <div class="stats" id="statsBar">
     <div class="statBox" data-tip="🔥 Días seguidos practicando. Si fallas o faltas, puede bajar (Freeze te protege)."><span class="stat-label">Racha</span><span class="stat-value" id="streak">0</span></div>
-    <div class="statBox" data-tip="⭐ Puntos acumulados por respuestas correctas en la app."><span class="stat-label">Total XP</span><span class="stat-value" id="xp">0</span></div>
+    <div class="statBox xpBox" data-tip="⭐ Puntos acumulados por respuestas correctas en la app."><span class="stat-label">TOTAL XP</span><span class="stat-value" id="xp">0</span></div>
     <div class="statBox" data-tip="🎯 Porcentaje de aciertos: correctas ÷ intentos."><span class="stat-label">Precisión</span><span class="stat-value" id="acc">100%</span></div>
 
     <div class="statBox" data-tip="🧬 Subes de nivel cada 250 XP (aprox.)."><span class="stat-label">Nivel</span><span class="stat-value" id="level">1</span></div>
@@ -1548,6 +1885,21 @@
     </div>
   </div>
 
+
+
+  <!-- 🏆 LEADERBOARD / RANKING (Sheets) -->
+  <section class="leaderboardCard" aria-label="Ranking">
+    <div class="lbHeader">
+      <div class="lbTitle">🏆 Ranking (Top <span id="lbTopN">50</span>)</div>
+      <button class="lbBtn" id="lbRefreshBtn" type="button">Actualizar</button>
+    </div>
+    <div class="lbSub">
+      <span id="lbStatus">Inicia sesión para aparecer en el ranking.</span>
+      <span class="lbHint">Tip: el ranking se actualiza cuando alguien gana XP.</span>
+    </div>
+    <div class="lbPodium" id="lbPodium" aria-label="Podio"></div>
+    <ol class="lbList" id="lbList"></ol>
+  </section>
 
   <!-- ✅✅✅ BOTÓN INFERIOR SIEMPRE VISIBLE: ASISTENTE IA -->
   <a class="ebook-float" href="https://chatgpt.com/g/g-688f92ef15e88191a178208283c76eb6-neuro-aprendizaje-de-los-verbos-irregulares" target="_blank" rel="noopener">ASISTENTE IA 🤖</a>
@@ -2376,11 +2728,13 @@ function awardXP(base, reason="xp"){
   const gained = Math.max(1, Math.round(base * mult));
   xp += gained;
   dailyXP += gained;
+  sumarXPEnSheets(gained);
 
   // Bonos por hitos de racha (cada 5 aciertos seguidos)
   if(reason==="connect" && streak>0 && streak % 5 === 0){
     xp += 10;
     dailyXP += 10;
+    sumarXPEnSheets(10);
     toastAchievement("🔥", "Bonus de racha", `+10 XP por racha ${streak}.`);
   }
 
