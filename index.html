@@ -1643,259 +1643,386 @@
 
 <script>
 // ====== Sheets (Apps Script) ======
-  const WEB_APP_URL = "https://script.google.com/a/macros/iemanueljbetancur.edu.co/s/AKfycbzBaBdjCCyS5Ctb0ageUPJeP_O3JFuBXoqARryIOJ9YwuhqgZe0B7DhXd-sm2bGmVPJ/exec";
-  const OAUTH_CLIENT_ID = "932013722424-9uoc8vlc0b252qeuk5o81bsnj3th0ruk.apps.googleusercontent.com";
+// ✅ URL del Web App (Apps Script) - DEBE ser /exec
+const WEB_APP_URL = "https://script.google.com/a/macros/iemanueljbetancur.edu.co/s/AKfycbxZwOwimHNVWIFXIbFyDy_IqZbQsPpgTuUcDWb9VVge5Mdba_Wu48Hci7gFQLtTbhPG/exec";
 
-  // Estado de sincronización XP
-  let __lastXpSynced = null;
-  let __pendingDelta = 0;
-  let __flushTimer = null;
+// ✅ Client ID de Google (GSI)
+const OAUTH_CLIENT_ID = "932013722424-9uoc8vlc0b252qeuk5o81bsnj3th0ruk.apps.googleusercontent.com";
 
-  function showUserChip(profile){
-    const chip = document.getElementById("userChip");
-    const pic = document.getElementById("userPic");
-    const name = document.getElementById("userName");
-    const email = document.getElementById("userEmail");
-    if(!chip || !pic || !name || !email) return;
-    pic.src = profile.picture || "";
-    pic.style.display = profile.picture ? "block" : "none";
-    name.textContent = profile.name || "Usuario";
-    email.textContent = profile.email || "";
-    chip.style.display = "flex";
-  }
+// Ranking paginado (10 por página)
+const LB_PAGE_SIZE = 10;
+let __lbPage = 1;
 
-  function postToSheets(payload){
-    try{
-      const blob = new Blob([JSON.stringify(payload)], { type: "text/plain" });
-      const ok = navigator.sendBeacon(WEB_APP_URL, blob);
-      if(ok) return;
-    }catch(e){}
-    try{
-      fetch(WEB_APP_URL, {
-        method: "POST",
-        mode: "no-cors",
-        body: JSON.stringify(payload)
-      });
-    }catch(e){}
-  }
+// Estado de sincronización XP
+let __lastXpSynced = null;
+let __pendingDelta = 0;
+let __flushTimer = null;
 
-  function registrarEnSheets(idToken){
-    postToSheets({ action: "upsert", idToken, xpDelta: 0 });
-  }
-
-  function syncTotalXP(idToken, totalXP){
-    const t = Number(totalXP||0);
-    if(!idToken || !isFinite(t)) return;
-    // Sincroniza el TOTAL (útil para corregir desfaces)
-    postToSheets({ action: "synctotal", idToken, totalXP: Math.max(0, Math.floor(t)) });
-  }
-
-  function queueXpDelta(idToken, delta){
-    const d = Number(delta||0);
-    if(!idToken || !isFinite(d) || d<=0) return;
-    __pendingDelta += d;
-    if(__flushTimer) return;
-    __flushTimer = setTimeout(() => {
-      const send = __pendingDelta;
-      __pendingDelta = 0;
-      __flushTimer = null;
-      if(send>0) postToSheets({ action:"upsert", idToken, xpDelta: send });
-    }, 1200);
-  }
-
-  // ====== Leaderboard JSONP (evita CORS) ======
-  function cargarLeaderboard(limit=50){
-    const cb = "renderLeaderboard";
-    const url = WEB_APP_URL + "?action=leaderboard&limit=" + encodeURIComponent(limit) + "&callback=" + cb + "&_=" + Date.now();
-    const old = document.getElementById("lbJsonp");
-    if(old) old.remove();
-    const s = document.createElement("script");
-    s.id = "lbJsonp";
-    s.src = url;
-    document.body.appendChild(s);
-  }
-
-  window.renderLeaderboard = (data) => {
-    const sec = document.getElementById("leaderboardSection");
-    const pod = document.getElementById("podium");
-    const list = document.getElementById("leaderboardList");
-    const st = document.getElementById("lbStatus");
-    if(!sec || !pod || !list || !st) return;
-
-    if(!data || !data.ok){
-      sec.style.display = "block";
-      st.textContent = "No se pudo cargar el ranking.";
-      pod.innerHTML = "";
-      list.innerHTML = "";
-      return;
-    }
-
-    const meRaw = localStorage.getItem("user_profile");
-    let meSub = null;
-    try{ meSub = meRaw ? JSON.parse(meRaw).sub : null; }catch(_){}
-
-    const rows = Array.isArray(data.leaderboard) ? data.leaderboard : [];
-
-    // ✅ Mantener TOTAL XP (HUD) siempre igual al XP del ranking (Sheets)
-    try{
-      if(meSub){
-        const meRow = rows.find(r => r && r.sub === meSub);
-        if(meRow && meRow.xp != null){
-          const serverXp = Number(meRow.xp || 0);
-          if(Number.isFinite(serverXp) && typeof xp !== "undefined" && xp !== serverXp){
-            window.__suppressXpSync = true;     // evita que esto cuente como "XP ganado"
-            xp = serverXp;
-            __lastXpSynced = serverXp;
-            if(typeof persistState === "function") persistState();
-            if(typeof actualizarStats === "function") actualizarStats();
-            window.__suppressXpSync = false;
-          } else if(Number.isFinite(serverXp)) {
-            __lastXpSynced = serverXp;
-          }
-        }
-      }
-    }catch(_){}
-
-    sec.style.display = "block";
-    st.textContent = rows.length ? ("Participantes: " + rows.length + " (Top 50)") : "Aún no hay participantes con XP. Gana XP para aparecer.";
-
-    // Podio
-    const top3 = rows.slice(0,3);
-    pod.innerHTML = top3.map((r,i)=>{
-      const medal = i===0?"🥇":i===1?"🥈":"🥉";
-      const nm = (r.name || r.email || "Usuario");
-      const xp = Number(r.xp||0);
-      const pic = r.picture || "";
-      const cls = (meSub && r.sub===meSub) ? "podiumCard lbMe" : "podiumCard";
-      return `
-        <div class="${cls}">
-          <div class="podiumRank">${medal} #${i+1}</div>
-          <img class="podiumPic" src="${pic}" onerror="this.style.display='none'">
-          <div class="podiumName" title="${nm}">${nm}</div>
-          <div class="podiumXP">${xp} XP</div>
-        </div>
-      `;
-    }).join("");
-
-    // Lista Top 50
-    const shown = rows.slice(0,50);
-    list.innerHTML = shown.map((r,i)=>{
-      const nm = (r.name || r.email || "Usuario");
-      const xp = Number(r.xp||0);
-      const pic = r.picture || "";
-      const cls = (meSub && r.sub===meSub) ? "lbRow lbMe" : "lbRow";
-      return `
-        <div class="${cls}">
-          <div class="lbLeft">
-            <div class="lbNum">${i+1}</div>
-            <img class="lbAvatar" src="${pic}" onerror="this.style.display='none'">
-            <div class="lbName" title="${nm}">${nm}</div>
-          </div>
-          <div class="lbXP">${xp} XP</div>
-        </div>
-      `;
-    }).join("");
-  };
-
-  function parseJwt(token) {
+// ---------- Helpers ----------
+function parseJwt(token) {
+  try{
     const base64Url = token.split('.')[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
     const jsonPayload = decodeURIComponent(atob(base64).split('').map(c =>
       '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
     ).join(''));
     return JSON.parse(jsonPayload);
+  }catch(e){
+    return {};
   }
-
-  function onGoogleCredential(response) {
-    const idToken = response.credential;
-    const user = parseJwt(idToken);
-
-    // Guardar sesión
-    localStorage.setItem("google_id_token", idToken);
-    localStorage.setItem("user_profile", JSON.stringify({
-      sub: user.sub,
-      name: user.name,
-      email: user.email,
-      picture: user.picture
-    }));
-
-    console.log("OK login:", user.email);
-
-    // UI
-    showUserChip({
-      sub: user.sub,
-      name: user.name,
-      email: user.email,
-      picture: user.picture
-    });
-
-    const lbStatus = document.getElementById("lbStatus");
-    if(lbStatus) lbStatus.textContent = "Sincronizando con Sheets…";
-
-    // Registrar / actualizar en Sheets
-    try{ registrarEnSheets(idToken); }catch(e){ console.warn(e); }
-
-    // Sincronizar XP total inicial (por si ya hay XP local)
-    try{ syncTotalXP(idToken, (typeof window.xp === "number" ? window.xp : (Number(document.getElementById('xp')?.innerText)||0))); }catch(_ ){}
-
-    // Cargar ranking (con un pequeño delay para dar tiempo a la escritura)
-    document.getElementById('leaderboardSection').style.display='block';
-    setTimeout(()=>cargarLeaderboard(50), 900);
 }
 
-  let __gsiInitTries = 0;
-function initGoogleAuthAndSync(){
-    // Restaurar sesión guardada (si el usuario ya había iniciado sesión)
-    try{
-      const raw = localStorage.getItem('user_profile');
-      if(raw){
-        const u = JSON.parse(raw);
-        showUserChip(u);
-        document.getElementById('leaderboardSection').style.display='block';
-        cargarLeaderboard(50);
-      }
-    }catch(_){}
+function $(id){ return document.getElementById(id); }
 
-    const btn = document.getElementById("googleBtn");
-    if(btn && !btn.__placeholder){
-      btn.__placeholder = true;
-      btn.innerHTML = '<div style="opacity:.9;font-weight:700;">Cargando login…</div>';
+function setUserUI(profile){
+  const chip = $("userChip");
+  const img = $("userPhoto");
+  const name = $("userName");
+  const email = $("userEmail");
+  if(chip) chip.style.display = "flex";
+  if(img) img.src = profile.picture || "";
+  if(name) name.textContent = profile.name || "Usuario";
+  if(email) email.textContent = profile.email || "—";
+}
+
+function clearUserUI(){
+  const chip = $("userChip");
+  const img = $("userPhoto");
+  const name = $("userName");
+  const email = $("userEmail");
+  if(chip) chip.style.display = "none";
+  if(img) img.src = "";
+  if(name) name.textContent = "Usuario";
+  if(email) email.textContent = "—";
+}
+
+// ---------- POST a Sheets (sin leer respuesta por CORS) ----------
+function postToSheets(payload){
+  try{
+    fetch(WEB_APP_URL, {
+      method: "POST",
+      mode: "no-cors",
+      body: JSON.stringify(payload)
+    });
+  }catch(e){
+    console.warn("postToSheets error:", e);
+  }
+}
+
+function registrarEnSheets(idToken){
+  if(!idToken) return;
+  postToSheets({ action: "upsert", idToken, xpDelta: 0 });
+}
+
+function queueXpDelta(idToken, delta){
+  const d = Number(delta||0);
+  if(!idToken || !isFinite(d) || d<=0) return;
+  __pendingDelta += d;
+
+  if(__flushTimer) return;
+  __flushTimer = setTimeout(() => {
+    const send = __pendingDelta;
+    __pendingDelta = 0;
+    __flushTimer = null;
+    if(send>0){
+      postToSheets({ action:"upsert", idToken, xpDelta: send });
+
+      // 🔄 Refrescar XP desde Sheets para que SIEMPRE coincida (eventual consistency)
+      const me = getStoredProfile();
+      if(me && me.sub){
+        setTimeout(()=> cargarMiXP(me.sub), 1200);
+      }
     }
+  }, 1200);
+}
 
-    // Esperar a que cargue la librería GIS (a veces tarda con async/defer o en embeds)
-    if(!(window.google && google.accounts && google.accounts.id)){
-      __gsiInitTries++;
-      if(__gsiInitTries < 40){
-        return setTimeout(initGoogleAuthAndSync, 250);
-      }
-      console.warn("Google Identity Services no cargó (gsi/client). Revisa red/CSP/embebido.");
-      if(btn) btn.innerHTML = '<button class="lbBtn" type="button" onclick="location.reload()">Reintentar Login</button>';
+// ---------- JSONP (evita CORS) ----------
+function jsonp(url, callbackName, onerror){
+  const old = document.getElementById(callbackName);
+  if(old) old.remove();
+  const s = document.createElement("script");
+  s.id = callbackName;
+  s.src = url + (url.includes("?") ? "&" : "?") + "_=" + Date.now();
+  s.onerror = () => { if(onerror) onerror(); };
+  document.body.appendChild(s);
+}
+
+function cargarMiXP(sub){
+  if(!sub) return;
+  const cb = "__renderUser_" + Date.now();
+  window[cb] = (data) => {
+    try{
+      delete window[cb];
+      if(!data || !data.ok || !data.user) return;
+
+      // ⚠️ Autoridad: Sheets manda el XP real
+      const serverXP = Number(data.user.xp||0);
+
+      // Evitar que se sume XP al sincronizar desde servidor
+      window.__suppressXpSync = true;
+      try{
+        xp = serverXP;
+        __lastXpSynced = serverXP;
+        actualizarStats();   // ya persiste estado
+      }catch(_){}
+      window.__suppressXpSync = false;
+
+      // Mostrar sección ranking
+      const sec = $("leaderboardSection");
+      if(sec) sec.style.display = "block";
+    }catch(e){
+      console.warn(e);
+    }
+  };
+
+  const url = WEB_APP_URL
+    + "?action=user"
+    + "&sub=" + encodeURIComponent(sub)
+    + "&callback=" + encodeURIComponent(cb);
+
+  jsonp(url, cb, ()=>console.warn("jsonp user error"));
+}
+
+// Ranking paginado
+function cargarLeaderboard(limit=50){
+  // compat con el botón existente: llama a la página actual
+  cargarLeaderboardPage(__lbPage || 1);
+}
+
+function cargarLeaderboardPage(page){
+  const p = Math.max(1, parseInt(page||1, 10));
+  __lbPage = p;
+
+  const st = $("lbStatus");
+  const sec = $("leaderboardSection");
+  if(sec) sec.style.display = "block";
+  if(st) st.textContent = "Cargando ranking…";
+
+  const cb = "renderLeaderboard"; // mantiene el nombre usado por el HTML
+  const url = WEB_APP_URL
+    + "?action=leaderboardPage"
+    + "&page=" + encodeURIComponent(p)
+    + "&pageSize=" + encodeURIComponent(LB_PAGE_SIZE)
+    + "&callback=" + encodeURIComponent(cb);
+
+  jsonp(url, "lbJsonp", ()=>{ if(st) st.textContent = "No se pudo cargar el ranking."; });
+}
+
+// Callback JSONP: renderLeaderboard({ok:true, leaderboard:[...], page, pageSize, total})
+window.renderLeaderboard = function(data){
+  const sec = $("leaderboardSection");
+  const st = $("lbStatus");
+  const listEl = $("leaderboardList");
+  const podiumEl = $("podium");
+
+  if(sec) sec.style.display = "block";
+
+  if(!data || !data.ok){
+    if(st) st.textContent = "No se pudo cargar el ranking.";
+    if(listEl) listEl.innerHTML = "";
+    if(podiumEl) podiumEl.innerHTML = "";
+    ensurePagerUI_(0,0);
+    return;
+  }
+
+  const rows = Array.isArray(data.leaderboard) ? data.leaderboard : [];
+  const total = Number(data.total || 0);
+  const page = Number(data.page || 1);
+  const pageSize = Number(data.pageSize || LB_PAGE_SIZE);
+
+  if(st){
+    const shownFrom = total ? ((page-1)*pageSize + 1) : 0;
+    const shownTo = Math.min(total, page*pageSize);
+    st.textContent = total
+      ? `Mostrando ${shownFrom}-${shownTo} de ${total} participantes.`
+      : "Aún no hay participantes con XP. Inicia sesión y gana XP para aparecer.";
+  }
+
+  // Podio (Top 3 global): usa los primeros 3 de la página 1
+  if(podiumEl){
+    podiumEl.innerHTML = "";
+    if(page === 1 && rows.length){
+      const top3 = rows.slice(0,3);
+      top3.forEach((u,i)=>{
+        const medal = ["🥇","🥈","🥉"][i] || "🏅";
+        const card = document.createElement("div");
+        card.className = "podiumCard";
+        card.innerHTML = `
+          <div class="podiumMedal">${medal}</div>
+          <img class="podiumImg" src="${u.picture || ""}" alt="">
+          <div class="podiumName">${escapeHtml_(u.name || "Usuario")}</div>
+          <div class="podiumXP">${Number(u.xp||0)} XP</div>
+        `;
+        podiumEl.appendChild(card);
+      });
+    }
+  }
+
+  // Lista
+  if(listEl){
+    listEl.innerHTML = "";
+    rows.forEach((u) => {
+      const rank = u.rank ? Number(u.rank) : null;
+      const row = document.createElement("div");
+      row.className = "lbRow";
+      row.innerHTML = `
+        <div class="lbRank">${rank ? "#" + rank : ""}</div>
+        <img class="lbAvatar" src="${u.picture || ""}" alt="">
+        <div class="lbName">${escapeHtml_(u.name || "Usuario")}</div>
+        <div class="lbXp">${Number(u.xp||0)} XP</div>
+      `;
+      listEl.appendChild(row);
+    });
+  }
+
+  ensurePagerUI_(page, total, pageSize);
+};
+
+function escapeHtml_(s){
+  return String(s||"")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+// Crea controles Prev/Next sin tocar mucho el HTML original
+function ensurePagerUI_(page, total, pageSize){
+  const header = document.querySelector("#leaderboardSection .lbActions");
+  if(!header) return;
+
+  // ya existe?
+  if(header.__pagerReady) {
+    updatePagerState_(page, total, pageSize);
+    return;
+  }
+
+  const prev = document.createElement("button");
+  prev.className = "lbBtn";
+  prev.type = "button";
+  prev.textContent = "◀";
+  prev.title = "Anterior";
+  prev.onclick = () => cargarLeaderboardPage(Math.max(1, (__lbPage||1)-1));
+
+  const label = document.createElement("span");
+  label.style.fontWeight = "900";
+  label.style.opacity = "0.9";
+  label.style.padding = "0 8px";
+  label.id = "lbPageLabel";
+
+  const next = document.createElement("button");
+  next.className = "lbBtn";
+  next.type = "button";
+  next.textContent = "▶";
+  next.title = "Siguiente";
+  next.onclick = () => {
+    const maxPage = total ? Math.ceil(total / (pageSize||LB_PAGE_SIZE)) : 1;
+    cargarLeaderboardPage(Math.min(maxPage, (__lbPage||1)+1));
+  };
+
+  header.insertBefore(prev, header.firstChild);
+  header.insertBefore(label, header.children[1]);
+  header.insertBefore(next, header.children[2]);
+
+  header.__pagerReady = true;
+  updatePagerState_(page, total, pageSize);
+}
+
+function updatePagerState_(page, total, pageSize){
+  __lbPage = Number(page||1);
+  const label = $("lbPageLabel");
+  const maxPage = total ? Math.ceil(total / (pageSize||LB_PAGE_SIZE)) : 1;
+  if(label) label.textContent = `Página ${__lbPage} / ${maxPage}`;
+}
+
+// ---------- Persistencia / sesión ----------
+function getStoredProfile(){
+  try{ return JSON.parse(localStorage.getItem("user_profile")||"null"); }catch(_){ return null; }
+}
+function getStoredToken(){
+  return localStorage.getItem("google_id_token") || "";
+}
+
+// ---------- Google Identity Services ----------
+function onGoogleCredential(response){
+  const idToken = response.credential;
+  const user = parseJwt(idToken);
+
+  localStorage.setItem("google_id_token", idToken);
+  localStorage.setItem("user_profile", JSON.stringify({
+    sub: user.sub,
+    name: user.name,
+    email: user.email,
+    picture: user.picture
+  }));
+
+  setUserUI({ name:user.name, email:user.email, picture:user.picture });
+
+  const lbStatus = $("lbStatus");
+  if(lbStatus) lbStatus.textContent = "Sincronizando con Sheets…";
+
+  // Upsert sin sumar XP
+  registrarEnSheets(idToken);
+
+  // ✅ Autoridad: traer XP desde Sheets y fijarlo (sin sumar)
+  cargarMiXP(user.sub);
+
+  // Cargar ranking (página 1)
+  __lbPage = 1;
+  setTimeout(()=>cargarLeaderboardPage(1), 600);
+}
+
+function initGoogleAuthAndSync(){
+  try{
+    // Render botón GSI (si no está ya)
+    const btn = $("googleBtn");
+    if(!btn) return;
+
+    if(!window.google || !google.accounts || !google.accounts.id){
+      // GSI aún no cargó, reintenta
+      setTimeout(initGoogleAuthAndSync, 300);
       return;
     }
 
-    // Renderizar botón Google (solo una vez)
-    try{
-      if(btn && !btn.__rendered){
-        btn.innerHTML = "";
-        google.accounts.id.initialize({
-          client_id: "932013722424-9uoc8vlc0b252qeuk5o81bsnj3th0ruk.apps.googleusercontent.com",
-          callback: onGoogleCredential,
-          ux_mode: "popup"
-        });
-        google.accounts.id.renderButton(
-          btn,
-          { theme: "outline", size: "large", shape: "pill", text: "signin_with" }
-        );
-        btn.__rendered = true;
-      }
-    }catch(err){
-      console.error("Error init Google Auth:", err);
-      if(btn) btn.innerHTML = '<button class="lbBtn" type="button" onclick="location.reload()">Reintentar Login</button>';
+    google.accounts.id.initialize({
+      client_id: OAUTH_CLIENT_ID,
+      callback: onGoogleCredential,
+      ux_mode: "popup"
+    });
+
+    if(!btn.__rendered){
+      google.accounts.id.renderButton(btn, { theme: "outline", size: "large", shape:"pill", text:"signin_with" });
+      btn.__rendered = true;
     }
+
+    // Si ya hay sesión guardada
+    const tok = getStoredToken();
+    const prof = getStoredProfile();
+    if(tok && prof && prof.sub){
+      setUserUI(prof);
+
+      // Upsert sin XP por seguridad
+      registrarEnSheets(tok);
+
+      // Trae XP real del servidor (evita desfaces)
+      cargarMiXP(prof.sub);
+
+      // Ranking
+      setTimeout(()=>cargarLeaderboardPage(__lbPage || 1), 600);
+    }else{
+      clearUserUI();
+      const st = $("lbStatus");
+      if(st) st.textContent = "Inicia sesión para ver el ranking.";
+    }
+
+  }catch(err){
+    console.error("Error init Google Auth:", err);
+  }
 }
 
-  window.addEventListener('DOMContentLoaded', initGoogleAuthAndSync);
-  window.addEventListener('load', initGoogleAuthAndSync);
+window.addEventListener("DOMContentLoaded", initGoogleAuthAndSync);
+window.addEventListener("load", initGoogleAuthAndSync);
 </script>
 
 <div class="leaderboardWrap" id="leaderboardSection" style="display:none;">
