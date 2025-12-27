@@ -153,51 +153,47 @@
       text-transform:uppercase;
     }
     .roundbtn:hover{transform:translateY(-1px); border-color:rgba(255,255,255,.25);}
-    /* ✅ Ayudas por botón (tooltip) */
-    .roundbtn[data-help]{ position:relative; }
-    .roundbtn[data-help]::after{
-      content: attr(data-help);
-      position:absolute;
-      left:50%;
-      transform:translateX(-50%);
-      bottom: calc(100% + 10px);
-      background: rgba(15,23,42,.95);
-      color:#fff;
-      padding:8px 10px;
-      border-radius:10px;
-      font-size:12px;
-      font-weight:800;
-      text-transform:none;
-      letter-spacing:0;
-      line-height:1.2;
-      width:max-content;
-      max-width:260px;
-      box-shadow:0 12px 26px rgba(0,0,0,.35);
-      opacity:0;
-      pointer-events:none;
-      transition:.12s;
-      z-index: 99999999;
-      white-space: normal;
+    /* ✅ Ayudas (tooltip) — global (no se recorta por overflow)
+       Usa un tooltip fijo en <body> con z-index muy alto */
+    /* Desactiva el tooltip por pseudo-elementos (se recortaba dentro de contenedores) */
+    .roundbtn[data-help]::after,
+    .roundbtn[data-help]::before{ display:none !important; }
+
+    #globalTooltip{
+      position: fixed;
+      left: 0;
+      top: 0;
+      transform: translate(-9999px, -9999px);
+      max-width: min(360px, calc(100vw - 24px));
+      background: rgba(15, 22, 36, .96);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 12px;
+      padding: 10px 12px;
+      box-shadow: 0 16px 40px rgba(0,0,0,.5);
+      z-index: 999999;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .12s ease;
+      font-size: 13px;
+      line-height: 1.25;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
-    .roundbtn[data-help]::before{
-      content:"";
-      position:absolute;
-      left:50%;
-      transform:translateX(-50%);
-      bottom: calc(100% + 4px);
-      border:6px solid transparent;
-      border-top-color: rgba(15,23,42,.95);
-      opacity:0;
-      pointer-events:none;
-      transition:.12s;
-      z-index: 99999999;
+    #globalTooltip.show{ opacity: 1; }
+    #globalTooltip .gt-title{ font-weight: 800; margin-bottom: 4px; }
+    #globalTooltip .gt-text{ font-weight: 600; opacity:.95; }
+    #globalTooltip .gt-arrow{
+      position: absolute;
+      width: 10px; height: 10px;
+      background: rgba(15, 22, 36, .96);
+      border-left: 1px solid rgba(255,255,255,.16);
+      border-top: 1px solid rgba(255,255,255,.16);
+      transform: rotate(45deg);
+      left: calc(50% - 5px);
+      bottom: -6px;
     }
-    .roundbtn[data-help]:hover::after,
-    .roundbtn[data-help]:hover::before,
-    .roundbtn[data-help]:focus-visible::after,
-    .roundbtn[data-help]:focus-visible::before{
-      opacity:1;
-    }
+
     .roundbtn.active{
       background:var(--secondary);
       color:#0b1220;
@@ -5528,6 +5524,122 @@ function validateSpelling(){
   actualizarStats();
 }
 
+
+  /* ========= Tooltip global (NO se recorta) ========= */
+  (function initGlobalTooltip(){
+    const tip = document.getElementById('globalTooltip');
+    if(!tip) return;
+    const gtText = document.getElementById('gtText');
+    const gtArrow = document.getElementById('gtArrow');
+
+    // Promueve title -> data-help para evitar tooltip nativo
+    document.querySelectorAll('[title]').forEach(el=>{
+      const t = el.getAttribute('title');
+      if(t && !el.dataset.help){
+        el.dataset.help = t;
+      }
+      if(t) el.removeAttribute('title');
+    });
+
+    let activeEl = null;
+    let hideTimer = null;
+
+    function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
+
+    function showFor(el){
+      const msg = (el && el.dataset && el.dataset.help) ? el.dataset.help.trim() : '';
+      if(!msg) return;
+      activeEl = el;
+      if(hideTimer){ clearTimeout(hideTimer); hideTimer=null; }
+
+      gtText.textContent = msg;
+      tip.classList.add('show');
+      // Primero posiciona fuera y mide
+      tip.style.transform = 'translate(-9999px,-9999px)';
+      tip.style.left = '0px';
+      tip.style.top = '0px';
+
+      requestAnimationFrame(()=>{
+        if(!activeEl) return;
+        const r = activeEl.getBoundingClientRect();
+        const tw = tip.offsetWidth;
+        const th = tip.offsetHeight;
+
+        const margin = 10;
+        let left = r.left + (r.width/2) - (tw/2);
+        left = clamp(left, margin, window.innerWidth - tw - margin);
+
+        // Por defecto arriba del elemento; si no cabe, abajo
+        let top = r.top - th - 12;
+        let arrowAtTop = false;
+        if(top < margin){
+          top = r.bottom + 12;
+          arrowAtTop = true;
+        }
+
+        tip.style.left = left + 'px';
+        tip.style.top  = top + 'px';
+        tip.style.transform = 'translate(0,0)';
+
+        // Flecha
+        if(gtArrow){
+          if(arrowAtTop){
+            gtArrow.style.top = '-6px';
+            gtArrow.style.bottom = 'auto';
+            gtArrow.style.transform = 'rotate(225deg)';
+          }else{
+            gtArrow.style.bottom = '-6px';
+            gtArrow.style.top = 'auto';
+            gtArrow.style.transform = 'rotate(45deg)';
+          }
+          const center = r.left + r.width/2;
+          const arrowLeft = clamp(center - left, 18, tw - 18);
+          gtArrow.style.left = (arrowLeft - 5) + 'px';
+        }
+      });
+    }
+
+    function hide(){
+      activeEl = null;
+      tip.classList.remove('show');
+      // mueve fuera para evitar capturas raras
+      tip.style.transform = 'translate(-9999px,-9999px)';
+    }
+
+    // Delegación
+    document.addEventListener('mouseover', (e)=>{
+      const el = e.target.closest('[data-help]');
+      if(!el) return;
+      showFor(el);
+    });
+    document.addEventListener('mouseout', (e)=>{
+      // si sales del elemento con data-help, oculta
+      const el = e.target.closest('[data-help]');
+      if(!el) return;
+      hideTimer = setTimeout(hide, 80);
+    });
+    document.addEventListener('focusin', (e)=>{
+      const el = e.target.closest('[data-help]');
+      if(el) showFor(el);
+    });
+    document.addEventListener('focusout', (e)=>{
+      const el = e.target.closest('[data-help]');
+      if(el) hide();
+    });
+
+    // En scroll/resize, reubica
+    window.addEventListener('scroll', ()=>{ if(activeEl) showFor(activeEl); }, {passive:true});
+    window.addEventListener('resize', ()=>{ if(activeEl) showFor(activeEl); });
+
+    // Touch: tap para mostrar 2s
+    document.addEventListener('touchstart', (e)=>{
+      const el = e.target.closest('[data-help]');
+      if(!el) return;
+      showFor(el);
+      if(hideTimer) clearTimeout(hideTimer);
+      hideTimer = setTimeout(hide, 1600);
+    }, {passive:true});
+  })();
 </script>
 
 
@@ -5536,5 +5648,6 @@ function validateSpelling(){
 
 <!-- XP sync watcher removed: XP is synced only from exercise actions + server fetch to avoid double-counting -->
 
+  <div id="globalTooltip" aria-hidden="true"><div class="gt-title" id="gtTitle" style="display:none"></div><div class="gt-text" id="gtText"></div><div class="gt-arrow" id="gtArrow"></div></div>
 </body>
 </html>
