@@ -1671,8 +1671,8 @@ box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);;justify-content:flex-start;text-ali
 #statsBar{ overflow: visible !important; }
 #statsBar .statBox{ overflow: visible !important; position: relative; z-index: 300; }
 #statsBar .statBox[data-tip]::after{
-  bottom: calc(100% + 14px) !important;
-  top: auto !important;
+  top: calc(100% + 14px) !important;
+  bottom: auto !important;
   left: 50% !important;
   right: auto !important;
   transform: translateX(-50%) !important;
@@ -1681,12 +1681,13 @@ box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);;justify-content:flex-start;text-ali
   white-space: normal;
 }
 #statsBar .statBox[data-tip]::before{
-  bottom: calc(100% + 6px) !important;
-  top: auto !important;
+    top: calc(100% + 4px) !important;
+  bottom: auto !important;
   left: 50% !important;
   right: auto !important;
-  transform: translateX(-50%) rotate(45deg) !important;
+    transform: translateX(-50%) !important;
   z-index: 10000 !important;
+  border-color: transparent transparent rgba(15,22,36,.92) transparent !important;
 }
 /* Evita que en los extremos el tooltip se salga del viewport */
 #statsBar .statBox:first-child[data-tip]::after{
@@ -1696,7 +1697,7 @@ box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);;justify-content:flex-start;text-ali
 }
 #statsBar .statBox:first-child[data-tip]::before{
   left: 20px !important;
-  transform: rotate(45deg) !important;
+  transform: none !important;
 }
 #statsBar .statBox:last-child[data-tip]::after{
   left: auto !important;
@@ -1707,7 +1708,7 @@ box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);;justify-content:flex-start;text-ali
 #statsBar .statBox:last-child[data-tip]::before{
   left: auto !important;
   right: 20px !important;
-  transform: rotate(45deg) !important;
+  transform: none !important;
 }
 
 </style>
