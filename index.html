@@ -1704,7 +1704,7 @@
   }
 
   // ====== Leaderboard JSONP (evita CORS) ======
-  function cargarLeaderboard(limit=50){
+  function cargarLeaderboard(limit="all"){
     const cb = "renderLeaderboard";
     const url = WEB_APP_URL + "?action=leaderboard&limit=" + encodeURIComponent(limit) + "&callback=" + cb + "&_=" + Date.now();
     const old = document.getElementById("lbJsonp");
@@ -1757,7 +1757,7 @@
     }catch(_){}
 
     sec.style.display = "block";
-    st.textContent = rows.length ? ("Participantes: " + rows.length + " (Top 50)") : "Aún no hay participantes con XP. Gana XP para aparecer.";
+    st.textContent = rows.length ? ("Participantes: " + rows.length + " (Todos)") : "Aún no hay participantes con XP. Gana XP para aparecer.";
 
     // Podio
     const top3 = rows.slice(0,3);
@@ -1840,7 +1840,7 @@
 
     // Cargar ranking (con un pequeño delay para dar tiempo a la escritura)
     document.getElementById('leaderboardSection').style.display='block';
-    setTimeout(()=>cargarLeaderboard(50), 900);
+    setTimeout(()=>cargarLeaderboard("all"), 900);
 }
 
   let __gsiInitTries = 0;
@@ -1852,7 +1852,7 @@ function initGoogleAuthAndSync(){
         const u = JSON.parse(raw);
         showUserChip(u);
         document.getElementById('leaderboardSection').style.display='block';
-        cargarLeaderboard(50);
+        cargarLeaderboard("all");
       }
     }catch(_){}
 
@@ -1898,26 +1898,6 @@ function initGoogleAuthAndSync(){
   window.addEventListener('load', initGoogleAuthAndSync);
 </script>
 
-<div class="leaderboardWrap" id="leaderboardSection" style="display:none;">
-  <div class="lbHeader">
-    <h3>🏆 Ranking (Top 50)</h3>
-    <div class="lbActions">
-      <button class="lbBtn" type="button" onclick="cargarLeaderboard(50)">Actualizar</button>
-    </div>
-  </div>
-  <p class="lbNote" id="lbStatus">Inicia sesión para ver el ranking.</p>
-  <div class="podium" id="podium"></div>
-  <div class="lbList" id="leaderboardList"></div>
-</div>
-
-
-
-
-
-
-
-  
-  
 
   <!-- ✅✅✅ BARRA DE PUNTOS FUERA DE .app -->
   
@@ -3760,7 +3740,7 @@ try{
         __lastXpSynced = xp;
         queueXpDelta(idToken, delta);
         if(!window.__lbDebounce){
-          window.__lbDebounce = setTimeout(()=>{ window.__lbDebounce=null; cargarLeaderboard(50); }, 1200);
+          window.__lbDebounce = setTimeout(()=>{ window.__lbDebounce=null; cargarLeaderboard("all"); }, 1200);
         }
       }
     }
@@ -5353,7 +5333,7 @@ function validateSpelling(){
         if(idToken){
           // usa la cola ya existente
           try{ queueXpDelta(idToken, delta); }catch(_){}
-          try{ cargarLeaderboard(50); }catch(_){}
+          try{ cargarLeaderboard("all"); }catch(_){}
         }
       } else if(current < lastSeen){
         // si reinicia, ajusta base
@@ -5363,5 +5343,29 @@ function validateSpelling(){
   }, 1200);
 })();
 </script>
+
+
+  <!-- ✅ Ranking al final (todos los participantes) -->
+  <div class="leaderboardWrap" id="leaderboardSection" style="display:none;">
+  <div class="lbHeader">
+    <h3>🏆 Ranking (Todos)</h3>
+    <div class="lbActions">
+      <button class="lbBtn" type="button" onclick="cargarLeaderboard("all")">Actualizar</button>
+    </div>
+  </div>
+  <p class="lbNote" id="lbStatus">Inicia sesión para ver el ranking.</p>
+  <div class="podium" id="podium"></div>
+  <div class="lbList" id="leaderboardList"></div>
+</div>
+
+
+
+
+
+
+
+  
+  
+
 </body>
 </html>
