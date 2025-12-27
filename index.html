@@ -1789,6 +1789,7 @@
     const idToken = response.credential;
     const user = parseJwt(idToken);
 
+    // Guardar sesión
     localStorage.setItem("google_id_token", idToken);
     localStorage.setItem("user_profile", JSON.stringify({
       sub: user.sub,
@@ -1799,16 +1800,30 @@
 
     console.log("OK login:", user.email);
 
-    // ✅ Mostrar usuario, registrar en Sheets, sincronizar XP y cargar ranking
-    showUserChip(user);
-    registrarEnSheets(idToken);
-    try{ syncTotalXP(idToken, (typeof window.xp === "number" ? window.xp : 0)); }catch(_){ syncTotalXP(idToken, 0); }
-    cargarLeaderboard(50);
+    // UI
+    showUserChip({
+      sub: user.sub,
+      name: user.name,
+      email: user.email,
+      picture: user.picture
+    });
 
-    // aquí pintas tu UI (nombre/foto) y continúas tu app
-  }
+    const lbStatus = document.getElementById("lbStatus");
+    if(lbStatus) lbStatus.textContent = "Sincronizando con Sheets…";
 
-  function initGoogleAuthAndSync(){
+    // Registrar / actualizar en Sheets
+    try{ registrarEnSheets(idToken); }catch(e){ console.warn(e); }
+
+    // Sincronizar XP total inicial (por si ya hay XP local)
+    try{ syncTotalXP(idToken, (typeof window.xp === "number" ? window.xp : (Number(document.getElementById('xp')?.innerText)||0))); }catch(_ ){}
+
+    // Cargar ranking (con un pequeño delay para dar tiempo a la escritura)
+    document.getElementById('leaderboardSection').style.display='block';
+    setTimeout(()=>cargarLeaderboard(50), 900);
+}
+
+  let __gsiInitTries = 0;
+function initGoogleAuthAndSync(){
     // Restaurar sesión guardada (si el usuario ya había iniciado sesión)
     try{
       const raw = localStorage.getItem('user_profile');
@@ -1820,29 +1835,45 @@
       }
     }catch(_){}
 
-    // Renderizar botón Google (si la librería cargó bien)
+    const btn = document.getElementById("googleBtn");
+    if(btn && !btn.__placeholder){
+      btn.__placeholder = true;
+      btn.innerHTML = '<div style="opacity:.9;font-weight:700;">Cargando login…</div>';
+    }
+
+    // Esperar a que cargue la librería GIS (a veces tarda con async/defer o en embeds)
+    if(!(window.google && google.accounts && google.accounts.id)){
+      __gsiInitTries++;
+      if(__gsiInitTries < 40){
+        return setTimeout(initGoogleAuthAndSync, 250);
+      }
+      console.warn("Google Identity Services no cargó (gsi/client). Revisa red/CSP/embebido.");
+      if(btn) btn.innerHTML = '<button class="lbBtn" type="button" onclick="location.reload()">Reintentar Login</button>';
+      return;
+    }
+
+    // Renderizar botón Google (solo una vez)
     try{
-      if(window.google && google.accounts && google.accounts.id){
+      if(btn && !btn.__rendered){
+        btn.innerHTML = "";
         google.accounts.id.initialize({
           client_id: "932013722424-9uoc8vlc0b252qeuk5o81bsnj3th0ruk.apps.googleusercontent.com",
           callback: onGoogleCredential,
           ux_mode: "popup"
         });
-        const btn = document.getElementById("googleBtn");
-        if(btn){
-          google.accounts.id.renderButton(
-            btn,
-            { theme: "outline", size: "large", shape: "pill", text: "signin_with" }
-          );
-        }
-      } else {
-        console.warn("Google Identity Services no cargó (gsi/client).");
+        google.accounts.id.renderButton(
+          btn,
+          { theme: "outline", size: "large", shape: "pill", text: "signin_with" }
+        );
+        btn.__rendered = true;
       }
     }catch(err){
       console.error("Error init Google Auth:", err);
+      if(btn) btn.innerHTML = '<button class="lbBtn" type="button" onclick="location.reload()">Reintentar Login</button>';
     }
-  }
+}
 
+  window.addEventListener('DOMContentLoaded', initGoogleAuthAndSync);
   window.addEventListener('load', initGoogleAuthAndSync);
 </script>
 
@@ -1870,7 +1901,7 @@
   <!-- ✅✅✅ BARRA DE PUNTOS FUERA DE .app -->
   
   <div class="stats" id="statsBar">
-    <div class="statBox" xpBig" data-tip="🔥 Días seguidos practicando. Si fallas o faltas, puede bajar (Freeze te protege)."><span class="stat-label">Racha</span><span class="stat-value" id="streak">0</span></div>
+    <div class="statBox xpBig" data-tip="🔥 Días seguidos practicando. Si fallas o faltas, puede bajar (Freeze te protege)."><span class="stat-label">Racha</span><span class="stat-value" id="streak">0</span></div>
     <div class="statBox" data-tip="⭐ Puntos acumulados por respuestas correctas en la app."><span class="stat-label">Total XP</span><span class="stat-value" id="xp">0</span></div>
     <div class="statBox" data-tip="🎯 Porcentaje de aciertos: correctas ÷ intentos."><span class="stat-label">Precisión</span><span class="stat-value" id="acc">100%</span></div>
 
