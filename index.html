@@ -1862,7 +1862,7 @@
     try{ registrarEnSheets(idToken); }catch(e){ console.warn(e); }
 
     // Sincronizar XP total inicial (por si ya hay XP local)
-    try{ syncTotalXP(idToken, (typeof window.xp === "number" ? window.xp : (Number(document.getElementById("xp")?.innerText)||0))); }catch(_){}
+    try{ syncTotalXP(idToken, (typeof window.xp === "number" ? window.xp : (Number(document.getElementById('xp')?.innerText)||0))); }catch(_ ){}
 
     // Cargar ranking (con un pequeño delay para dar tiempo a la escritura)
     document.getElementById('leaderboardSection').style.display='block';
@@ -2776,7 +2776,6 @@ function unlock(id, icon, title, desc){
   persistState();
 }
 function awardXP(base, reason="xp"){
-  const xpBefore = xp;
   const lvlBefore = computeLevel(xp).lvl;
 
   // Multiplicadores suaves (no rompe la economía)
@@ -2807,22 +2806,6 @@ function awardXP(base, reason="xp"){
     freezeTokens += 1;
     toastAchievement("🧊", "Streak Freeze", "Ganaste 1 congelación de racha.");
   }
-
-  // ✅ Enviar XP ganado a Sheets SOLO cuando se gana XP (evita sumas al recargar)
-  try{
-    const idToken = localStorage.getItem("google_id_token");
-    const gainedTotal = xp - xpBefore;
-    if(idToken && gainedTotal > 0){
-      // actualiza baseline local para evitar deltas fantasma
-      __lastXpSynced = xp;
-      queueXpDelta(idToken, gainedTotal);
-      // refresca leaderboard con debounce
-      if(!window.__lbDebounce){
-        window.__lbDebounce = setTimeout(()=>{ window.__lbDebounce=null; cargarLeaderboard(50); }, 1200);
-      }
-    }
-  }catch(_){}
-
 
   // Meta diaria
   if(dailyXP >= dailyGoal){
@@ -3562,7 +3545,12 @@ function init(){
   pinStatsBar();
   loadState();
 
-  const gNames=[
+  
+  // ✅ Asegura que XP/racha/precisión se pinten al iniciar (evita "delta" por recarga)
+  try{ actualizarStats(); }catch(_){ }
+  // ✅ Baseline para sincronización: no contar XP restaurado como XP ganado
+  try{ if(typeof __lastXpSynced !== "undefined") __lastXpSynced = (typeof xp==="number"?xp: (Number(document.getElementById("xp")?.innerText)||0)); }catch(_){ }
+const gNames=[
     "GRUPO 1: (Day 1-8) - Patrón t/d",
     "GRUPO 2: C2=C3",
     "GRUPO 3: Todas diferentes"
@@ -3790,10 +3778,20 @@ function actualizarStats(){
   document.getElementById('acc').innerText = (att===0 ? 100 : Math.round((corr/att)*100)) + "%";
   updateGamificationUI();
 
-  // ✅ Sheets XP Sync (solo baseline aquí; el envío real ocurre cuando se gana XP en awardXP)
+  // ✅ Sincronizar XP a Sheets (delta) y refrescar ranking
   try{
     const idToken = localStorage.getItem("google_id_token");
-    if(idToken && __lastXpSynced === null) __lastXpSynced = xp;
+    if(idToken){
+      if(__lastXpSynced === null) __lastXpSynced = xp;
+      const delta = xp - __lastXpSynced;
+      if(delta > 0){
+        __lastXpSynced = xp;
+        queueXpDelta(idToken, delta);
+        if(!window.__lbDebounce){
+          window.__lbDebounce = setTimeout(()=>{ window.__lbDebounce=null; cargarLeaderboard(50); }, 1200);
+        }
+      }
+    }
   }catch(_){}
 
   persistState();
@@ -5370,23 +5368,35 @@ function validateSpelling(){
 <script>
 (function(){
   let lastSeen = null;
+  const start = Date.now();
+  const GRACE_MS = 6000; // ✅ evita sumar XP al recargar (ignora cambios iniciales)
   setInterval(() => {
     try{
       const el = document.getElementById("xp");
       if(!el) return;
       const current = parseInt((el.innerText||"0").replace(/[^0-9]/g,""),10) || 0;
-      if(lastSeen === null){ lastSeen = current; return; }
+
+      // Baseline inicial
+      if(lastSeen === null){
+        lastSeen = current;
+        return;
+      }
+
+      // Durante el arranque, solo ajusta baseline (NO sincroniza deltas)
+      if(Date.now() - start < GRACE_MS){
+        lastSeen = current;
+        return;
+      }
+
       if(current > lastSeen){
         const delta = current - lastSeen;
         lastSeen = current;
         const idToken = localStorage.getItem("google_id_token");
         if(idToken){
-          // usa la cola ya existente
           try{ queueXpDelta(idToken, delta); }catch(_){}
           try{ cargarLeaderboard(50); }catch(_){}
         }
       } else if(current < lastSeen){
-        // si reinicia, ajusta base
         lastSeen = current;
       }
     }catch(_){}
