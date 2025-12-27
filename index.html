@@ -1608,12 +1608,12 @@ padding:14px 16px;
 border-radius:18px;
 background:rgba(255,255,255,.06);
 border:1px solid rgba(255,255,255,.10);
-box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);}
+box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);;justify-content:flex-start;text-align:left;}
 .lbLeft{ display:flex; align-items:center; gap:10px; min-width:0; }
 .lbNum{ width:28px; text-align:center; font-weight:950; opacity:.9; }
 .lbAvatar{ width:32px; height:32px; border-radius:999px; object-fit:cover; border:2px solid rgba(255,255,255,.22); }
 .lbName{ font-weight:900; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.lbXP{ font-weight:950; }
+.lbXp,.lbXP{font-weight:950;}
 .lbMe{ outline: 2px solid rgba(242,139,22,.65); }
 @media (max-width: 720px){
   .podium{ grid-template-columns:1fr; }
@@ -1667,15 +1667,8 @@ box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);}
   letter-spacing:.5px;
   opacity:.95;
 }
-.lbInfo{
-  display:flex;
-  flex-direction:column;
-  align-items:flex-start;
-  justify-content:center;
-  gap:4px;
-  text-align:left;
-  min-width:0;
-}
+.lbInfo{display:flex;flex-direction:row;align-items:baseline;gap:12px;flex-wrap:wrap;min-width:0;}
+
 
 </style>
 </head>
