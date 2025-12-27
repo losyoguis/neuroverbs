@@ -1474,6 +1474,60 @@
 
 <body class="has-floating-stats">
 
+
+   <!-- ✅✅✅ CONSOLE GOOGLE -->
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+
+<div id="googleBtn"></div>
+
+<script>
+  function parseJwt(token) {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(atob(base64).split('').map(c =>
+      '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+    ).join(''));
+    return JSON.parse(jsonPayload);
+  }
+
+  function onGoogleCredential(response) {
+    const idToken = response.credential;
+    const user = parseJwt(idToken);
+
+    localStorage.setItem("google_id_token", idToken);
+    localStorage.setItem("user_profile", JSON.stringify({
+      sub: user.sub,
+      name: user.name,
+      email: user.email,
+      picture: user.picture
+    }));
+
+    console.log("OK login:", user.email);
+    // aquí pintas tu UI (nombre/foto) y continúas tu app
+  }
+
+  window.onload = () => {
+    google.accounts.id.initialize({
+      client_id: "932013722424-9uoc8vlc0b252qeuk5o81bsnj3th0ruk.apps.googleusercontent.com",
+      callback: onGoogleCredential,
+      ux_mode: "popup"   // CLAVE para evitar problemas en embebidos
+    });
+
+    google.accounts.id.renderButton(
+      document.getElementById("googleBtn"),
+      { theme: "outline", size: "large", shape: "pill", text: "signin_with" }
+    );
+  };
+</script>
+
+
+
+
+
+  
+  
+
   <!-- ✅✅✅ BARRA DE PUNTOS FUERA DE .app -->
   
   <div class="stats" id="statsBar">
