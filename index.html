@@ -1739,7 +1739,6 @@ box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);;justify-content:flex-start;text-ali
 // =========================
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxeSJfmdiRzkhfDZqnjjxg1FOAVOwsiUTGa7A118MyqGRrXPNsUJaV8HyzyxbOw-fYW/exec";
 const OAUTH_CLIENT_ID = "637468265896-5olh8rhf76setm52743tashi3vq1la67.apps.googleusercontent.com";
-const ALLOWED_DOMAIN = "iemanueljbetancur.edu.co"; // solo cuentas institucionales
 
 // Leaderboard paging
 const LB_PAGE_SIZE = 10;
@@ -1931,9 +1930,9 @@ function cargarLeaderboardPage() {
   if (sec) sec.style.display = "block";
   if (st) st.textContent = "Cargando ranking...";
   if (list) list.innerHTML = "";
-  if (pageInfo) pageInfo.textContent = "Top 10";
+  if (pageInfo) pageInfo.textContent = String(Math.floor(__lbOffset / LB_PAGE_SIZE) + 1);
 
-  const url = WEB_APP_URL + "?action=leaderboard&limit=" + encodeURIComponent(LB_PAGE_SIZE) + "&offset=" + encodeURIComponent(0);
+  const url = WEB_APP_URL + "?action=leaderboard&limit=" + encodeURIComponent(LB_PAGE_SIZE) + "&offset=" + encodeURIComponent(__lbOffset);
   jsonpRequest(url).then((data) => {
     renderLeaderboard(data);
   }).catch((err) => {
@@ -1973,18 +1972,18 @@ function renderLeaderboard(data) {
 
   sec.style.display = "block";
   if (rows.length) {
-    st.textContent = (total ? ("Participantes: " + total + " — mostrando Top 10") : "Mostrando Top 10");
+    st.textContent = (total ? ("Participantes: " + total + " — mostrando " + start + "-" + end) : ("Mostrando " + start + "-" + end));
   } else {
     st.textContent = "Aún no hay participantes con XP. Inicia sesión y gana XP para aparecer.";
   }
 
-  if (pageInfo) pageInfo.textContent = "Top 10";
+  if (pageInfo) pageInfo.textContent = String(Math.floor(__lbOffset / LB_PAGE_SIZE) + 1);
 
   // Habilitar / deshabilitar flechas
   const prevBtn = document.getElementById("lbPrevBtn");
   const nextBtn = document.getElementById("lbNextBtn");
-  if (prevBtn) prevBtn.disabled = true;
-  if (nextBtn) nextBtn.disabled = true;
+  if (prevBtn) prevBtn.disabled = (__lbOffset <= 0);
+  if (nextBtn) nextBtn.disabled = (total ? (__lbOffset + LB_PAGE_SIZE >= total) : true);
 
   // Render cards
   list.innerHTML = rows.map((r, i) => {
