@@ -2089,7 +2089,8 @@ function initGoogleAuthAndSync() {
       google.accounts.id.initialize({
         client_id: OAUTH_CLIENT_ID,
         callback: onGoogleCredential,
-        ux_mode: "popup"
+        ux_mode: "popup",
+        hosted_domain: ALLOWED_DOMAIN
       });
       google.accounts.id.renderButton(btn, {
         theme: "outline",
