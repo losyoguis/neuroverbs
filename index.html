@@ -1815,44 +1815,31 @@ function jsonpRequest(url) {
 
 // POST cross-domain sin CORS (Apps Script no expone CORS headers).
 // En Apps Script, doPost debe parsear JSON desde text/plain.
-function postToSheets(actionOrPayload, extra={}) {
-  // Soporta: postToSheets("upsert", {xpDelta: 10})  o  postToSheets({action:"upsert", idToken, xpDelta:10})
-  let payload = {};
-  if (actionOrPayload && typeof actionOrPayload === "object") {
-    payload = Object.assign({}, actionOrPayload, extra || {});
-  } else {
-    payload = Object.assign({ action: String(actionOrPayload || "upsert") }, extra || {});
-  }
+function postToSheets(payload) {
+  const body = JSON.stringify(payload);
+  // Prefer fetch keepalive (más confiable que beacon en algunos entornos)
+  try {
+    fetch(WEB_APP_URL, {
+      method: "POST",
+      mode: "no-cors",
+      keepalive: true,
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body
+    }).catch(()=>{});
+  } catch(e) {}
 
-  // Asegurar acción string
-  if (payload.action && typeof payload.action !== "string") {
-    payload.action = String(payload.action);
-  }
-  if (!payload.action) payload.action = "upsert";
-
-  // ID Token: prioridad -> payload.idToken -> localStorage
-  if (!payload.idToken) {
-    payload.idToken = localStorage.getItem("id_token") || localStorage.getItem("idToken") || "";
-  }
-
-  // Si no hay token, no enviamos (evita llamadas inválidas)
-  if (!payload.idToken) return;
-
-  // Enviar por FORM POST oculto (evita CORS / preflight)
-  const form = document.getElementById("sheetForm");
-  const payloadEl = document.getElementById("sheetPayload");
-  if (!form || !payloadEl) return;
-
-  form.action = WEB_APP_URL;
-  payloadEl.value = JSON.stringify(payload);
-  form.submit();
+  // Fallback beacon
+  try {
+    if (navigator.sendBeacon) {
+      navigator.sendBeacon(WEB_APP_URL, new Blob([body], { type: "text/plain;charset=utf-8" }));
+    }
+  } catch(e) {}
 }
 
 function registrarEnSheets(idToken) {
-  // Solo registra/actualiza usuario en Sheets (no suma XP)
-  postToSheets({ action: "upsert", idToken: idToken, xpDelta: 0 });
+  // upsert sin sumar XP
+  postToSheets({ action: "upsert", idToken, xpDelta: 0 });
 }
-
 
 function queueXpDelta(idToken, xpDelta) {
   if (!idToken) return;
@@ -2060,8 +2047,7 @@ function onGoogleCredential(response) {
   if (sec) sec.style.display = "block";
   resetLeaderboardPaging();
   cargarLeaderboardPage();
-  postToSheets('upsert', { xpDelta: 0 });
-        fetchAndApplyUserFromSheets();
+  fetchAndApplyUserFromSheets();
 }
 
 function initGoogleAuthAndSync() {
@@ -5669,12 +5655,5 @@ function validateSpelling(){
 <!-- XP sync watcher removed: XP is synced only from exercise actions + server fetch to avoid double-counting -->
 
   <div id="globalTooltip" aria-hidden="true"><div class="gt-title" id="gtTitle" style="display:none"></div><div class="gt-text" id="gtText"></div><div class="gt-arrow" id="gtArrow"></div></div>
-
-<!-- Sheets write sink (no-CORS, works with "internal" web-app deployments) -->
-<iframe name="sheetsSink" id="sheetsSink" style="display:none;width:0;height:0;border:0;"></iframe>
-<form id="sheetsForm" target="sheetsSink" method="POST" action="https://script.google.com/macros/s/AKfycbxeSJfmdiRzkhfDZqnjjxg1FOAVOwsiUTGa7A118MyqGRrXPNsUJaV8HyzyxbOw-fYW/exec" style="display:none;">
-  <input type="hidden" name="payload" id="sheetsPayload" value="">
-</form>
-
 </body>
 </html>
