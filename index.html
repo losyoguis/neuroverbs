@@ -1738,6 +1738,8 @@ box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);;justify-content:flex-start;text-ali
 // Google Auth (GSI) + Sheets (Apps Script WebApp)
 // =========================
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxeSJfmdiRzkhfDZqnjjxg1FOAVOwsiUTGa7A118MyqGRrXPNsUJaV8HyzyxbOw-fYW/exec";
+const ALLOWED_DOMAIN = "iemanueljbetancur.edu.co";
+const ALLOWED_EMAIL_SUFFIX = "@"+ALLOWED_DOMAIN;
 const OAUTH_CLIENT_ID = "637468265896-5olh8rhf76setm52743tashi3vq1la67.apps.googleusercontent.com";
 
 // Leaderboard paging
@@ -2024,7 +2026,19 @@ function onGoogleCredential(response) {
   const idToken = response.credential;
   const user = parseJwt(idToken);
 
-  localStorage.setItem("google_id_token", idToken);
+  
+  // 🔒 Solo cuentas del dominio institucional
+  const email = String((user && user.email) || "").toLowerCase();
+  if(!email.endsWith(ALLOWED_EMAIL_SUFFIX.toLowerCase())) {
+    try{ toastAchievement("⚠️","Cuenta no permitida","Solo se permite iniciar sesión con cuentas @"+ALLOWED_DOMAIN); }catch(e){ alert("Solo se permite iniciar sesión con cuentas @"+ALLOWED_DOMAIN); }
+    try{ if(window.google && google.accounts && google.accounts.id) {
+      google.accounts.id.disableAutoSelect && google.accounts.id.disableAutoSelect();
+      google.accounts.id.revoke && google.accounts.id.revoke(email, ()=>{});
+    } }catch(e){}
+    clearSession();
+    return;
+  }
+localStorage.setItem("google_id_token", idToken);
   localStorage.setItem("user_profile", JSON.stringify({
     sub: user.sub,
     name: user.name,
