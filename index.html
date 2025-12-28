@@ -1742,9 +1742,10 @@ const DEFAULT_WEB_APP_URL = "https://script.google.com/a/macros/iemanueljbetancu
 //   tuapp.html?webapp=PASTE_AQUI_LA_URL
 // y queda guardada en localStorage automáticamente.
 const WEB_APP_URL = (new URLSearchParams(location.search).get("webapp")
-  || localStorage.getItem("WEB_APP_URL")
+  || localStorage.getItem("WEB_APP_URL_V3")
   || DEFAULT_WEB_APP_URL);
-try{ localStorage.setItem("WEB_APP_URL", WEB_APP_URL); }catch(_){ }
+console.log("[Neuroverbs] WEB_APP_URL =", WEB_APP_URL);
+try{ localStorage.setItem("WEB_APP_URL_V3", WEB_APP_URL); }catch(_){ }
 const ALLOWED_DOMAIN = "iemanueljbetancur.edu.co";
 const ALLOWED_EMAIL_SUFFIX = "@"+ALLOWED_DOMAIN;
 const OAUTH_CLIENT_ID = "637468265896-5olh8rhf76setm52743tashi3vq1la67.apps.googleusercontent.com";
@@ -1825,24 +1826,48 @@ function jsonpRequest(url) {
 // POST cross-domain sin CORS (Apps Script no expone CORS headers).
 // En Apps Script, doPost debe parsear JSON desde text/plain.
 function postToSheets(payload) {
-  const body = JSON.stringify(payload);
-  // Prefer fetch keepalive (más confiable que beacon en algunos entornos)
+  // ✅ Preferimos JSONP (GET) para evitar CORS y poder ver respuesta/errores.
+  // El backend (Apps Script) acepta action=upsert/xp también por GET cuando ALLOW_GET_UPSERT=true.
   try {
-    fetch(WEB_APP_URL, {
-      method: "POST",
-      mode: "no-cors",
-      keepalive: true,
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body
-    }).catch(()=>{});
-  } catch(e) {}
+    const params = new URLSearchParams();
+    params.set("action", payload.action || "upsert");
+    if (payload.idToken) params.set("idToken", payload.idToken);
+    if (payload.xpDelta !== undefined) params.set("xpDelta", String(payload.xpDelta));
+    params.set("_", String(Date.now()));
 
-  // Fallback beacon
-  try {
-    if (navigator.sendBeacon) {
-      navigator.sendBeacon(WEB_APP_URL, new Blob([body], { type: "text/plain;charset=utf-8" }));
-    }
-  } catch(e) {}
+    const url = WEB_APP_URL + (WEB_APP_URL.includes("?") ? "&" : "?") + params.toString();
+
+    jsonpRequest(url, 8000).then((res) => {
+      if (!res || res.ok !== true) {
+        console.warn("[Sheets] Respuesta no-ok:", res);
+      } else {
+        // opcional: podrías usar res.user.xp si quieres sincronizar XP
+        // console.log("[Sheets] OK:", res);
+      }
+    }).catch((err) => {
+      console.warn("[Sheets] JSONP falló, fallback POST no-cors:", err);
+      // Fallback POST silencioso
+      const body = JSON.stringify(payload);
+      try {
+        fetch(WEB_APP_URL, {
+          method: "POST",
+          mode: "no-cors",
+          keepalive: true,
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body
+        }).catch(()=>{});
+      } catch(e) {}
+
+      // Fallback beacon
+      try {
+        if (navigator.sendBeacon) {
+          navigator.sendBeacon(WEB_APP_URL, new Blob([body], { type: "text/plain;charset=utf-8" }));
+        }
+      } catch(e) {}
+    });
+  } catch (e) {
+    console.warn("[Sheets] postToSheets error:", e);
+  }
 }
 
 function registrarEnSheets(idToken) {
