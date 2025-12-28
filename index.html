@@ -1605,6 +1605,13 @@ border-radius:18px;
 background:rgba(255,255,255,.06);
 border:1px solid rgba(255,255,255,.10);
 box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);;justify-content:flex-start;text-align:left;}
+
+/* === Ranking colors (for light background areas) === */
+.lbTop3{ color:#f59e0b !important; }   /* naranja */
+.lbOther{ color:#3b82f6 !important; }  /* azul */
+.lbTop3 .lbRank,.lbTop3 .lbName,.lbTop3 .lbXp{ color:#f59e0b !important; }
+.lbOther .lbRank,.lbOther .lbName,.lbOther .lbXp{ color:#3b82f6 !important; }
+
 .lbLeft{ display:flex; align-items:center; gap:10px; min-width:0; }
 .lbNum{ width:28px; text-align:center; font-weight:950; opacity:.9; }
 .lbAvatar{ width:32px; height:32px; border-radius:999px; object-fit:cover; border:2px solid rgba(255,255,255,.22); }
@@ -2053,7 +2060,7 @@ function renderLeaderboard(data) {
     const name = (r.name || r.email || "Usuario").toString();
     const xpVal = Number(r.xp || 0);
     return `
-      <div class="lbRow">
+      <div class="lbRow ${rank<=3?'lbTop3':'lbOther'}">
         <div class="lbRank">#${rank}</div>
         ${pic}
         <div class="lbInfo">
