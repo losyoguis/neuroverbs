@@ -2,74 +2,88 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Neuroverbs Real-Time</title>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        :root { --purple: #65116B; --orange: #F28B16; }
+        body { font-family: sans-serif; background: #0b1220; color: white; display: flex; flex-direction: column; align-items: center; }
+        #leaderboard-container { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; width: 300px; margin-top: 20px; border: 1px solid var(--purple); }
+        .leader-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .xp-val { color: var(--orange); font-weight: bold; }
+        #user-hud { background: var(--purple); padding: 10px 20px; border-radius: 30px; margin: 10px; }
+    </style>
 </head>
 <body>
-    <div id="user-stats">
+
+    <div id="user-hud">
         XP Actual: <span id="local-xp">0</span>
     </div>
 
+    <div id="g_id_onload"
+         data-client_id="932013722424-9uoc8vlc0b252qeuk5o81bsnj3th0ruk.apps.googleusercontent.com"
+         data-callback="handleCredentialResponse"
+         data-auto_prompt="false">
+    </div>
+    <div class="g_id_signin" data-type="standard"></div>
+
     <div id="leaderboard-container">
-        <h3>Ranking en Tiempo Real</h3>
-        <div id="leaderboard-list">Cargando ranking...</div>
+        <h3 style="text-align:center; color: var(--orange);">Ranking Top 10</h3>
+        <div id="leaderboard-list">Cargando...</div>
     </div>
 
     <script>
-        const SCRIPT_URL = "TU_URL_DE_DESPLIEGUE_AQUI"; // REEMPLAZAR
-        let userToken = null;
+        // CONFIGURACIÓN: PEGA TU URL DE DESPLIEGUE AQUÍ
+        const SCRIPT_URL = "REEMPLAZA_CON_TU_URL_DE_APPS_SCRIPT"; 
+        
+        let userToken = localStorage.getItem('neuroToken') || null;
+        let currentXP = 0;
 
-        // 1. Manejar Inicio de Sesión
         function handleCredentialResponse(response) {
             userToken = response.credential;
             localStorage.setItem('neuroToken', userToken);
-            console.log("Sesión activa");
+            console.log("Sesión Iniciada");
             refreshLeaderboard();
         }
 
-        // 2. Sincronizar XP (Llamar a esta función cuando el usuario gane puntos)
-        async function syncXP(puntosGanados) {
-            if (!userToken) return;
-
-            try {
-                await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors', // Para evitar problemas de redirección de Google
-                    body: JSON.stringify({
-                        idToken: userToken,
-                        xp: puntosGanados
-                    })
-                });
-                console.log("Sincronización enviada");
-            } catch (e) {
-                console.error("Error sincronizando:", e);
-            }
+        // Simulación de ganar puntos (Llama a esto en tu juego)
+        function ganarPuntos(cantidad) {
+            currentXP += cantidad;
+            document.getElementById('local-xp').innerText = currentXP;
+            syncWithServer();
         }
 
-        // 3. Obtener Ranking (Tiempo Real)
+        async function syncWithServer() {
+            if (!userToken) return;
+            // Usamos mode 'no-cors' para el POST a Apps Script
+            fetch(SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify({ idToken: userToken, xp: currentXP })
+            });
+        }
+
         async function refreshLeaderboard() {
             try {
                 const res = await fetch(`${SCRIPT_URL}?action=leaderboard`);
                 const data = await res.json();
-                
                 if (data.ok) {
                     const html = data.leaderboard.map((u, i) => `
-                        <div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding:5px;">
+                        <div class="leader-item">
                             <span>${i+1}. ${u.name}</span>
-                            <strong>${u.xp} XP</strong>
+                            <span class="xp-val">${u.xp} XP</span>
                         </div>
                     `).join('');
-                    document.getElementById('leaderboard-list').innerHTML = html;
+                    document.getElementById('leaderboard-list').innerHTML = html || "Sin registros";
                 }
             } catch (e) {
-                console.log("Esperando actualización...");
+                console.log("Buscando actualización...");
             }
         }
 
-        // 4. Bucle de Tiempo Real (Cada 20 segundos)
+        // Tiempo real: Refrescar cada 20 segundos
         setInterval(refreshLeaderboard, 20000);
         window.onload = refreshLeaderboard;
-
     </script>
 </body>
 </html>
