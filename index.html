@@ -1468,25 +1468,17 @@
   
 /* ====== AUTH BAR (Google button + usuario) ====== */
 .authBar{
-  position: fixed;
-  top: 14px;
-  right: 14px;
-  left: auto;
-  width: auto;
-  max-width: min(560px, 96vw);
-  margin: 0;
-  z-index: 9000;
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 10px 12px;
-  border-radius: 18px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.14);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 16px 40px rgba(0,0,0,0.25);
+  position:fixed;
+  left:50%;
+  transform:translateX(-50%);
+  top:140px; /* JS reajusta según el alto real del menú de puntuación */
+  right:auto;
+  width:min(1100px, calc(100vw - 24px));
+  display:flex;
+  justify-content:center;
+  gap:12px;
+  z-index:890; /* debajo del menú de puntuación (900) pero encima del resto */
+  pointer-events:auto;
 }
 
 @media (max-width: 600px){
@@ -2082,53 +2074,11 @@ function onGoogleCredential(response) {
 
   // --- Ajuste automático: dejar la barra de autenticación por encima de la barra de puntuación ---
   function updateFixedBarsOffset(){
-    const auth = document.querySelector('.authBar');
-    const h = auth ? Math.ceil(auth.getBoundingClientRect().height) : 0;
-    // +10px de separación
-    document.documentElement.style.setProperty('--authbar-h', (h ? (h + 10) : 0) + 'px');
-  }
-  window.addEventListener('resize', () => { try{ updateFixedBarsOffset(); }catch(e){} });
-function initGoogleAuthAndSync() {
-  const btn = document.getElementById("googleBtn");
-  if (!btn) return;
-
-  // Si ya hay sesión guardada, pinta UI + carga data
-  const token = localStorage.getItem("google_id_token");
-  const profRaw = localStorage.getItem("user_profile");
-  if (token && profRaw) {
-    try {
-      const prof = JSON.parse(profRaw);
-      showUserChip(prof);
-      const sec = document.getElementById("leaderboardSection");
-      if (sec) sec.style.display = "block";
-      resetLeaderboardPaging();
-      cargarLeaderboardPage();
-      fetchAndApplyUserFromSheets();
-    } catch(_){}
-  }
-
-  // Render button una vez
-  try {
-    if (!btn.__rendered) {
-      google.accounts.id.initialize({
-        client_id: OAUTH_CLIENT_ID,
-        callback: onGoogleCredential,
-        ux_mode: "popup"
-      });
-      google.accounts.id.renderButton(btn, {
-        theme: "outline",
-        size: "large",
-        shape: "pill",
-        text: "signin_with"
-      });
-        updateFixedBarsOffset();
-
-      btn.__rendered = true;
-    }
-  } catch (err) {
-    console.error("Error init Google Auth:", err);
-    btn.innerHTML = '<button class="lbBtn" type="button" onclick="location.reload()">Reintentar Login</button>';
-  }
+  // El menú de puntuación es el elemento principal fijo.
+  // La autenticación se posiciona debajo del menú (ver updateHudSafe),
+  // por eso no usamos más --authbar-h como offset.
+  document.documentElement.style.setProperty("--authbar-h", "0px");
+  updateHudSafe();
 }
 
 window.addEventListener("load", () => {
@@ -2456,10 +2406,31 @@ function renderGroupHint(groupId){
 
 /* ✅✅✅ Altura segura para modales (se ajusta al alto real de la barra fija) */
 function updateHudSafe(){
-  const bar = document.getElementById("statsBar");
-  if(!bar) return;
-  const r = bar.getBoundingClientRect();
-  const safe = Math.max(0, Math.ceil(r.bottom + 12)); // deja un pequeño margen debajo
+  const stats = document.getElementById("statsBar");
+  const auth  = document.getElementById("authBar");
+
+  // Coloca autenticación centrada debajo del menú de puntuación
+  if(stats && auth){
+    const rStats = stats.getBoundingClientRect();
+    auth.style.position = "fixed";
+    auth.style.left = "50%";
+    auth.style.right = "auto";
+    auth.style.transform = "translateX(-50%)";
+    auth.style.top = Math.ceil(rStats.bottom + 10) + "px";
+    auth.style.zIndex = "890";
+  }
+
+  if(!stats) return;
+  const bottoms = [];
+  const r1 = stats.getBoundingClientRect();
+  bottoms.push(r1.bottom);
+
+  if(auth){
+    const r2 = auth.getBoundingClientRect();
+    bottoms.push(r2.bottom);
+  }
+
+  const safe = Math.max(0, Math.ceil(Math.max.apply(null, bottoms) + 12)); // margen debajo
   document.documentElement.style.setProperty("--hudSafe", safe + "px");
 }
 function pinStatsBar(){
