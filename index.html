@@ -1742,10 +1742,10 @@ const DEFAULT_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwh3qTioH-x
 //   tuapp.html?webapp=PASTE_AQUI_LA_URL
 // y queda guardada en localStorage automáticamente.
 const WEB_APP_URL = (new URLSearchParams(location.search).get("webapp")
-  || localStorage.getItem("WEB_APP_URL_V4")
+  || localStorage.getItem("WEB_APP_URL_V5")
   || DEFAULT_WEB_APP_URL);
 console.log("[Neuroverbs] WEB_APP_URL =", WEB_APP_URL);
-try{ localStorage.setItem("WEB_APP_URL_V4", WEB_APP_URL); }catch(_){ }
+try{ localStorage.setItem("WEB_APP_URL_V5", WEB_APP_URL); }catch(_){ }
 const ALLOWED_DOMAIN = "iemanueljbetancur.edu.co";
 const ALLOWED_EMAIL_SUFFIX = "@"+ALLOWED_DOMAIN;
 const OAUTH_CLIENT_ID = "637468265896-5olh8rhf76setm52743tashi3vq1la67.apps.googleusercontent.com";
@@ -1873,6 +1873,30 @@ function postToSheets(payload) {
 function registrarEnSheets(idToken) {
   // upsert sin sumar XP
   postToSheets({ action: "upsert", idToken, xpDelta: 0 });
+
+  // Diagnóstico (solo consola): confirma que el /exec apunta al Sheet correcto
+  try {
+    setTimeout(() => {
+      debugSheetsEndpoint();
+    }, 800);
+  } catch(e) {}
+}
+
+function debugSheetsEndpoint() {
+  try {
+    const cb = "cb_debug_" + Math.random().toString(36).slice(2);
+    window[cb] = (res) => {
+      console.log("[Sheets][debug]", res);
+      try { delete window[cb]; } catch(e) { window[cb] = undefined; }
+    };
+    const src = WEB_APP_URL + "?action=debug&callback=" + encodeURIComponent(cb) + "&t=" + Date.now();
+    const s = document.createElement("script");
+    s.src = src;
+    s.onerror = () => console.warn("[Sheets][debug] no cargó el endpoint");
+    document.body.appendChild(s);
+  } catch (e) {
+    console.warn("[Sheets][debug] error", e);
+  }
 }
 
 
@@ -1992,7 +2016,7 @@ function renderLeaderboard(data) {
     return;
   }
 
-  const rows = Array.isArray(data.leaderboard) ? data.leaderboard : [];
+  const rows = Array.isArray(data.leaderboard) ? data.leaderboard : (Array.isArray(data.rows) ? data.rows : []);
   const total = Number(data.total || 0);
   __lbTotal = total;
 
