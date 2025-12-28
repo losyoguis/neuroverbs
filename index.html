@@ -2311,7 +2311,7 @@ window.addEventListener("load", () => {
 
     <!-- ✅ Navegación (flechas) en la FILA DE ABAJO (separada del recuadro de la imagen) -->
     <div class="navRowBelowIllustration">
-      <div class="nav" id="readingNav" style="display:none;">
+      <div class="nav" id="readingNav">
         <button onclick="cambiar(-1)" aria-label="Anterior">⬅️</button>
         <span id="progreso2" style="font-weight:900; color:var(--muted);">0 de 0</span>
         <button onclick="cambiar(1)" aria-label="Siguiente">➡️</button>
@@ -3936,7 +3936,7 @@ function mostrar(){
   document.getElementById('practiceArea').innerHTML = "";
   document.getElementById('readingArea').innerHTML = "";
   const rn = document.getElementById('readingNav');
-  if(rn) rn.style.display = "none";
+  if(rn) rn.style.display = "flex";
   const rnf = document.getElementById('readingNavFooter');
   if(rnf) rnf.style.display = "none";
   spellingState = null;
