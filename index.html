@@ -1841,6 +1841,11 @@ function postToSheets(payload) {
 function registrarEnSheets(idToken) {
   // upsert sin sumar XP
   postToSheets({ action: "upsert", idToken, xpDelta: 0 });
+  // Fallback JSONP (GET) si POST/CORS falla
+  try {
+    jsonpRequest(WEB_APP_URL, { action: "upsert", idToken, xpDelta: 0 }, () => {});
+  } catch (e) {}
+
 }
 
 function queueXpDelta(idToken, xpDelta) {
@@ -1852,6 +1857,12 @@ function queueXpDelta(idToken, xpDelta) {
   if (Date.now() < window.__suppressXpSyncUntil) return;
 
   postToSheets({ action: "upsert", idToken, xpDelta: delta });
+
+  // Fallback JSONP (GET) si POST/CORS falla
+  try {
+    jsonpRequest(WEB_APP_URL, { action: "xp", idToken, xpDelta: delta }, () => {});
+  } catch (e) {}
+
 }
 
 // Trae el XP del usuario desde Sheets y lo aplica (Sheets manda)
@@ -2088,6 +2099,7 @@ function initGoogleAuthAndSync() {
     if (!btn.__rendered) {
       google.accounts.id.initialize({
         client_id: OAUTH_CLIENT_ID,
+        hd: "iemanueljbetancur.edu.co",
         callback: onGoogleCredential,
         ux_mode: "popup",
         hosted_domain: ALLOWED_DOMAIN
