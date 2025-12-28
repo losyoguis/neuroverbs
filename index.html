@@ -2180,20 +2180,6 @@ window.addEventListener("load", () => {
 });
 </script>
 
-<!-- Ranking abajo (paginado 10 por página) -->
-<div class="leaderboardWrap" id="leaderboardSection" style="display:none;">
-  <div class="lbHeader">
-    <h3 style="margin:0;">🏆 Ranking (Todos - paginado)</h3>
-    <div class="lbControls" style="display:flex; gap:10px; align-items:center;">
-      <button id="lbPrevBtn" class="lbBtn" type="button" onclick="lbPrev()">◀</button>
-      <span id="lbPageInfo" style="opacity:.9; font-weight:700;">1</span>
-      <button id="lbNextBtn" class="lbBtn" type="button" onclick="lbNext()">▶</button>
-      <button class="lbBtn" type="button" onclick="cargarLeaderboard()">Actualizar</button>
-    </div>
-  </div>
-  <p class="lbNote" id="lbStatus">Inicia sesión para ver el ranking.</p>
-  <div class="lbList" id="leaderboardList"></div>
-</div>
 <!-- ✅✅✅ BARRA DE PUNTOS FUERA DE .app -->
   
   <div class="stats" id="statsBar">
@@ -2372,6 +2358,21 @@ window.addEventListener("load", () => {
       </div>
 
       <div style="flex-basis:100%; height:0;"></div>
+
+<!-- Ranking abajo (paginado 10 por página) -->
+<div class="leaderboardWrap" id="leaderboardSection" style="display:none;">
+  <div class="lbHeader">
+    <h3 style="margin:0;">🏆 Ranking (Todos - paginado)</h3>
+    <div class="lbControls" style="display:flex; gap:10px; align-items:center;">
+      <button id="lbPrevBtn" class="lbBtn" type="button" onclick="lbPrev()">◀</button>
+      <span id="lbPageInfo" style="opacity:.9; font-weight:700;">1</span>
+      <button id="lbNextBtn" class="lbBtn" type="button" onclick="lbNext()">▶</button>
+      <button class="lbBtn" type="button" onclick="cargarLeaderboard()">Actualizar</button>
+    </div>
+  </div>
+  <p class="lbNote" id="lbStatus">Inicia sesión para ver el ranking.</p>
+  <div class="lbList" id="leaderboardList"></div>
+</div>
 
 <button class="roundbtn web" type="button" onclick="abrirWeb()"
         title="Abre el sitio web SmartEbook (Google Sites) en una pestaña nueva.">Neuroaprendizaje del Inglés 🌐</button>
