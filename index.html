@@ -3,87 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Neuroverbs Real-Time</title>
+    <title>Neuroverbs - Sistema de Autenticación y XP</title>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
-        :root { --purple: #65116B; --orange: #F28B16; }
-        body { font-family: sans-serif; background: #0b1220; color: white; display: flex; flex-direction: column; align-items: center; }
-        #leaderboard-container { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; width: 300px; margin-top: 20px; border: 1px solid var(--purple); }
-        .leader-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .xp-val { color: var(--orange); font-weight: bold; }
-        #user-hud { background: var(--purple); padding: 10px 20px; border-radius: 30px; margin: 10px; }
+        :root { --purple: #65116B; --orange: #F28B16; --bg: #0b1220; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; align-items: center; }
+        
+        /* HUD de Usuario */
+        .user-header { background: var(--purple); width: 100%; padding: 15px; display: flex; justify-content: space-around; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .xp-display { font-size: 1.5rem; font-weight: bold; color: var(--orange); }
+
+        /* Leaderboard */
+        #leaderboard-card { background: rgba(255,255,255,0.05); border: 1px solid var(--purple); border-radius: 15px; padding: 20px; width: 90%; max-width: 400px; margin-top: 30px; }
+        .leader-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .leader-name { color: #eee; }
+        .leader-xp { color: var(--orange); font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <div id="user-hud">
-        XP Actual: <span id="local-xp">0</span>
+    <div class="user-header">
+        <div>Neuroverbs Status</div>
+        <div class="xp-display">XP: <span id="local-xp">0</span></div>
     </div>
 
-    <div id="g_id_onload"
-         data-client_id="932013722424-9uoc8vlc0b252qeuk5o81bsnj3th0ruk.apps.googleusercontent.com"
-         data-callback="handleCredentialResponse"
-         data-auto_prompt="false">
+    <div style="margin-top: 20px;">
+        <div id="g_id_onload"
+             data-client_id="932013722424-9uoc8vlc0b252qeuk5o81bsnj3th0ruk.apps.googleusercontent.com"
+             data-callback="handleCredentialResponse"
+             data-auto_prompt="false">
+        </div>
+        <div class="g_id_signin" data-type="standard"></div>
     </div>
-    <div class="g_id_signin" data-type="standard"></div>
 
-    <div id="leaderboard-container">
-        <h3 style="text-align:center; color: var(--orange);">Ranking Top 10</h3>
-        <div id="leaderboard-list">Cargando...</div>
+    <div id="leaderboard-card">
+        <h2 style="text-align: center; color: var(--orange); margin-top: 0;">Top Ranking</h2>
+        <div id="leaderboard-list">Cargando posiciones...</div>
     </div>
 
     <script>
-        // CONFIGURACIÓN: PEGA TU URL DE DESPLIEGUE AQUÍ
-        const SCRIPT_URL = "REEMPLAZA_CON_TU_URL_DE_APPS_SCRIPT"; 
+        // --- CONFIGURACIÓN ---
+        // 1. Despliega tu Apps Script y pega la URL aquí:
+        const SCRIPT_URL = "TU_URL_DE_APPS_SCRIPT_AQUI"; 
         
         let userToken = localStorage.getItem('neuroToken') || null;
-        let currentXP = 0;
+        let currentXP = parseInt(localStorage.getItem('neuroXP')) || 0;
 
+        document.getElementById('local-xp').innerText = currentXP;
+
+        // Manejar el login exitoso
         function handleCredentialResponse(response) {
             userToken = response.credential;
             localStorage.setItem('neuroToken', userToken);
-            console.log("Sesión Iniciada");
-            refreshLeaderboard();
+            console.log("Usuario autenticado");
+            syncXP(); // Sincronizar apenas loguee
         }
 
-        // Simulación de ganar puntos (Llama a esto en tu juego)
-        function ganarPuntos(cantidad) {
-            currentXP += cantidad;
+        /**
+         * Llama a esta función cada vez que el usuario gane puntos en el juego
+         */
+        function addXP(puntos) {
+            currentXP += puntos;
             document.getElementById('local-xp').innerText = currentXP;
-            syncWithServer();
+            localStorage.setItem('neuroXP', currentXP);
+            syncXP();
         }
 
-        async function syncWithServer() {
+        /**
+         * Envía los datos al servidor (Google Sheets)
+         */
+        async function syncXP() {
             if (!userToken) return;
-            // Usamos mode 'no-cors' para el POST a Apps Script
+            
+            // Usamos mode: 'no-cors' para evitar errores de redirección de Google
             fetch(SCRIPT_URL, {
                 method: 'POST',
                 mode: 'no-cors',
-                body: JSON.stringify({ idToken: userToken, xp: currentXP })
+                body: JSON.stringify({
+                    idToken: userToken,
+                    xp: currentXP
+                })
             });
         }
 
-        async function refreshLeaderboard() {
+        /**
+         * Carga el ranking en tiempo real
+         */
+        async function fetchLeaderboard() {
             try {
-                const res = await fetch(`${SCRIPT_URL}?action=leaderboard`);
-                const data = await res.json();
+                const response = await fetch(`${SCRIPT_URL}?action=leaderboard`);
+                const data = await response.json();
+                
                 if (data.ok) {
                     const html = data.leaderboard.map((u, i) => `
-                        <div class="leader-item">
-                            <span>${i+1}. ${u.name}</span>
-                            <span class="xp-val">${u.xp} XP</span>
+                        <div class="leader-row">
+                            <span class="leader-name">${i+1}. ${u.name}</span>
+                            <span class="leader-xp">${u.xp} XP</span>
                         </div>
                     `).join('');
-                    document.getElementById('leaderboard-list').innerHTML = html || "Sin registros";
+                    document.getElementById('leaderboard-list').innerHTML = html || "Sin jugadores aún";
                 }
             } catch (e) {
-                console.log("Buscando actualización...");
+                console.warn("Actualizando ranking...");
             }
         }
 
-        // Tiempo real: Refrescar cada 20 segundos
-        setInterval(refreshLeaderboard, 20000);
-        window.onload = refreshLeaderboard;
+        // Refrescar cada 30 segundos para "tiempo real"
+        setInterval(fetchLeaderboard, 30000);
+        window.onload = fetchLeaderboard;
     </script>
 </body>
 </html>
