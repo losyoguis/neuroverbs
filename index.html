@@ -430,6 +430,16 @@
       cursor:pointer; text-transform:uppercase;
       transition:.2s;
     }
+
+    .btn-associar{
+      /* Responsive label wrapping */
+      white-space:normal;
+      line-height:1.15;
+      text-transform:none;
+      padding:16px 18px;
+      font-size:clamp(0.95rem,2.6vw,1.05rem);
+    }
+
     .btn-main:hover{background:var(--secondaryHover); transform:translateY(-1px);}
 
     .audio{
@@ -2314,7 +2324,7 @@ window.addEventListener("load", () => {
         data-help="Escucha la pronunciación del verbo en C3 (Participio)."
         title="Escucha la pronunciación del verbo en C3 (Participio).">🔊 LISTENING C3</button>
 </div>
-<button class="btn-main" onclick="validar()">CONECTAR NEURONAS</button>
+<button class="btn-main btn-associar" onclick="validar()">Asociar - Repetir y Conectar Neuronas</button>
     <div id="msg"></div>
 
     <div class="nav" id="readingNav" style="margin-top:18px; display:none;">
