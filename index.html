@@ -2295,7 +2295,7 @@ window.addEventListener("load", () => {
 
       <div class="voiceChip" id="voiceChip">
         <span>Modo:</span> <small id="voiceModeLabel">Voz Activa</small>
-        <span style="opacity:.85;font-weight:950" id="voiceModeMiniHint">Sujeto → Verbo → Complemento</span>
+        <span style="opacity:.85;font-weight:950" id="voiceModeMiniHint">Sujeto → Verbo</span>
       </div>
 
       <ul id="pistaLista"></ul>
@@ -3679,10 +3679,14 @@ function setVoice(mode){
   const hint = document.getElementById("voiceModeMiniHint");
   if(voiceMode==="active"){
     label.textContent = "Voz Activa";
-    hint.textContent = "Sujeto → Verbo → Complemento";
+    hint.textContent = (currentRound===2)
+      ? "Sujeto → Verbo → Complemento"
+      : "Sujeto → Verbo";
   }else{
     label.textContent = "Voz Pasiva";
-    hint.textContent = "Objeto → BE → V3 (+ by agente)";
+    hint.textContent = (currentRound===2)
+      ? "Objeto → BE → V3 (+ by agente)"
+      : "Objeto → BE → V3";
   }
 
   // si ya estaba abierto el master, regenera para el verbo actual
@@ -3711,9 +3715,10 @@ function setRound(n){
   document.getElementById("roundHint").textContent =
     (currentRound===2)
       ? "Round 2: Pronombre + Verbo + Complemento"
-      : "Round 1: oraciones básicas";
+      : "Round 1: Pronombre + Verbo";
 
   actualizarDias();
+  setVoice(voiceMode);
 }
 
 /* ===========================
