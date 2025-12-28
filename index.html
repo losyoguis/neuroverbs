@@ -1722,7 +1722,7 @@ box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);;justify-content:flex-start;text-ali
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <div class="authBar" id="authBar">
-  <div id="googleBtn" data-help="🔑 Inicia sesión con Google para guardar tus XP y aparecer en el ranking."></div>
+  <div id="googleBtn" data-help="🔑 Inicia sesión con Google para guardar tus XP y aparecer en el ranking. Si solo algunos usuarios pueden entrar, revisa que el OAuth esté en PRODUCCIÓN (o tipo INTERNO en Workspace); en modo PRUEBA solo ingresan usuarios de prueba."></div>
   <div class="userChip" id="userChip" style="display:none;">
     <img id="userPic" alt="Foto" />
     <div class="userMeta">
@@ -1738,7 +1738,8 @@ box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);;justify-content:flex-start;text-ali
 // Google Auth (GSI) + Sheets (Apps Script WebApp)
 // =========================
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxeSJfmdiRzkhfDZqnjjxg1FOAVOwsiUTGa7A118MyqGRrXPNsUJaV8HyzyxbOw-fYW/exec";
-const OAUTH_CLIENT_ID = "932013722424-9uoc8vlc0b252qeuk5o81bsnj3th0ruk.apps.googleusercontent.com";
+const OAUTH_CLIENT_ID = "637468265896-5olh8rhf76setm52743tashi3vq1la67.apps.googleusercontent.com";
+const ALLOWED_DOMAIN = "iemanueljbetancur.edu.co"; // solo cuentas institucionales
 
 // Leaderboard paging
 const LB_PAGE_SIZE = 10;
@@ -1930,9 +1931,9 @@ function cargarLeaderboardPage() {
   if (sec) sec.style.display = "block";
   if (st) st.textContent = "Cargando ranking...";
   if (list) list.innerHTML = "";
-  if (pageInfo) pageInfo.textContent = String(Math.floor(__lbOffset / LB_PAGE_SIZE) + 1);
+  if (pageInfo) pageInfo.textContent = "Top 10";
 
-  const url = WEB_APP_URL + "?action=leaderboard&limit=" + encodeURIComponent(LB_PAGE_SIZE) + "&offset=" + encodeURIComponent(__lbOffset);
+  const url = WEB_APP_URL + "?action=leaderboard&limit=" + encodeURIComponent(LB_PAGE_SIZE) + "&offset=" + encodeURIComponent(0);
   jsonpRequest(url).then((data) => {
     renderLeaderboard(data);
   }).catch((err) => {
@@ -1972,18 +1973,18 @@ function renderLeaderboard(data) {
 
   sec.style.display = "block";
   if (rows.length) {
-    st.textContent = (total ? ("Participantes: " + total + " — mostrando " + start + "-" + end) : ("Mostrando " + start + "-" + end));
+    st.textContent = (total ? ("Participantes: " + total + " — mostrando Top 10") : "Mostrando Top 10");
   } else {
     st.textContent = "Aún no hay participantes con XP. Inicia sesión y gana XP para aparecer.";
   }
 
-  if (pageInfo) pageInfo.textContent = String(Math.floor(__lbOffset / LB_PAGE_SIZE) + 1);
+  if (pageInfo) pageInfo.textContent = "Top 10";
 
   // Habilitar / deshabilitar flechas
   const prevBtn = document.getElementById("lbPrevBtn");
   const nextBtn = document.getElementById("lbNextBtn");
-  if (prevBtn) prevBtn.disabled = (__lbOffset <= 0);
-  if (nextBtn) nextBtn.disabled = (total ? (__lbOffset + LB_PAGE_SIZE >= total) : true);
+  if (prevBtn) prevBtn.disabled = true;
+  if (nextBtn) nextBtn.disabled = true;
 
   // Render cards
   list.innerHTML = rows.map((r, i) => {
