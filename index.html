@@ -1815,37 +1815,44 @@ function jsonpRequest(url) {
 
 // POST cross-domain sin CORS (Apps Script no expone CORS headers).
 // En Apps Script, doPost debe parsear JSON desde text/plain.
-function postToSheets(action, extra={}) {
-      try {
-        const idToken = localStorage.getItem('google_id_token') || '';
-        const profile = JSON.parse(localStorage.getItem('user_profile') || '{}');
-        const payload = Object.assign({
-          action: action,
-          idToken: idToken,
-          // fallback fields (Apps Script also decodes from idToken)
-          sub: profile.sub || '',
-          email: profile.email || '',
-          name: profile.name || profile.given_name || '',
-          picture: profile.picture || ''
-        }, extra || {});
+function postToSheets(actionOrPayload, extra={}) {
+  // Soporta: postToSheets("upsert", {xpDelta: 10})  o  postToSheets({action:"upsert", idToken, xpDelta:10})
+  let payload = {};
+  if (actionOrPayload && typeof actionOrPayload === "object") {
+    payload = Object.assign({}, actionOrPayload, extra || {});
+  } else {
+    payload = Object.assign({ action: String(actionOrPayload || "upsert") }, extra || {});
+  }
 
-        const payloadEl = document.getElementById('sheetsPayload');
-        const formEl = document.getElementById('sheetsForm');
-        if (!payloadEl || !formEl) {
-          console.warn('Sheets form not found, cannot post.');
-          return;
-        }
-        payloadEl.value = JSON.stringify(payload);
-        formEl.submit();
-      } catch (err) {
-        console.warn('postToSheets failed:', err);
-      }
-    }
+  // Asegurar acción string
+  if (payload.action && typeof payload.action !== "string") {
+    payload.action = String(payload.action);
+  }
+  if (!payload.action) payload.action = "upsert";
+
+  // ID Token: prioridad -> payload.idToken -> localStorage
+  if (!payload.idToken) {
+    payload.idToken = localStorage.getItem("id_token") || localStorage.getItem("idToken") || "";
+  }
+
+  // Si no hay token, no enviamos (evita llamadas inválidas)
+  if (!payload.idToken) return;
+
+  // Enviar por FORM POST oculto (evita CORS / preflight)
+  const form = document.getElementById("sheetForm");
+  const payloadEl = document.getElementById("sheetPayload");
+  if (!form || !payloadEl) return;
+
+  form.action = WEB_APP_URL;
+  payloadEl.value = JSON.stringify(payload);
+  form.submit();
+}
 
 function registrarEnSheets(idToken) {
-  // upsert sin sumar XP
-  postToSheets({ action: "upsert", idToken, xpDelta: 0 });
+  // Solo registra/actualiza usuario en Sheets (no suma XP)
+  postToSheets({ action: "upsert", idToken: idToken, xpDelta: 0 });
 }
+
 
 function queueXpDelta(idToken, xpDelta) {
   if (!idToken) return;
