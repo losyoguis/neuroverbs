@@ -459,6 +459,8 @@
       display:flex; justify-content:center; align-items:center;
       gap:18px; margin-top:6px;
     }
+    .navRowBelowIllustration{width:100%; display:flex; justify-content:center; margin:10px 0 6px;}
+
     .nav button{
       cursor:pointer; border:none; background:none; font-size:2rem;
     }
@@ -2304,13 +2306,13 @@ window.addEventListener("load", () => {
       <div class="verbIllustration" id="verbIllustration" aria-label="Imagen del verbo"></div>
     </div>
 
-    <!-- ✅ Navegación (flechas) movida debajo de la imagen del verbo -->
-
-
-    <div class="nav" id="readingNav" style="margin-top:18px; display:none;">
-      <button onclick="cambiar(-1)">⬅️</button>
-      <span id="progreso2" style="font-weight:900; color:var(--muted);">0 de 0</span>
-      <button onclick="cambiar(1)">➡️</button>
+    <!-- ✅ Navegación (flechas) en la FILA DE ABAJO (separada del recuadro de la imagen) -->
+    <div class="navRowBelowIllustration">
+      <div class="nav" id="readingNav" style="display:none;">
+        <button onclick="cambiar(-1)" aria-label="Anterior">⬅️</button>
+        <span id="progreso2" style="font-weight:900; color:var(--muted);">0 de 0</span>
+        <button onclick="cambiar(1)" aria-label="Siguiente">➡️</button>
+      </div>
     </div>
 
 
