@@ -1815,26 +1815,32 @@ function jsonpRequest(url) {
 
 // POST cross-domain sin CORS (Apps Script no expone CORS headers).
 // En Apps Script, doPost debe parsear JSON desde text/plain.
-function postToSheets(payload) {
-  const body = JSON.stringify(payload);
-  // Prefer fetch keepalive (más confiable que beacon en algunos entornos)
-  try {
-    fetch(WEB_APP_URL, {
-      method: "POST",
-      mode: "no-cors",
-      keepalive: true,
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body
-    }).catch(()=>{});
-  } catch(e) {}
+function postToSheets(action, extra={}) {
+      try {
+        const idToken = localStorage.getItem('google_id_token') || '';
+        const profile = JSON.parse(localStorage.getItem('user_profile') || '{}');
+        const payload = Object.assign({
+          action: action,
+          idToken: idToken,
+          // fallback fields (Apps Script also decodes from idToken)
+          sub: profile.sub || '',
+          email: profile.email || '',
+          name: profile.name || profile.given_name || '',
+          picture: profile.picture || ''
+        }, extra || {});
 
-  // Fallback beacon
-  try {
-    if (navigator.sendBeacon) {
-      navigator.sendBeacon(WEB_APP_URL, new Blob([body], { type: "text/plain;charset=utf-8" }));
+        const payloadEl = document.getElementById('sheetsPayload');
+        const formEl = document.getElementById('sheetsForm');
+        if (!payloadEl || !formEl) {
+          console.warn('Sheets form not found, cannot post.');
+          return;
+        }
+        payloadEl.value = JSON.stringify(payload);
+        formEl.submit();
+      } catch (err) {
+        console.warn('postToSheets failed:', err);
+      }
     }
-  } catch(e) {}
-}
 
 function registrarEnSheets(idToken) {
   // upsert sin sumar XP
@@ -2047,7 +2053,8 @@ function onGoogleCredential(response) {
   if (sec) sec.style.display = "block";
   resetLeaderboardPaging();
   cargarLeaderboardPage();
-  fetchAndApplyUserFromSheets();
+  postToSheets('upsert', { xpDelta: 0 });
+        fetchAndApplyUserFromSheets();
 }
 
 function initGoogleAuthAndSync() {
@@ -5655,5 +5662,12 @@ function validateSpelling(){
 <!-- XP sync watcher removed: XP is synced only from exercise actions + server fetch to avoid double-counting -->
 
   <div id="globalTooltip" aria-hidden="true"><div class="gt-title" id="gtTitle" style="display:none"></div><div class="gt-text" id="gtText"></div><div class="gt-arrow" id="gtArrow"></div></div>
+
+<!-- Sheets write sink (no-CORS, works with "internal" web-app deployments) -->
+<iframe name="sheetsSink" id="sheetsSink" style="display:none;width:0;height:0;border:0;"></iframe>
+<form id="sheetsForm" target="sheetsSink" method="POST" action="https://script.google.com/macros/s/AKfycbxeSJfmdiRzkhfDZqnjjxg1FOAVOwsiUTGa7A118MyqGRrXPNsUJaV8HyzyxbOw-fYW/exec" style="display:none;">
+  <input type="hidden" name="payload" id="sheetsPayload" value="">
+</form>
+
 </body>
 </html>
