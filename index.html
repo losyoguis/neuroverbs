@@ -1841,12 +1841,8 @@ function postToSheets(payload) {
 function registrarEnSheets(idToken) {
   // upsert sin sumar XP
   postToSheets({ action: "upsert", idToken, xpDelta: 0 });
-  // Fallback JSONP (GET) si POST/CORS falla
-  try {
-    jsonpRequest(WEB_APP_URL, { action: "upsert", idToken, xpDelta: 0 }, () => {});
-  } catch (e) {}
-
 }
+
 
 function queueXpDelta(idToken, xpDelta) {
   if (!idToken) return;
@@ -1856,14 +1852,10 @@ function queueXpDelta(idToken, xpDelta) {
   // Evitar sumar XP por sincronizaciones internas / refresh
   if (Date.now() < window.__suppressXpSyncUntil) return;
 
+  // ✅ Siempre usamos el mismo endpoint/acción que soporta el backend (doPost -> action=upsert)
   postToSheets({ action: "upsert", idToken, xpDelta: delta });
-
-  // Fallback JSONP (GET) si POST/CORS falla
-  try {
-    jsonpRequest(WEB_APP_URL, { action: "xp", idToken, xpDelta: delta }, () => {});
-  } catch (e) {}
-
 }
+
 
 // Trae el XP del usuario desde Sheets y lo aplica (Sheets manda)
 async function fetchAndApplyUserFromSheets() {
