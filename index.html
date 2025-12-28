@@ -1737,7 +1737,14 @@ box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);;justify-content:flex-start;text-ali
 // =========================
 // Google Auth (GSI) + Sheets (Apps Script WebApp)
 // =========================
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxeSJfmdiRzkhfDZqnjjxg1FOAVOwsiUTGa7A118MyqGRrXPNsUJaV8HyzyxbOw-fYW/exec";
+const DEFAULT_WEB_APP_URL = "https://script.google.com/a/macros/iemanueljbetancur.edu.co/s/AKfycbxZwOwimHNVWIFXIbFyDy_IqZbQsPpgTuUcDWb9VVge5Mdba_Wu48Hci7gFQLtTbhPG/exec";
+// Tip: si vuelves a implementar el Web App, puedes pasar la nueva URL así:
+//   tuapp.html?webapp=PASTE_AQUI_LA_URL
+// y queda guardada en localStorage automáticamente.
+const WEB_APP_URL = (new URLSearchParams(location.search).get("webapp")
+  || localStorage.getItem("WEB_APP_URL")
+  || DEFAULT_WEB_APP_URL);
+try{ localStorage.setItem("WEB_APP_URL", WEB_APP_URL); }catch(_){ }
 const ALLOWED_DOMAIN = "iemanueljbetancur.edu.co";
 const ALLOWED_EMAIL_SUFFIX = "@"+ALLOWED_DOMAIN;
 const OAUTH_CLIENT_ID = "637468265896-5olh8rhf76setm52743tashi3vq1la67.apps.googleusercontent.com";
