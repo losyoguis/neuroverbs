@@ -3047,25 +3047,32 @@ function unlock(id, icon, title, desc){
 }
 function awardXP(base, reason="xp"){
   const lvlBefore = computeLevel(xp).lvl;
+  const fixedTen = (Number(base) === 10);
 
   // Multiplicadores suaves (no rompe la economía)
   let mult = 1;
-  if(reason==="connect"){
+  if(!fixedTen && reason==="connect"){
     if(streak>=10) mult += 0.10;
     if(streak>=20) mult += 0.15;
     if(streak>=30) mult += 0.20;
   }
-  if(reason==="practice"){
+  if(!fixedTen && reason==="practice"){
     if(streak>=10) mult += 0.05;
     if(streak>=20) mult += 0.10;
   }
-
-  const gained = Math.max(1, Math.round(base * mult));
+  let gained;
+  if(Number(base) <= 0){
+    gained = 0;
+  } else if(fixedTen){
+    gained = 10; // ✅ Solo 10 XP por verbo correcto
+  } else {
+    gained = Math.max(1, Math.round(Number(base) * mult));
+  }
   xp += gained;
   dailyXP += gained;
 
   // Bonos por hitos de racha (cada 5 aciertos seguidos)
-  if(reason==="connect" && streak>0 && streak % 5 === 0){
+  if(!fixedTen && reason==="connect" && streak>0 && streak % 5 === 0){
     xp += 10;
     dailyXP += 10;
     toastAchievement("🔥", "Bonus de racha", `+10 XP por racha ${streak}.`);
@@ -4588,13 +4595,13 @@ function connectKeyFor(v){
   return `${voiceMode}|${currentRound}|${v.g}|${v.d}|${c1}`;
 }
 function addConnectXP(v){
-  // ✅ Ahora se permite ganar XP cada vez que aciertes (repetible)
-  return awardXP(25, "connect");
+  // ✅ Solo 10 XP por verbo correcto
+  return awardXP(10, "connect");
 }
 
 function addSpellingXP(v){
-  // ✅ Repetible: cada acierto suma XP
-  return awardXP(15, "spelling");
+  // ✅ Solo 10 XP por verbo correcto
+  return awardXP(10, "spelling");
 }
 
 
