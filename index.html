@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Neuroaprendizaje de los Verbos Irregulares - Voz Activa / Voz Pasiva</title>
   <style>
-    :root{ --authbar-h: 0px; 
+    :root{
       --purple:#65116B;
       --orange:#F28B16;
       --blue:#2563eb; /* azul para C2 */
@@ -43,7 +43,7 @@
     }
 
     body.has-floating-stats{
-      padding-top: 0; 
+      padding-top: calc(var(--hudSafe, 160px) + 12px);
     }
 
     .app{
@@ -92,7 +92,7 @@
       margin:0;
 
       position: fixed !important;
-      top: calc(12px + var(--authbar-h)) !important;
+      top: 12px !important;
       left: 50% !important;
       transform: translateX(-50%) !important;
 
@@ -1468,27 +1468,24 @@
   
 /* ====== AUTH BAR (Google button + usuario) ====== */
 .authBar{
-  position:fixed;
-  left:50%;
-  transform:translateX(-50%);
-  top:140px; /* JS reajusta según el alto real del menú de puntuación */
-  right:auto;
-  width:min(1100px, calc(100vw - 24px));
+  width:min(1100px, 96vw);
+  margin: 14px auto 10px;
   display:flex;
+  align-items:center;
   justify-content:center;
   gap:12px;
-  z-index:890; /* debajo del menú de puntuación (900) pero encima del resto */
-  pointer-events:auto;
-}
+  flex-wrap:wrap;
 
-@media (max-width: 600px){
-  .authBar{
-    top: 8px;
-    right: 8px;
-    padding: 8px 10px;
-    gap: 10px;
-    max-width: 96vw;
-  }
+  position: sticky;
+  top: 10px;
+  z-index: 99999;
+
+  background: rgba(0,0,0,.18);
+  border: 1px solid rgba(255,255,255,.18);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 10px 12px;
 }
 #googleBtn{ display:flex; justify-content:center; min-height:44px; }
 .userChip{
@@ -1722,22 +1719,6 @@ box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);;justify-content:flex-start;text-ali
 
    <!-- ✅✅✅ CONSOLE GOOGLE -->
 
-
-
-<div class="leaderboardWrap" id="leaderboardSection" style="display:none;">
-  <div class="lbHeader">
-    <h3 style="margin:0;">🏆 Ranking (Todos - paginado)</h3>
-    <div class="lbControls" style="display:flex; gap:10px; align-items:center;">
-      <button id="lbPrevBtn" class="lbBtn" type="button" onclick="lbPrev()">◀</button>
-      <span id="lbPageInfo" style="opacity:.9; font-weight:700;">1</span>
-      <button id="lbNextBtn" class="lbBtn" type="button" onclick="lbNext()">▶</button>
-      <button class="lbBtn" type="button" onclick="cargarLeaderboard()">Actualizar</button>
-    </div>
-  </div>
-  <p class="lbNote" id="lbStatus">Inicia sesión para ver el ranking.</p>
-  <div class="lbList" id="leaderboardList"></div>
-</div>
-
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <div class="authBar" id="authBar">
@@ -1788,7 +1769,6 @@ function showUserChip(profile) {
   if (pic) {
     pic.src = profile.picture || "";
     pic.style.display = profile.picture ? "block" : "none";
-    updateFixedBarsOffset();
   }
   if (name) name.textContent = profile.name || "Usuario";
   if (email) email.textContent = profile.email || "";
@@ -1797,7 +1777,6 @@ function showUserChip(profile) {
 function hideUserChip() {
   const chip = document.getElementById("userChip");
   if (chip) chip.style.display = "none";
-    updateFixedBarsOffset();
 }
 
 function clearSession() {
@@ -2071,14 +2050,45 @@ function onGoogleCredential(response) {
   fetchAndApplyUserFromSheets();
 }
 
+function initGoogleAuthAndSync() {
+  const btn = document.getElementById("googleBtn");
+  if (!btn) return;
 
-  // --- Ajuste automático: dejar la barra de autenticación por encima de la barra de puntuación ---
-  function updateFixedBarsOffset(){
-  // El menú de puntuación es el elemento principal fijo.
-  // La autenticación se posiciona debajo del menú (ver updateHudSafe),
-  // por eso no usamos más --authbar-h como offset.
-  document.documentElement.style.setProperty("--authbar-h", "0px");
-  updateHudSafe();
+  // Si ya hay sesión guardada, pinta UI + carga data
+  const token = localStorage.getItem("google_id_token");
+  const profRaw = localStorage.getItem("user_profile");
+  if (token && profRaw) {
+    try {
+      const prof = JSON.parse(profRaw);
+      showUserChip(prof);
+      const sec = document.getElementById("leaderboardSection");
+      if (sec) sec.style.display = "block";
+      resetLeaderboardPaging();
+      cargarLeaderboardPage();
+      fetchAndApplyUserFromSheets();
+    } catch(_){}
+  }
+
+  // Render button una vez
+  try {
+    if (!btn.__rendered) {
+      google.accounts.id.initialize({
+        client_id: OAUTH_CLIENT_ID,
+        callback: onGoogleCredential,
+        ux_mode: "popup"
+      });
+      google.accounts.id.renderButton(btn, {
+        theme: "outline",
+        size: "large",
+        shape: "pill",
+        text: "signin_with"
+      });
+      btn.__rendered = true;
+    }
+  } catch (err) {
+    console.error("Error init Google Auth:", err);
+    btn.innerHTML = '<button class="lbBtn" type="button" onclick="location.reload()">Reintentar Login</button>';
+  }
 }
 
 window.addEventListener("load", () => {
@@ -2096,46 +2106,64 @@ window.addEventListener("load", () => {
 </script>
 
 <!-- Ranking abajo (paginado 10 por página) -->
-
-<!-- ✅✅✅ BARRA DE PUNTOS FUERA DE .app -->
-<div class="stats" aria-label="Barra de puntuación">
-  <div id="statsBar">
-    <div class="statBox" data-help="🔥 Tiros seguidos practicando. Si fallas o faltas, puede bajar (Freeze te protege).">
-      <span class="stat-label">RACHA</span>
-      <span class="stat-value" id="streak">0</span>
-    </div>
-    <div class="statBox" data-help="⭐ Puntos totales acumulados en la app.">
-      <span class="stat-label">TOTAL XP</span>
-      <span class="stat-value" id="xp">0</span>
-    </div>
-    <div class="statBox" data-help="🎯 Porcentaje de respuestas correctas.">
-      <span class="stat-label">PRECISIÓN</span>
-      <span class="stat-value" id="acc">100%</span>
-    </div>
-    <div class="statBox" data-help="🏅 Tu nivel sube con XP.">
-      <span class="stat-label">NIVEL</span>
-      <span class="stat-value" id="level">1</span>
-    </div>
-    <div class="statBox" data-help="❤️ Vidas disponibles. Si fallas pierdes una (Freeze puede ayudarte).">
-      <span class="stat-label">VIDAS</span>
-      <span class="stat-value" id="hearts">❤️❤️❤️❤️❤️</span>
-    </div>
-    <div class="statBox" data-help="🧊 Freeze protege tu racha si fallas.">
-      <span class="stat-label">FREEZE</span>
-      <span class="stat-value" id="freeze">0</span>
+<div class="leaderboardWrap" id="leaderboardSection" style="display:none;">
+  <div class="lbHeader">
+    <h3 style="margin:0;">🏆 Ranking (Todos - paginado)</h3>
+    <div class="lbControls" style="display:flex; gap:10px; align-items:center;">
+      <button id="lbPrevBtn" class="lbBtn" type="button" onclick="lbPrev()">◀</button>
+      <span id="lbPageInfo" style="opacity:.9; font-weight:700;">1</span>
+      <button id="lbNextBtn" class="lbBtn" type="button" onclick="lbNext()">▶</button>
+      <button class="lbBtn" type="button" onclick="cargarLeaderboard()">Actualizar</button>
     </div>
   </div>
-
-  <div class="goalWrap">
-    <div class="goalTop">
-      <div class="goalLabel">META DIARIA</div>
-      <div class="goalValue" id="dailyGoalText" data-help="📅 Objetivo de XP del día. Completa la meta para crear hábito (la racha se fortalece).">0/200</div>
-    </div>
-    <div class="goalBar"><div class="goalFill" id="dailyGoalFill" style="width:0%"></div></div>
-  </div>
+  <p class="lbNote" id="lbStatus">Inicia sesión para ver el ranking.</p>
+  <div class="lbList" id="leaderboardList"></div>
 </div>
+<!-- ✅✅✅ BARRA DE PUNTOS FUERA DE .app -->
+  
+  <div class="stats" id="statsBar">
+    <div class="statBox" data-tip="🔥 Tiros seguidos practicando. Si fallas o faltas, puede bajar (Freeze te protege)."><span class="stat-label">Racha</span><span class="stat-value" id="streak">0</span></div>
+    <div class="statBox" data-tip="⭐ Puntos acumulados por respuestas correctas en la app."><span class="stat-label">Total XP</span><span class="stat-value" id="xp">0</span></div>
+    <div class="statBox" data-tip="🎯 Porcentaje de aciertos: correctas ÷ intentos."><span class="stat-label">Precisión</span><span class="stat-value" id="acc">100%</span></div>
 
-<div class="app">
+    <div class="statBox" data-tip="🧬 Subes de nivel cada 250 XP (aprox.)."><span class="stat-label">Nivel</span><span class="stat-value" id="level">1</span></div>
+    <div class="statBox" data-tip="❤️ Intentos disponibles. Un error consume 1. Se recuperan con el tiempo."><span class="stat-label">Vidas</span><span class="stat-value heartsText" id="hearts">❤️❤️❤️❤️❤️</span></div>
+    <div class="statBox" data-tip="🧊 Protege tu racha cuando fallas o faltas. Se gana por hitos de racha."><span class="stat-label">Freeze</span><span class="stat-value" id="freeze">0</span></div>
+
+    <div class="goalBox" data-tip="📅 Objetivo de XP del día. Completa la meta para crear hábito y mantener el ritmo." aria-label="Meta diaria">
+      <div class="goalTop">
+        <span class="goalLabel">Meta diaria</span>
+        <span class="goalValue" id="dailyGoalText">0/200</span>
+      </div>
+      <div class="goalBar"><div class="goalFill" id="dailyGoalFill"></div></div>
+    </div>
+  </div>
+
+
+  <!-- ✅✅✅ BOTÓN INFERIOR SIEMPRE VISIBLE: ASISTENTE IA -->
+  <a class="ebook-float" href="https://chatgpt.com/g/g-688f92ef15e88191a178208283c76eb6-neuro-aprendizaje-de-los-verbos-irregulares" target="_blank" rel="noopener">ASISTENTE IA 🤖</a>
+
+
+  <div class="motivation-backdrop" id="motivationBackdrop"></div>
+
+  <div class="motivation" id="motivationToast" role="dialog" aria-live="polite" aria-modal="true">
+    <div class="motivation-card">
+      <button class="motivation-x" type="button" onclick="hideMotivation()">✕</button>
+      <div class="motivation-top">
+        <span class="motivation-badge">🔥 ¡Conexión exitosa!</span>
+        <span style="color:#cbd5e1;font-weight:900;">Siguiente paso: <b>CONJUGAR</b></span>
+      </div>
+      <div class="motivation-lines">
+        <div class="motivation-en" id="motivationEN"></div>
+        <div class="motivation-es" id="motivationES"></div>
+      </div>
+      <div class="motivation-action">
+        <button class="btn-conjugar" type="button" onclick="conjugarDesdeModal()">CONJUGAR ✅</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="app">
 
     <div class="brand">
       <h1>Neuroaprendizaje de los Verbos Irregulares</h1>
@@ -2406,31 +2434,10 @@ function renderGroupHint(groupId){
 
 /* ✅✅✅ Altura segura para modales (se ajusta al alto real de la barra fija) */
 function updateHudSafe(){
-  const stats = document.getElementById("statsBar");
-  const auth  = document.getElementById("authBar");
-
-  // Coloca autenticación centrada debajo del menú de puntuación
-  if(stats && auth){
-    const rStats = stats.getBoundingClientRect();
-    auth.style.position = "fixed";
-    auth.style.left = "50%";
-    auth.style.right = "auto";
-    auth.style.transform = "translateX(-50%)";
-    auth.style.top = Math.ceil(rStats.bottom + 10) + "px";
-    auth.style.zIndex = "890";
-  }
-
-  if(!stats) return;
-  const bottoms = [];
-  const r1 = stats.getBoundingClientRect();
-  bottoms.push(r1.bottom);
-
-  if(auth){
-    const r2 = auth.getBoundingClientRect();
-    bottoms.push(r2.bottom);
-  }
-
-  const safe = Math.max(0, Math.ceil(Math.max.apply(null, bottoms) + 12)); // margen debajo
+  const bar = document.getElementById("statsBar");
+  if(!bar) return;
+  const r = bar.getBoundingClientRect();
+  const safe = Math.max(0, Math.ceil(r.bottom + 12)); // deja un pequeño margen debajo
   document.documentElement.style.setProperty("--hudSafe", safe + "px");
 }
 function pinStatsBar(){
