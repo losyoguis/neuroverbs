@@ -1722,16 +1722,7 @@ box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);;justify-content:flex-start;text-ali
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 
-<div class="authBar" id="authBar">
-  <div id="googleBtn" data-help="🔑 Inicia sesión con Google para guardar tus XP y aparecer en el ranking. Si solo algunos usuarios pueden entrar, revisa que el OAuth esté en PRODUCCIÓN (o tipo INTERNO en Workspace); en modo PRUEBA solo ingresan usuarios de prueba."></div>
-  <div class="userChip" id="userChip" style="display:none;">
-    <img id="userPic" alt="Foto" />
-    <div class="userMeta">
-      <div class="userName" id="userName">Usuario</div>
-      <div class="userEmail" id="userEmail">—</div>
-    </div>
-  </div>
-</div>
+<!-- AUTH MOVED BELOW -->
 
 
 <script>
@@ -2360,6 +2351,19 @@ window.addEventListener("load", () => {
 
       <div style="flex-basis:100%; height:0;"></div>
 
+
+<!-- Login antes del Ranking -->
+<div class="authDomainLabel" style="text-align:center; margin: 8px 0 14px; font-weight: 800; color: #fff;">Acceder con @iemanueljbetancur.edu.co</div>
+<div class="authBar" id="authBar">
+  <div id="googleBtn" data-help="🔑 Inicia sesión con Google para guardar tus XP y aparecer en el ranking. Si solo algunos usuarios pueden entrar, revisa que el OAuth esté en PRODUCCIÓN (o tipo INTERNO en Workspace); en modo PRUEBA solo ingresan usuarios de prueba."></div>
+  <div class="userChip" id="userChip" style="display:none;">
+    <img id="userPic" alt="Foto" />
+    <div class="userMeta">
+      <div class="userName" id="userName">Usuario</div>
+      <div class="userEmail" id="userEmail">—</div>
+    </div>
+  </div>
+</div>
 <!-- Ranking abajo (paginado 10 por página) -->
 <div class="leaderboardWrap" id="leaderboardSection" style="display:none;">
   <div class="lbHeader">
