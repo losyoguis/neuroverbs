@@ -2304,6 +2304,19 @@ window.addEventListener("load", () => {
       <div class="verbIllustration" id="verbIllustration" aria-label="Imagen del verbo"></div>
     </div>
 
+    <!-- ✅ Navegación (flechas) movida debajo de la imagen del verbo -->
+
+
+    <div class="nav" id="readingNav" style="margin-top:18px; display:none;">
+      <button onclick="cambiar(-1)">⬅️</button>
+      <span id="progreso2" style="font-weight:900; color:var(--muted);">0 de 0</span>
+      <button onclick="cambiar(1)">➡️</button>
+    </div>
+
+
+
+
+
 
 
 
@@ -2326,14 +2339,6 @@ window.addEventListener("load", () => {
 </div>
 <button class="btn-main btn-associar" onclick="validar()">Asociar - Repetir y Conectar Neuronas</button>
     <div id="msg"></div>
-
-    <div class="nav" id="readingNav" style="margin-top:18px; display:none;">
-      <button onclick="cambiar(-1)">⬅️</button>
-      <span id="progreso2" style="font-weight:900; color:var(--muted);">0 de 0</span>
-      <button onclick="cambiar(1)">➡️</button>
-    </div>
-
-
     <div id="master">
       
 
