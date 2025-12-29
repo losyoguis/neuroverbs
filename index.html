@@ -1782,12 +1782,12 @@ box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);;justify-content:flex-start;text-ali
 }
 
 /* ✅ Ayuda (tooltips) del menú de puntuación: solo en pantallas grandes */
-@media (min-width: 768px){
+@media (min-width: 360px){
   #statsBar{ overflow-y: visible !important; }
 }
 
 /* En pantallas pequeñas (móvil/tablet), la barra mantiene swipe pero sin ayudas (tooltips) */
-@media (max-width: 767px){
+@media (max-width: 359px){
   #statsBar{ overflow-y: hidden !important; }
   #statsBar .statBox[data-tip]::after,
   #statsBar .goalBox[data-tip]::after,
@@ -5775,8 +5775,8 @@ function validateSpelling(){
       if(t) el.removeAttribute('title');
     });
 
-    // ✅ Desde TABLET hacia arriba (>=768px) habilitamos ayudas.
-    const mqHelp = window.matchMedia('(min-width: 768px)');
+    // ✅ Desde TABLET hacia arriba (>=360px) habilitamos ayudas.
+    const mqHelp = window.matchMedia('(min-width: 360px)');
 
     // Promueve data-tip -> data-help (para la barra de puntuación)
     document.querySelectorAll('[data-tip]').forEach(el=>{
@@ -5789,8 +5789,8 @@ function validateSpelling(){
 
     
 
-    // ✅ Ayuda para TODOS los botones desde TABLET (>=768px).
-    // En móvil (<768px) NO se muestra porque los listeners se cortan con mqHelp.matches.
+    // ✅ Ayuda para TODOS los botones desde TABLET (>=360px).
+    // En móvil (<360px) NO se muestra porque los listeners se cortan con mqHelp.matches.
     const __btnHelpMap = new Map([
       ['motivation-x', 'Cerrar este mensaje.'],
       ['btn-conjugar', 'Genera la conjugación según el modo y el verbo seleccionado.'],
@@ -5805,7 +5805,21 @@ function validateSpelling(){
       ['btn-main|ENTENDIDO', 'Cerrar y continuar con la práctica.'],
       ['btn-main|ASOCIAR', 'Confirmar y continuar con la asociación.'],
       ['aria|Anterior', 'Ir al elemento anterior.'],
-      ['aria|Siguiente', 'Ir al elemento siguiente.']
+      ['aria|Siguiente', 'Ir al elemento siguiente.'],
+      ['roundbtn|INSTRUCCIONES', '📌 Abre las instrucciones y recomendaciones para usar la app.'],
+      ['roundbtn ebook|E-BOOK', '📚 Abre el e‑book para estudiar la teoría y ejemplos antes de practicar.'],
+      ['btnRound1', '🎯 Inicia Round 1: practica solo PRONOMBRE + VERBO (sin complemento).'],
+      ['btnRound2', '🚀 Inicia Round 2: practica PRONOMBRE + VERBO + COMPLEMENTO.'],
+      ['btnActive', '✅ Cambia al modo Voz Activa para practicar oraciones en activa.'],
+      ['btnPassive', '🔁 Cambia al modo Voz Pasiva para practicar oraciones en pasiva.'],
+      ['btn-mini|REVIEW', '🧩 Abre REVIEW: repasa errores y refuerza los verbos que más fallas.'],
+      ['btn-audio btn-a', '🔊 Escucha la pronunciación del verbo en C1 (Present).'],
+      ['btn-audio btn-b', '🔊 Escucha la pronunciación del verbo en C2 (Past).'],
+      ['btn-audio btn-c', '🔊 Escucha la pronunciación del verbo en C3 (Participle).'],
+      ['roundbtn web|Neuroaprendizaje del Inglés', '🌐 Abre el sitio web con recursos del proyecto.'],
+      ['a|www.losyoguis.com', '🌐 Visita el portal de Los Yoguis.'],
+      ['arrow|⬅️', '⬅️ Ir al elemento anterior (día/verbo/anterior pregunta).'],
+      ['arrow|➡️', '➡️ Ir al siguiente elemento (día/verbo/siguiente pregunta).'],
     ]);
 
     function __inferHelpFor(el){
@@ -5822,6 +5836,11 @@ function validateSpelling(){
       // Prioridad 3: por clase + texto
       const cls = (el.className || '').toString().trim().replace(/\s+/g,' ');
       const txt = (el.textContent || '').trim().replace(/\s+/g,' ');
+
+      // Ayudas directas por texto (links/botones sin id)
+      if(txt === 'www.losyoguis.com') return __btnHelpMap.get('a|www.losyoguis.com') || 'Visitar www.losyoguis.com';
+      if(txt === '⬅️') return __btnHelpMap.get('arrow|⬅️') || 'Ir atrás';
+      if(txt === '➡️') return __btnHelpMap.get('arrow|➡️') || 'Ir adelante';
 
       // matching por clase exacta registrada
       if(cls && __btnHelpMap.has(cls)) return __btnHelpMap.get(cls);
@@ -5977,14 +5996,52 @@ let activeEl = null;
     window.addEventListener('scroll', ()=>{ if(!mqHelp.matches) return; if(activeEl) showFor(activeEl); }, {passive:true});
     window.addEventListener('resize', ()=>{ if(!mqHelp.matches) return; if(activeEl) showFor(activeEl); });
 
-    // Touch: tap para mostrar 2s
+    // Touch: mantener pulsado (long‑press) para mostrar ayuda sin interferir con swipe
+    let tHold = null;
+    let startX = 0, startY = 0;
+
+    function clearHold(){
+      if(tHold){ clearTimeout(tHold); tHold = null; }
+    }
+
     document.addEventListener('touchstart', (e)=>{
       if(!mqHelp.matches) return;
       const el = e.target.closest('[data-help]');
       if(!el) return;
-      showFor(el);
-      if(hideTimer) clearTimeout(hideTimer);
-      hideTimer = setTimeout(hide, 1600);
+
+      const touch = e.touches && e.touches[0];
+      startX = touch ? touch.clientX : 0;
+      startY = touch ? touch.clientY : 0;
+
+      clearHold();
+      tHold = setTimeout(()=>{
+        showFor(el);
+        if(hideTimer) clearTimeout(hideTimer);
+        hideTimer = setTimeout(hide, 1600);
+      }, 420);
+    }, {passive:true});
+
+    document.addEventListener('touchmove', (e)=>{
+      if(!mqHelp.matches) return;
+      if(!tHold) return;
+      const touch = e.touches && e.touches[0];
+      if(!touch) return;
+      const dx = Math.abs(touch.clientX - startX);
+      const dy = Math.abs(touch.clientY - startY);
+      if(dx > 8 || dy > 8){
+        clearHold(); // usuario está haciendo swipe/scroll
+      }
+    }, {passive:true});
+
+    document.addEventListener('touchend', ()=>{
+      if(!mqHelp.matches) return;
+      clearHold();
+    }, {passive:true});
+
+    document.addEventListener('touchcancel', ()=>{
+      if(!mqHelp.matches) return;
+      clearHold();
+      hide();
     }, {passive:true});
   })();
 </script>
