@@ -2395,7 +2395,6 @@ window.addEventListener("load", () => {
 <div class="roundrow">
 <button class="roundbtn" data-help="Guía rápida: cómo usar la app paso a paso." onclick="abrirInstrucciones()" title="Guía rápida: cómo usar la app paso a paso." type="button">INSTRUCCIONES 📌</button>
 <button class="roundbtn ebook" data-help="Abre el e-book (Canva) dentro de la app." onclick="abrirEbook()" title="Abre el e-book (Canva) dentro de la app." type="button">E-BOOK 📚</button>
-<button class="roundbtn" data-help="📚 VERBS: consulta conjugaciones completas (EN/ES) en voz activa y pasiva." onclick="abrirVerbs()" title="VERBS: consulta conjugaciones" type="button">VERBS 📖</button>
 </div>
 <!-- ✅ FILA 2: ROUND 1 + ROUND 2 + VOZ ACTIVA + VOZ PASIVA -->
 <div class="roundrow">
@@ -3473,7 +3472,10 @@ function normalizeSentence(s){
    =========================== */
 function isThirdSing(p){ return (p.key==="He" || p.key==="She" || p.key==="It"); }
 function subjCap(p){ return p.en; }
-function subjLow(p){ return p.en.toLowerCase(); }
+function subjLow(p){
+  // ✅ Mantén "I" en mayúscula (no "i") en preguntas.
+  return (p && p.en === "I") ? "I" : String(p?.en || "").toLowerCase();
+}
 
 function thirdPersonS(verb){
   const v = verb.toLowerCase();
@@ -3962,11 +3964,6 @@ function abrirWeb(){
 }
 
 
-function abrirVerbs(){
-  // ✅ Abre el nuevo módulo de conjugaciones (verbs.html)
-  window.location.href = "verbs.html";
-}
-
 /* ===========================
    INIT / UI
    =========================== */
@@ -4420,7 +4417,18 @@ function esParticiple(espGloss){
   const baseNorm = _deaccent(base);
   const end = baseNorm.slice(-2);
   const stem = base.slice(0,-2);
-  const part = (end==="ar") ? (stem + "ado") : (stem + "ido");
+  let part = (end==="ar") ? (stem + "ado") : (stem + "ido");
+  // ✅ Fallback de seguridad: evita 'undefined' en salida si el infinitivo viene raro
+  if(!part || part === "undefined"){
+    // intenta reconstrucción mínima
+    const b = String(base||"");
+    if(b.length >= 2){
+      const st = b.slice(0,-2);
+      const en2 = _deaccent(b).slice(-2);
+      part = (en2==="ar") ? (st + "ado") : (st + "ido");
+    }
+  }
+  if(!part || part === "undefined") part = "hecho";
   return { part, tail, reflexive, key };
 }
 
@@ -5257,7 +5265,7 @@ function esPreteriteYo(inf){
   if(inf.endsWith("er")||inf.endsWith("ir")) return esStem(inf)+"í";
   return inf;
 }
-function esParticiple(inf){
+function esParticipleInf(inf){
   inf = String(inf||"").toLowerCase().trim();
 
   // Participios irregulares (Colombia/Español estándar)
@@ -5328,7 +5336,7 @@ function getReadingStory(mode, v){
   const inf = String(v.esp||"hacer").toLowerCase().trim();
   const esPres = wrapTense(esPresentYo(inf), "present");
   const esPast = wrapTense(esPreteriteYo(inf), "past");
-  const esPart = esParticiple(inf);
+  const esPart = esParticipleInf(inf);
   const esPerf = wrapTense(esPart, "perfect");
 
   // Verbos "secundarios" para darle coherencia (no se colorean)
