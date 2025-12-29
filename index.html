@@ -5363,7 +5363,7 @@ function getReadingStory(mode, v){
         `Yesterday, a mini challenge happened and ${ctx.en.twist}. ${sEN} ${beS} ${vP_past} by me, and the mistake was turned into a lesson.`,
         `${capFirst(beS)} ${sEN.toLowerCase()} ${vP_past} by me perfectly? Not always. But was ${sEN.toLowerCase()} ${vP_past} by me again with calm? Yes—and XP was earned.`,
         `This week, a stronger habit has grown: ${sEN} ${have} been ${vP_perf} by me many times. It ${have==="has"?"hasn't":"haven't"} been ${vP_perf} in a rush.`,
-        `${capFirst(have)} ${sEN.toLowerCase()} been ${vP_perf} with deeper comprehension—main ideas, details, purpose, vocabulary, and reflection? Absolutely. The story closes: ${ctx.en.closing}.`
+        `${capFirst(have)} ${sEN.toLowerCase()} been ${vP_perf} by me with real focus? Yes. The story closes: ${ctx.en.closing}.`
       ],
       es: [
         `En la mañana ${ctx.es.place}, se inicia la práctica y el verbo <b>${wrapTense(esPart, "perfect")}</b> se vuelve el protagonista. ${capFirstSafe(subjPas.es)} ${esBeP} ${wrapTense(esPart, "perfect")} por mí ${ctx.es.when}.`,
@@ -5371,7 +5371,7 @@ function getReadingStory(mode, v){
         `Ayer pasó un mini reto y ${ctx.es.twist}. ${capFirstSafe(subjPas.es)} ${esBeS} ${wrapTense(esPart, "perfect")} por mí, y el error se convirtió en aprendizaje.`,
         `¿${capFirstSafe(subjPas.es)} ${esBeS} ${wrapTense(esPart, "perfect")} por mí perfecto? No siempre. Pero ¿${capFirstSafe(subjPas.es)} ${esBeS} ${wrapTense(esPart, "perfect")} por mí otra vez con calma? Sí, y gané XP.`,
         `Esta semana ha crecido un hábito más fuerte: ${capFirstSafe(subjPas.es)} ${esH} sido ${wrapTense(esPart, "perfect")} por mí muchas veces. No ${esH} sido ${wrapTense(esPart, "perfect")} a la carrera.`,
-        `¿${capFirstSafe(subjPas.es)} ${esH} sido ${wrapTense(esPart, "perfect")} con comprensión profunda (ideas principales y secundarias, argumentos y propósito), fluidez y atención, vocabulario y reflexión crítica? Totalmente. La historia cierra: ${ctx.es.closing}.`
+        `¿${capFirstSafe(subjPas.es)} ${esH} sido ${wrapTense(esPart, "perfect")} por mí con verdadera concentración? Sí. La historia cierra: ${ctx.es.closing}.`
       ]
     };
   }
@@ -5384,7 +5384,7 @@ function getReadingStory(mode, v){
       `Yesterday, a mini challenge happened and ${ctx.en.twist}. I ${vPast} ${comp.en} carefully, and I ${side.en[2]}.`,
       `I didn't ${vPastB} ${comp.en} perfectly at first. Did I ${vPastB} ${comp.en} again with calm? Yes—and the mistake became a lesson.`,
       `This week, I have ${vPerf} ${comp.en} many times. I haven't ${vPerf} ${comp.en} in a rush.`,
-      `Have I ${vPerf} ${comp.en} with deeper comprehension—main ideas, supporting details, purpose, vocabulary, and reflection? Absolutely. Now the story closes: ${ctx.en.closing}.`
+      `Have I ${vPerf} ${comp.en} with real focus? Yes. Now the story closes: ${ctx.en.closing}.`
     ],
     es: [
       `En la mañana ${ctx.es.place}, el verbo <b>${esPres}</b> se vuelve el protagonista de mi práctica. Yo ${esPres} ${comp.es} ${ctx.es.when}.`,
@@ -5392,7 +5392,7 @@ function getReadingStory(mode, v){
       `Ayer pasó un mini reto y ${ctx.es.twist}. Yo ${esPast} ${comp.es} con cuidado, y ${side.es[2]}.`,
       `Al principio no ${esPast} ${comp.es} perfecto. ¿${esPast} ${comp.es} otra vez con calma? Sí, y el error se volvió aprendizaje.`,
       `Esta semana he ${esPerf} ${comp.es} muchas veces. No he ${esPerf} ${comp.es} a la carrera.`,
-      `¿He ${esPerf} ${comp.es} con comprensión profunda (ideas principales y secundarias, argumentos y propósito), fluidez y atención (sin distracciones), vocabulario y reflexión crítica? Totalmente. Ahora la historia cierra: ${ctx.es.closing}.`
+      `¿He ${esPerf} ${comp.es} con verdadera concentración? Sí. Ahora la historia cierra: ${ctx.es.closing}.`
     ]
   };
 }
