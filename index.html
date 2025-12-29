@@ -5881,7 +5881,98 @@ function validateSpelling(){
     });
 
 
-    let activeEl = null;
+    
+
+    // ✅ Ayuda para TODOS los botones desde TABLET (>=768px).
+    // En móvil (<768px) NO se muestra porque los listeners se cortan con mqHelp.matches.
+    const __btnHelpMap = new Map([
+      ['motivation-x', 'Cerrar este mensaje.'],
+      ['btn-conjugar', 'Genera la conjugación según el modo y el verbo seleccionado.'],
+      ['btn-mini|RED NEURONAL', 'Abre el reto “Red Neuronal”.'],
+      ['btn-associar', 'Asociar, repetir y conectar neuronas para ganar XP.'],
+      ['lbPrevBtn', 'Ir a la página anterior del ranking.'],
+      ['lbNextBtn', 'Ir a la página siguiente del ranking.'],
+      ['lbBtn|Actualizar', 'Actualizar el ranking y recargar los puntajes.'],
+      ['roundbtn web', 'Abrir el sitio “Neuroaprendizaje del Inglés”.'],
+      ['btn-main|LIMPIAR', 'Borrar el contenido actual del ejercicio.'],
+      ['btn-main|CERRAR', 'Cerrar esta ventana o modal.'],
+      ['btn-main|ENTENDIDO', 'Cerrar y continuar con la práctica.'],
+      ['btn-main|ASOCIAR', 'Confirmar y continuar con la asociación.'],
+      ['aria|Anterior', 'Ir al elemento anterior.'],
+      ['aria|Siguiente', 'Ir al elemento siguiente.']
+    ]);
+
+    function __inferHelpFor(el){
+      // Prioridad 1: por id
+      if(el.id && __btnHelpMap.has(el.id)) return __btnHelpMap.get(el.id);
+
+      // Prioridad 2: por aria-label (flechas / paginación)
+      const aria = (el.getAttribute('aria-label') || '').trim();
+      if(aria){
+        const key = 'aria|' + aria;
+        if(__btnHelpMap.has(key)) return __btnHelpMap.get(key);
+      }
+
+      // Prioridad 3: por clase + texto
+      const cls = (el.className || '').toString().trim().replace(/\s+/g,' ');
+      const txt = (el.textContent || '').trim().replace(/\s+/g,' ');
+
+      // matching por clase exacta registrada
+      if(cls && __btnHelpMap.has(cls)) return __btnHelpMap.get(cls);
+
+      // matching por (clase contiene + texto contiene)
+      for(const [k,v] of __btnHelpMap.entries()){
+        if(!k.includes('|')) continue;
+        const [kCls, kTxt] = k.split('|');
+        if(kCls && cls.includes(kCls) && kTxt && txt.toUpperCase().includes(kTxt.toUpperCase())) return v;
+      }
+
+      // Fallback: ayuda genérica basada en el texto
+      if(txt){
+        const short = txt.length > 44 ? (txt.slice(0,44) + '…') : txt;
+        return 'Acción: ' + short;
+      }
+      return '';
+    }
+
+    function __applyHelps(){
+      // Incluye <button>, <a>, y elementos con role="button"
+      const candidates = document.querySelectorAll('button, a, [role="button"], input[type="button"], input[type="submit"]');
+      candidates.forEach(el=>{
+        if(el.dataset && el.dataset.help) return;
+
+        // Si ya tiene title, lo migramos (ya lo hacemos arriba, pero por si llega tarde)
+        const t = el.getAttribute && el.getAttribute('title');
+        if(t && !el.dataset.help){
+          el.dataset.help = t;
+          el.removeAttribute('title');
+          return;
+        }
+
+        // Solo crea ayudas automáticas si parece un botón clickeable
+        const tag = (el.tagName || '').toLowerCase();
+        const isClickable =
+          tag === 'button' ||
+          (tag === 'a' && el.getAttribute('href')) ||
+          el.getAttribute('role') === 'button' ||
+          tag === 'input';
+
+        if(!isClickable) return;
+
+        const msg = __inferHelpFor(el);
+        if(msg) el.dataset.help = msg;
+      });
+    }
+
+    // Aplica al cargar y cuando cambie el breakpoint
+    __applyHelps();
+    try{
+      mqHelp.addEventListener('change', ()=>{ if(mqHelp.matches) __applyHelps(); hide(); });
+    }catch(e){
+      // Safari viejo: ignora
+    }
+
+let activeEl = null;
     let hideTimer = null;
 
     function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
