@@ -2627,6 +2627,80 @@ const GROUP_HINTS = {
   }
 };
 
+/* ===========================
+   🔗 SYNC: cargar verbos desde verbs.html
+   (para traducción ES perfecta y consistencia)
+   =========================== */
+let __NY_VERBS_DB__ = null;
+let __NY_VERBS_DB_READY__ = false;
+
+async function loadVerbsDbFromVerbsHtml(){
+  try{
+    const res = await fetch("verbs.html", { cache: "no-store" });
+    if(!res.ok) return;
+    const txt = await res.text();
+    const m = txt.match(/const\s+VERBS_DB\s*=\s*(\[[\s\S]*?\n\s*\]);/);
+    if(!m) return;
+    // Evaluamos el array JS (misma origin, archivo controlado por nosotros)
+    __NY_VERBS_DB__ = (new Function("return " + m[1]))();
+    __NY_VERBS_DB_READY__ = Array.isArray(__NY_VERBS_DB__) && __NY_VERBS_DB__.length > 0;
+  }catch(e){
+    // Silencioso: la app sigue funcionando con el motor interno
+  }
+}
+
+function __nyVerbKeyFromIndexVerb(v){
+  return String((v && v.c1) ? v.c1 : "").trim().toLowerCase();
+}
+function __nyPronKeyToDb(pKey){
+  // index usa: I, You, He, She, It, We, YouP, They
+  const k = String(pKey||"");
+  if(k==="You") return "YOU_S";
+  if(k==="YouP") return "YOU_P";
+  return k.toUpperCase(); // I->I, He->HE, etc.
+}
+function __nyPronIndexForQ(pKey){
+  // Orden en verbs.html: I, YOU_S, HE, SHE, IT, WE, YOU_P, THEY
+  const k = String(pKey||"");
+  if(k==="I") return 0;
+  if(k==="You") return 1;
+  if(k==="He") return 2;
+  if(k==="She") return 3;
+  if(k==="It") return 4;
+  if(k==="We") return 5;
+  if(k==="YouP") return 6;
+  if(k==="They") return 7;
+  return 0;
+}
+
+function lookupSpanishLineFromVerbsHtml(tKind, modeKey, p, v){
+  if(!__NY_VERBS_DB_READY__ || !v || !p) return null;
+  const key = __nyVerbKeyFromIndexVerb(v);
+  if(!key) return null;
+  const entry = __NY_VERBS_DB__.find(e => e && e.key === key);
+  if(!entry || !entry.active || !entry.active[tKind]) return null;
+
+  const block = entry.active[tKind];
+  if(modeKey === "Q"){
+    const arr = block.Q;
+    if(!Array.isArray(arr)) return null;
+    const idx = __nyPronIndexForQ(p.key);
+    const row = arr[idx];
+    return row && row[1] ? row[1] : null;
+  }
+
+  const arr = block[modeKey];
+  if(!Array.isArray(arr)) return null;
+  const pk = __nyPronKeyToDb(p.key);
+  const row = arr.find(r => r && r[0] === pk);
+  return row && row[2] ? row[2] : null;
+}
+
+// Cargamos la DB lo más pronto posible (sin bloquear la app)
+window.addEventListener("DOMContentLoaded", () => { loadVerbsDbFromVerbsHtml(); });
+
+
+
 function renderGroupHint(groupId){
   const titulo = document.getElementById("pistaTitulo");
   const dias = document.getElementById("pistaDias");
@@ -4408,6 +4482,21 @@ function buildSpanishActiveLine(tKind, modeKey, p, v, comp){
   const useComp = (currentRound===2); // Round 2: con complemento en todas las conjugaciones/tiempos (incluye "be")
   const compEs = (useComp && comp && comp.es) ? (" " + comp.es) : "";
   const pronEs = p.es;
+
+  // ✅ Preferir traducción exacta desde verbs.html (si existe)
+  const __fromDb = lookupSpanishLineFromVerbsHtml(tKind, modeKey, p, v);
+  if(__fromDb){
+    if(!compEs) return __fromDb;
+    // Insertar complemento respetando signos de pregunta y alternativas " / "
+    return String(__fromDb).split(" / ").map(part=>{
+      part = String(part||"").trim();
+      if(!part) return part;
+      if(part.endsWith("?")){
+        return (part.slice(0,-1).trim() + compEs + "?").replace(/\s+/g," ").trim();
+      }
+      return (part + compEs).replace(/\s+/g," ").trim();
+    }).join(" / ");
+  }
 
   // ✅ Caso especial: TO BE (Ser/Estar) - Grupo 3 Día 40
   if(isBeVerb(v)){
