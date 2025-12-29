@@ -2,8 +2,13 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Neuroaprendizaje de los Verbos Irregulares - Voz Activa / Voz Pasiva</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  
+  <meta name="theme-color" content="#0b1220" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<title>Neuroaprendizaje de los Verbos Irregulares - Voz Activa / Voz Pasiva</title>
   <style>
     :root{
       --purple:#65116B;
@@ -1744,6 +1749,94 @@ box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);;justify-content:flex-start;text-ali
   right: 20px !important;
   transform: none !important;
 }
+
+
+
+    /* ===========================
+       📱 MOBILE APP SHELL (extra)
+       - Fullscreen feel
+       - Safe areas (notch)
+       - Sticky action bar
+       - Bottom CTA full-width
+       =========================== */
+
+    /* Mejor experiencia táctil */
+    button, a, input, select{
+      touch-action: manipulation;
+    }
+    *{ -webkit-tap-highlight-color: transparent; }
+
+    @supports (height: 100dvh){
+      body{ min-height: 100dvh; }
+    }
+
+    /* Evita el "rebote" exagerado en algunos navegadores móviles */
+    html, body{
+      overscroll-behavior-y: none;
+    }
+
+    @media (max-width: 640px){
+
+      /* Layout tipo app */
+      body{
+        padding: 0 !important;
+        margin: 0 !important;
+        align-items: stretch !important;
+      }
+
+      /* Mantener el contenido SIEMPRE visible bajo el HUD (puntuación) */
+      body.has-floating-stats{
+        padding-top: calc(var(--hudSafe, 160px) + env(safe-area-inset-top, 0px) + 10px) !important;
+      }
+
+      /* Contenedor principal: ocupa todo el ancho y se siente "app" */
+      .app{
+        max-width: 100% !important;
+        width: 100% !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        padding: 14px 14px calc(14px + env(safe-area-inset-bottom, 0px) + 82px) !important;
+      }
+
+      /* Barra de botones (acciones) estilo "tab" sticky */
+      .roundbar{
+        position: sticky;
+        top: calc(env(safe-area-inset-top, 0px) + 6px);
+        z-index: 900;
+        margin-top: 4px;
+        padding: 10px 10px 8px;
+        border-radius: 18px;
+        background: rgba(11,18,32,.25);
+        border: 1px solid rgba(255,255,255,.14);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+      }
+
+      /* Selects e inputs cómodos para dedos */
+      select, input{
+        min-height: 48px;
+        border-radius: 14px !important;
+      }
+
+      /* Botón inferior (ASISTENTE IA) como CTA full-width */
+      .ebook-float{
+        left: 12px !important;
+        right: 12px !important;
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 10px) !important;
+        width: auto !important;
+        text-align: center;
+      }
+
+      /* Footer: más compacto en móvil */
+      footer{
+        padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 90px) !important;
+      }
+    }
+
+    @media (max-width: 420px){
+      .roundbar{ border-radius: 16px; }
+      .roundbtn{ min-height: 44px; }
+    }
 
 </style>
 </head>
