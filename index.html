@@ -1667,7 +1667,10 @@ box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);;justify-content:flex-start;text-ali
 .lbNum{ width:28px; text-align:center; font-weight:950; opacity:.9; }
 .lbAvatar{ width:32px; height:32px; border-radius:999px; object-fit:cover; border:2px solid rgba(255,255,255,.22); }
 .lbName{ font-weight:900; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.lbXp,.lbXP{font-weight:950;}
+.lbXp,.lbXP{font-weight:950; color: var(--orange);}
+.lbTop3{background: rgba(242,139,22,.10); border-color: rgba(242,139,22,.35);}
+.lbTop3 .lbRank, .lbTop3 .lbName{color: var(--orange);}
+.lbTop3 .lbAvatar{border-color: rgba(242,139,22,.55);}
 .lbMe{ outline: 2px solid rgba(242,139,22,.65); }
 @media (max-width: 720px){
   .podium{ grid-template-columns:1fr; }
@@ -2215,8 +2218,9 @@ function renderLeaderboard(data) {
     const pic = r.picture ? `<img class="lbAvatar" src="${r.picture}" alt="foto">` : `<div class="lbAvatar lbAvatarFallback">👤</div>`;
     const name = (r.name || r.email || "Usuario").toString();
     const xpVal = Number(r.xp || 0);
+    const isTop3 = rank <= 3;
     return `
-      <div class="lbRow">
+      <div class="lbRow${isTop3 ? " lbTop3" : ""}">
         <div class="lbRank">#${rank}</div>
         ${pic}
         <div class="lbInfo">
