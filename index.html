@@ -5175,23 +5175,120 @@ function esInfFrom(v){
 }
 function esStem(inf){ return inf.slice(0, -2); }
 function esPresentYo(inf){
-  if(inf==="ser") return "soy";
-  if(inf==="ir") return "voy";
-  if(inf==="estar") return "estoy";
+  inf = String(inf||"").toLowerCase().trim();
+
+  // Irregulares frecuentes (yo)
+  const irregular = {
+    "ser":"soy",
+    "ir":"voy",
+    "estar":"estoy",
+    "tener":"tengo",
+    "venir":"vengo",
+    "poner":"pongo",
+    "hacer":"hago",
+    "salir":"salgo",
+    "traer":"traigo",
+    "ver":"veo",
+    "dar":"doy",
+    "saber":"sé",
+    "conocer":"conozco",
+    "decir":"digo",
+    "oír":"oigo",
+    "seguir":"sigo",
+    "pedir":"pido",
+    "servir":"sirvo",
+    "repetir":"repito",
+    "conducir":"conduzco",
+    "traducir":"traduzco",
+    "producir":"produzco"
+  };
+  if(irregular[inf]) return irregular[inf];
+
+  // Regulares
   if(inf.endsWith("ar")||inf.endsWith("er")||inf.endsWith("ir")) return esStem(inf)+"o";
   return inf;
 }
 function esPreteriteYo(inf){
-  if(inf==="ser"||inf==="ir") return "fui";
-  if(inf==="estar") return "estuve";
+  inf = String(inf||"").toLowerCase().trim();
+
+  // Irregulares frecuentes (yo) en pretérito perfecto simple
+  const irregular = {
+    "ser":"fui",
+    "ir":"fui",
+    "estar":"estuve",
+    "tener":"tuve",
+    "poder":"pude",
+    "poner":"puse",
+    "venir":"vine",
+    "decir":"dije",
+    "hacer":"hice",
+    "ver":"vi",
+    "dar":"di",
+    "saber":"supe",
+    "querer":"quise",
+    "traer":"traje",
+    "conducir":"conduje",
+    "traducir":"traduje",
+    "producir":"produje",
+    "andar":"anduve",
+    "caber":"cupe",
+    "haber":"hube",
+    "leer":"leí",
+    "oír":"oí",
+    "caer":"caí",
+    "reír":"reí",
+    "creer":"creí"
+  };
+  if(irregular[inf]) return irregular[inf];
+
+  // Cambios ortográficos en -car/-gar/-zar (yo)
+  if(inf.endsWith("car")) return inf.slice(0,-3)+"qué";
+  if(inf.endsWith("gar")) return inf.slice(0,-3)+"gué";
+  if(inf.endsWith("zar")) return inf.slice(0,-3)+"cé";
+
+  // Regulares
   if(inf.endsWith("ar")) return esStem(inf)+"é";
   if(inf.endsWith("er")||inf.endsWith("ir")) return esStem(inf)+"í";
   return inf;
 }
 function esParticiple(inf){
-  if(inf==="ser") return "sido";
-  if(inf==="ir") return "ido";
-  if(inf==="estar") return "estado";
+  inf = String(inf||"").toLowerCase().trim();
+
+  // Participios irregulares (Colombia/Español estándar)
+  const irregular = {
+    "abrir":"abierto",
+    "cubrir":"cubierto",
+    "descubrir":"descubierto",
+    "decir":"dicho",
+    "escribir":"escrito",
+    "freir":"frito",
+    "freír":"frito",
+    "hacer":"hecho",
+    "morir":"muerto",
+    "poner":"puesto",
+    "resolver":"resuelto",
+    "romper":"roto",
+    "ver":"visto",
+    "volver":"vuelto",
+    "satisfacer":"satisfecho",
+    "imprimir":"impreso",
+    "proveer":"provisto",
+    "prever":"previsto",
+    "reponer":"repuesto"
+  };
+  if(irregular[inf]) return irregular[inf];
+
+  // Participios con tilde (hiato)
+  const accented = {
+    "leer":"leído",
+    "creer":"creído",
+    "caer":"caído",
+    "oír":"oído",
+    "reír":"reído",
+    "traer":"traído"
+  };
+  if(accented[inf]) return accented[inf];
+
   if(inf.endsWith("ar")) return esStem(inf)+"ado";
   if(inf.endsWith("er")||inf.endsWith("ir")) return esStem(inf)+"ido";
   return inf;
@@ -5210,41 +5307,71 @@ function getReadingStory(mode, v){
   const subjPas = subjForPassive(v);
   const ctx = pickStoryContext(v.c1);
 
-  const vPresent = wrapTense(v.c1, "present");
-  const vPastAff = wrapTense(v.c2, "past");
-  const vPastBase = wrapTense(v.c1, "past");     // did/didn't + base (pero sigue siendo Past)
-  const vPerfect = wrapTense(v.c3, "perfect");
+  // Protagonista (EN) coloreado por TIEMPO:
+  const vPres  = wrapTense(v.c1, "present");
+  const vPast  = wrapTense(v.c2, "past");
+  const vPastB = wrapTense(v.c1, "past");        // did/didn't + base (sigue siendo Past)
+  const vPerf  = wrapTense(v.c3, "perfect");     // have/has + V3
 
-  // Para voz pasiva, en inglés casi siempre usamos V3, pero el color depende del TIEMPO.
-  const vP_present = wrapTense(v.c3, "present");
-  const vP_past    = wrapTense(v.c3, "past");
-  const vP_perf    = wrapTense(v.c3, "perfect");
+  // En pasiva (EN) casi siempre usamos V3, pero el color depende del TIEMPO del enunciado:
+  const vP_pres = wrapTense(v.c3, "present");
+  const vP_past = wrapTense(v.c3, "past");
+  const vP_perf = wrapTense(v.c3, "perfect");
 
-  // Español (aprox.) para resaltar el verbo también por tiempo
-  const inf = esInfFrom(v);
+  // Protagonista (ES) en 1ra persona singular (yo)
+  const inf = String(v.esp||"hacer").toLowerCase().trim();
   const esPres = wrapTense(esPresentYo(inf), "present");
   const esPast = wrapTense(esPreteriteYo(inf), "past");
-  const esPerf = wrapTense(esParticiple(inf), "perfect");
   const esPart = esParticiple(inf);
+  const esPerf = wrapTense(esPart, "perfect");
+
+  // Verbos "secundarios" para darle coherencia (no se colorean)
+  const sideSets = [
+    {en:["review","underline","compare"], es:["repaso","subrayo","comparo"]},
+    {en:["focus","breathe","try again"], es:["me enfoco","respiro","lo intento de nuevo"]},
+    {en:["take notes","ask for help","share"], es:["tomo apuntes","pido ayuda","comparto"]},
+    {en:["listen","repeat","check"], es:["escucho","repito","verifico"]},
+    {en:["connect ideas","reflect","improve"], es:["conecto ideas","reflexiono","mejoro"]}
+  ];
+  const side = sideSets[hashStr(v.c1) % sideSets.length];
+
+  // Helpers ES para pasiva (simple)
+  const isProbablyPluralES = (s)=>{
+    s = String(s||"").toLowerCase().trim();
+    return s.startsWith("los ") || s.startsWith("las ") || s.startsWith("unos ") || s.startsWith("unas ") || /\b(s|es)\b$/.test(s);
+  };
+  const beESPresentFor = (plural)=> plural ? "son" : "es";
+  const beESPastFor    = (plural)=> plural ? "fueron" : "fue";
+  const haberESFor     = (plural)=> plural ? "han" : "ha";
 
   if(mode === "passive"){
-    const sEN = subjPas.en;
-    const plural = isProbablyPluralEN(sEN);
-    const beP = bePresentFor(plural);
-    const beS = bePastFor(plural);
-    const have = haveFor(plural);
-    const sEN_low = sEN.toLowerCase();
+    const sEN = subjPas.en; // p.ej. "The homework"
+    const pluralEN = isProbablyPluralEN(sEN);
+    const beP = bePresentFor(pluralEN);
+    const beS = bePastFor(pluralEN);
+    const have = haveFor(pluralEN);
+
+    const pluralES = isProbablyPluralES(subjPas.es);
+    const esBeP = beESPresentFor(pluralES);
+    const esBeS = beESPastFor(pluralES);
+    const esH = haberESFor(pluralES);
 
     return {
       en: [
-        `Today, the verb <b>${vPresent}</b> is the protagonist of my practice ${ctx.en.place}. ${sEN} ${beP} ${vP_present} by me ${ctx.en.when}. ${sEN} ${(beP==="is"?"isn't":"aren't")} ${vP_present} when I feel distracted. ${capFirst(beP)} ${sEN_low} ${vP_present} by me ${ctx.en.when}? Yes—it is, and my focus stays strong.`,
-        `Yesterday, a mini challenge happened and ${ctx.en.twist}. ${sEN} ${beS} ${vP_past} by me, but it ${(beS==="was")?"wasn't":"weren't"} ${vP_past} on the first try. ${capFirst(beS)} ${sEN_low} ${vP_past} by me again? Yes—${sEN} ${beS} ${vP_past} carefully, and I earned XP.`,
-        `This week, a better habit has grown. ${sEN} ${have} been ${vP_perf} by me many times. ${sEN} ${have} not been ${vP_perf} perfectly every day, but ${capFirst(have)} ${sEN_low} been ${vP_perf} with more confidence? Absolutely. Now the story closes: ${ctx.en.closing}.`
+        `In the morning ${ctx.en.place}, practice is started and the verb <b>${vP_pres}</b> becomes the protagonist. ${sEN} ${beP} ${vP_pres} by me ${ctx.en.when}.`,
+        `${capFirst(beP)} ${sEN.toLowerCase()} ${vP_pres} by me with purpose? Yes. But ${sEN.toLowerCase()} ${beP==="is"?"isn't":"aren't"} ${vP_pres} by me while I’m distracted—I ${side.en[0]}, I ${side.en[1]}, and I stay focused.`,
+        `Yesterday, a mini challenge happened and ${ctx.en.twist}. ${sEN} ${beS} ${vP_past} by me, and the mistake was turned into a lesson.`,
+        `${capFirst(beS)} ${sEN.toLowerCase()} ${vP_past} by me perfectly? Not always. But was ${sEN.toLowerCase()} ${vP_past} by me again with calm? Yes—and XP was earned.`,
+        `This week, a stronger habit has grown: ${sEN} ${have} been ${vP_perf} by me many times. It ${have==="has"?"hasn't":"haven't"} been ${vP_perf} in a rush.`,
+        `${capFirst(have)} ${sEN.toLowerCase()} been ${vP_perf} with deeper comprehension—main ideas, details, purpose, vocabulary, and reflection? Absolutely. The story closes: ${ctx.en.closing}.`
       ],
       es: [
-        `Hoy, el verbo <b>${wrapTense(v.c1, "present")}</b> es el protagonista de mi práctica ${ctx.es.place}. ${capFirstSafe(comp.es)} es ${wrapTense(esPart, "present")} por mí ${ctx.es.when}. ${capFirstSafe(comp.es)} no es ${wrapTense(esPart, "present")} cuando me distraigo. ¿${capFirstSafe(comp.es)} es ${wrapTense(esPart, "present")} por mí ${ctx.es.when}? Sí, y mi enfoque se mantiene fuerte.`,
-        `Ayer pasó un mini reto y ${ctx.es.twist}. ${capFirstSafe(comp.es)} fue ${wrapTense(esPart, "past")} por mí, pero no fue ${wrapTense(esPart, "past")} en el primer intento. ¿${capFirstSafe(comp.es)} fue ${wrapTense(esPart, "past")} por mí otra vez? Sí: ${capFirstSafe(comp.es)} fue ${wrapTense(esPart, "past")} con cuidado, y gané XP.`,
-        `Esta semana ha crecido un mejor hábito. ${capFirstSafe(comp.es)} ha sido ${wrapTense(esPart, "perfect")} por mí muchas veces. ${capFirstSafe(comp.es)} no ha sido ${wrapTense(esPart, "perfect")} perfectamente todos los días, pero ¿ha sido ${wrapTense(esPart, "perfect")} con más confianza? Totalmente. Ahora la historia cierra: ${ctx.es.closing}.`
+        `En la mañana ${ctx.es.place}, se inicia la práctica y el verbo <b>${wrapTense(esPart, "present")}</b> se vuelve el protagonista. ${capFirstSafe(subjPas.es)} ${esBeP} ${wrapTense(esPart, "present")} por mí ${ctx.es.when}.`,
+        `¿${capFirstSafe(subjPas.es)} ${esBeP} ${wrapTense(esPart, "present")} por mí con intención? Sí. Pero ${subjPas.es} no ${esBeP} ${wrapTense(esPart, "present")} por mí cuando me distraigo: ${side.es[0]}, ${side.es[1]} y sigo enfocado.`,
+        `Ayer pasó un mini reto y ${ctx.es.twist}. ${capFirstSafe(subjPas.es)} ${esBeS} ${wrapTense(esPart, "past")} por mí, y el error se convirtió en aprendizaje.`,
+        `¿${capFirstSafe(subjPas.es)} ${esBeS} ${wrapTense(esPart, "past")} por mí perfecto? No siempre. Pero ¿${capFirstSafe(subjPas.es)} ${esBeS} ${wrapTense(esPart, "past")} por mí otra vez con calma? Sí, y gané XP.`,
+        `Esta semana ha crecido un hábito más fuerte: ${capFirstSafe(subjPas.es)} ${esH} sido ${wrapTense(esPart, "perfect")} por mí muchas veces. No ${esH} sido ${wrapTense(esPart, "perfect")} a la carrera.`,
+        `¿${capFirstSafe(subjPas.es)} ${esH} sido ${wrapTense(esPart, "perfect")} con comprensión profunda (ideas principales y secundarias, argumentos y propósito), fluidez y atención, vocabulario y reflexión crítica? Totalmente. La historia cierra: ${ctx.es.closing}.`
       ]
     };
   }
@@ -5252,14 +5379,20 @@ function getReadingStory(mode, v){
   // --- Voz activa ---
   return {
     en: [
-      `Today, the verb <b>${vPresent}</b> is the protagonist of my practice ${ctx.en.place}. I ${vPresent} ${comp.en} ${ctx.en.when}, but I don't ${vPresent} ${comp.en} when I feel distracted. Do I ${vPresent} ${comp.en} ${ctx.en.when}? Yes—and my neurons connect faster.`,
-      `Yesterday, a mini challenge happened and ${ctx.en.twist}. I ${vPastAff} ${comp.en}, but I didn't ${vPastBase} ${comp.en} on the first try. Did I ${vPastBase} ${comp.en} again? Yes—I ${vPastAff} ${comp.en} carefully, and I earned XP.`,
-      `This week, I have ${vPerfect} ${comp.en} many times. I haven't ${vPerfect} ${comp.en} perfectly every day, but have I ${vPerfect} ${comp.en} with more confidence? Absolutely. Now the story closes: ${ctx.en.closing}.`
+      `In the morning ${ctx.en.place}, the verb <b>${vPres}</b> becomes the protagonist of my practice. I ${vPres} ${comp.en} ${ctx.en.when}.`,
+      `I do not ${vPres} ${comp.en} while I’m distracted. Do I ${vPres} ${comp.en} with purpose? Yes—I ${side.en[0]}, I ${side.en[1]}, and I stay on task.`,
+      `Yesterday, a mini challenge happened and ${ctx.en.twist}. I ${vPast} ${comp.en} carefully, and I ${side.en[2]}.`,
+      `I didn't ${vPastB} ${comp.en} perfectly at first. Did I ${vPastB} ${comp.en} again with calm? Yes—and the mistake became a lesson.`,
+      `This week, I have ${vPerf} ${comp.en} many times. I haven't ${vPerf} ${comp.en} in a rush.`,
+      `Have I ${vPerf} ${comp.en} with deeper comprehension—main ideas, supporting details, purpose, vocabulary, and reflection? Absolutely. Now the story closes: ${ctx.en.closing}.`
     ],
     es: [
-      `Hoy, el verbo <b>${wrapTense(v.c1, "present")}</b> es el protagonista de mi práctica ${ctx.es.place}. Yo ${esPres} ${comp.es} ${ctx.es.when}, pero no ${esPres} ${comp.es} cuando me distraigo. ¿${esPres} ${comp.es} ${ctx.es.when}? Sí, y mis neuronas se conectan más rápido.`,
-      `Ayer pasó un mini reto y ${ctx.es.twist}. Yo ${esPast} ${comp.es}, pero no ${esPast} ${comp.es} en el primer intento. ¿${esPast} ${comp.es} otra vez? Sí: yo ${esPast} ${comp.es} con cuidado, y gané XP.`,
-      `Esta semana he ${esPerf} ${comp.es} muchas veces. No he ${esPerf} ${comp.es} perfectamente todos los días, pero ¿he ${esPerf} ${comp.es} con más confianza? Totalmente. Ahora la historia cierra: ${ctx.es.closing}.`
+      `En la mañana ${ctx.es.place}, el verbo <b>${esPres}</b> se vuelve el protagonista de mi práctica. Yo ${esPres} ${comp.es} ${ctx.es.when}.`,
+      `Yo no ${esPres} ${comp.es} cuando estoy distraído. ¿${esPres} ${comp.es} con intención? Sí: ${side.es[0]}, ${side.es[1]} y me mantengo en lo mío.`,
+      `Ayer pasó un mini reto y ${ctx.es.twist}. Yo ${esPast} ${comp.es} con cuidado, y ${side.es[2]}.`,
+      `Al principio no ${esPast} ${comp.es} perfecto. ¿${esPast} ${comp.es} otra vez con calma? Sí, y el error se volvió aprendizaje.`,
+      `Esta semana he ${esPerf} ${comp.es} muchas veces. No he ${esPerf} ${comp.es} a la carrera.`,
+      `¿He ${esPerf} ${comp.es} con comprensión profunda (ideas principales y secundarias, argumentos y propósito), fluidez y atención (sin distracciones), vocabulario y reflexión crítica? Totalmente. Ahora la historia cierra: ${ctx.es.closing}.`
     ]
   };
 }
