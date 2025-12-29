@@ -1771,13 +1771,23 @@ box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);;justify-content:flex-start;text-ali
 }
 
 
+
+/* ✅ Tooltips del menú de puntuación: usamos tooltip global (data-help) para evitar recortes.
+   Por eso desactivamos los pseudo-tooltips basados en data-tip SOLO en la barra de puntuación. */
+#statsBar .statBox[data-tip]::after,
+#statsBar .goalBox[data-tip]::after,
+#statsBar .statBox[data-tip]::before,
+#statsBar .goalBox[data-tip]::before{
+  display:none !important;
+}
+
 /* ✅ Ayuda (tooltips) del menú de puntuación: solo en pantallas grandes */
-@media (min-width: 900px) and (hover: hover){
+@media (min-width: 768px){
   #statsBar{ overflow-y: visible !important; }
 }
 
 /* En pantallas pequeñas (móvil/tablet), la barra mantiene swipe pero sin ayudas (tooltips) */
-@media (max-width: 899px){
+@media (max-width: 767px){
   #statsBar{ overflow-y: hidden !important; }
   #statsBar .statBox[data-tip]::after,
   #statsBar .goalBox[data-tip]::after,
@@ -5859,6 +5869,18 @@ function validateSpelling(){
       if(t) el.removeAttribute('title');
     });
 
+    // ✅ Desde TABLET hacia arriba (>=768px) habilitamos ayudas.
+    const mqHelp = window.matchMedia('(min-width: 768px)');
+
+    // Promueve data-tip -> data-help (para la barra de puntuación)
+    document.querySelectorAll('[data-tip]').forEach(el=>{
+      const t = el.getAttribute('data-tip');
+      if(t && !el.dataset.help){
+        el.dataset.help = t;
+      }
+    });
+
+
     let activeEl = null;
     let hideTimer = null;
 
@@ -5931,31 +5953,36 @@ function validateSpelling(){
 
     // Delegación
     document.addEventListener('mouseover', (e)=>{
+      if(!mqHelp.matches) return;
       const el = e.target.closest('[data-help]');
       if(!el) return;
       showFor(el);
     });
     document.addEventListener('mouseout', (e)=>{
+      if(!mqHelp.matches) return;
       // si sales del elemento con data-help, oculta
       const el = e.target.closest('[data-help]');
       if(!el) return;
       hideTimer = setTimeout(hide, 80);
     });
     document.addEventListener('focusin', (e)=>{
+      if(!mqHelp.matches) return;
       const el = e.target.closest('[data-help]');
       if(el) showFor(el);
     });
     document.addEventListener('focusout', (e)=>{
+      if(!mqHelp.matches) return;
       const el = e.target.closest('[data-help]');
       if(el) hide();
     });
 
     // En scroll/resize, reubica
-    window.addEventListener('scroll', ()=>{ if(activeEl) showFor(activeEl); }, {passive:true});
-    window.addEventListener('resize', ()=>{ if(activeEl) showFor(activeEl); });
+    window.addEventListener('scroll', ()=>{ if(!mqHelp.matches) return; if(activeEl) showFor(activeEl); }, {passive:true});
+    window.addEventListener('resize', ()=>{ if(!mqHelp.matches) return; if(activeEl) showFor(activeEl); });
 
     // Touch: tap para mostrar 2s
     document.addEventListener('touchstart', (e)=>{
+      if(!mqHelp.matches) return;
       const el = e.target.closest('[data-help]');
       if(!el) return;
       showFor(el);
