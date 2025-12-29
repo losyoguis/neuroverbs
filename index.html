@@ -2395,6 +2395,7 @@ window.addEventListener("load", () => {
 <div class="roundrow">
 <button class="roundbtn" data-help="Guía rápida: cómo usar la app paso a paso." onclick="abrirInstrucciones()" title="Guía rápida: cómo usar la app paso a paso." type="button">INSTRUCCIONES 📌</button>
 <button class="roundbtn ebook" data-help="Abre el e-book (Canva) dentro de la app." onclick="abrirEbook()" title="Abre el e-book (Canva) dentro de la app." type="button">E-BOOK 📚</button>
+<button class="roundbtn" data-help="📚 VERBS: consulta conjugaciones completas (EN/ES) en voz activa y pasiva." onclick="abrirVerbs()" title="VERBS: consulta conjugaciones" type="button">VERBS 📖</button>
 </div>
 <!-- ✅ FILA 2: ROUND 1 + ROUND 2 + VOZ ACTIVA + VOZ PASIVA -->
 <div class="roundrow">
@@ -3472,10 +3473,7 @@ function normalizeSentence(s){
    =========================== */
 function isThirdSing(p){ return (p.key==="He" || p.key==="She" || p.key==="It"); }
 function subjCap(p){ return p.en; }
-function subjLow(p){
-  // ✅ Mantén "I" en mayúscula (no "i") en preguntas.
-  return (p && p.en === "I") ? "I" : String(p?.en || "").toLowerCase();
-}
+function subjLow(p){ return p.en.toLowerCase(); }
 
 function thirdPersonS(verb){
   const v = verb.toLowerCase();
@@ -3771,31 +3769,103 @@ function passivePPQ(v, agentP){
   return `${aux} ${subj.toLowerCase()} been ${v.c3} ${by}?`;
 }
 
-/* Español: equivalencia elegante en pasiva con "SE" (evita concordancia de participio) */
-function esSePassive(tenseKind, moodKey, objES){
-  const obj = String(objES||"la tarea").trim();
-  if(tenseKind==="P"){
-    if(moodKey==="A") return `Se ${objVerbEs("present")} ${obj}.`;
-    if(moodKey==="N") return `No se ${objVerbEs("present")} ${obj}.`;
-    return `¿Se ${objVerbEs("present")} ${obj}?`;
+/* ===========================
+   ✅ ESPAÑOL: VOZ PASIVA (ser + participio + por + agente)
+   - Se alinea con el inglés: Objeto (complemento) → BE → V3 → by + agente
+   - Ajusta participio según género/número del objeto (la/las/el/los...)
+   =========================== */
+
+function parseObjES(objES){
+  const s = String(objES||"").trim().toLowerCase();
+  const first = (s.split(/\s+/)[0] || "");
+  const fem = new Set(["la","las","una","unas","esta","estas","esa","esas","aquella","aquellas","mi","mis","tu","tus","su","sus","nuestra","nuestras"]);
+  const masc = new Set(["el","los","un","unos","este","estos","ese","esos","aquel","aquellos","nuestro","nuestros"]);
+  let gender = fem.has(first) ? "f" : masc.has(first) ? "m" : "m";
+  let number = (["las","los","unas","unos","estas","estos","esas","esos","aquellas","aquellos","mis","tus","sus","nuestras","nuestros"].includes(first)) ? "pl" : "sg";
+  if(number==="sg"){
+    // fallback: plural si empieza con artículo plural o termina claramente en 's'
+    if(first.endsWith("s") || (s.endsWith("s") && !s.endsWith("és") && !s.endsWith("ús"))) number = "pl";
   }
-  if(tenseKind==="S"){
-    if(moodKey==="A") return `Se ${objVerbEs("past")} ${obj}.`;
-    if(moodKey==="N") return `No se ${objVerbEs("past")} ${obj}.`;
-    return `¿Se ${objVerbEs("past")} ${obj}?`;
-  }
-  // PP
-  if(moodKey==="A") return `Se ${objVerbEs("pp")} ${obj}.`;
-  if(moodKey==="N") return `No se ${objVerbEs("pp")} ${obj}.`;
-  return `¿Se ${objVerbEs("pp")} ${obj}?`;
+  return {gender, number};
 }
-function objVerbEs(kind){
-  // En español con "se" el verbo varía según el verbo original; aquí usamos una estructura genérica
-  // (se hace / se hizo / se ha hecho) porque el objetivo del módulo es VOZ PASIVA EN INGLÉS.
-  // Esto mantiene gramática correcta y consistente.
-  if(kind==="present") return "hace";
-  if(kind==="past") return "hizo";
-  return "ha hecho";
+
+function agreePartES(part, gender, number){
+  let p = String(part||"").trim().toLowerCase();
+  if(!p) p = "hecho";
+
+  // femenino: cambia la última 'o' por 'a' si aplica (cortado->cortada, visto->vista, hecho->hecha)
+  if(gender==="f"){
+    if(/o$/.test(p)) p = p.slice(0,-1) + "a";
+  }
+
+  // plural
+  if(number==="pl"){
+    if(!/s$/.test(p)) p = p + "s";
+  }
+
+  return p;
+}
+
+function agentES(agentP){
+  const k = agentP?.key || agentP;
+  const map = {
+    I: "mí",
+    You: "ti",
+    He: "él",
+    She: "ella",
+    It: "ello",
+    We: "nosotros",
+    YouP: "ustedes",
+    They: "ellos"
+  };
+  return map[k] || "ellos";
+}
+
+function auxPassiveES(tKind, number){
+  const pl = (number==="pl");
+  if(tKind==="P")  return pl ? "son" : "es";
+  if(tKind==="S")  return pl ? "fueron" : "fue";
+  // PP
+  return pl ? "han sido" : "ha sido";
+}
+
+function buildSpanishPassiveLine(tKind, moodKey, v, objES, agentP){
+  const obj = String(objES||"la tarea").trim();
+  const meta = parseObjES(obj);
+  const inf = String(v?.esp||"hacer").toLowerCase().trim();
+  const basePart = (typeof esParticipleInf === "function") ? esParticipleInf(inf) : "hecho";
+  const part = agreePartES(basePart, meta.gender, meta.number);
+  const aux = auxPassiveES(tKind, meta.number);
+  const by = `por ${agentES(agentP)}`;
+
+  if(moodKey==="Q"){
+    return `¿${obj} ${aux} ${part} ${by}?`.replace(/\s+/g," ").trim();
+  }
+  if(moodKey==="N"){
+    // En PP: "no ha sido", en P/S: "no es / no fue"
+    return `${obj} no ${aux} ${part} ${by}`.replace(/\s+/g," ").trim();
+  }
+  return `${obj} ${aux} ${part} ${by}`.replace(/\s+/g," ").trim();
+}
+
+// Helpers para añadir colas (hoy/ayer/esta semana) y puntuación
+function addTailES(line, tail){
+  line = String(line||"").replace(/\s+/g," ").trim();
+  tail = String(tail||"").trim();
+  if(!tail) return line;
+
+  if(line.startsWith("¿") && line.endsWith("?")){
+    const core = line.slice(0,-1).trim();
+    return `${core} ${tail}?`.replace(/\s+/g," ").trim();
+  }
+  return `${line} ${tail}`.replace(/\s+/g," ").trim();
+}
+function ensurePeriodES(line){
+  line = String(line||"").trim();
+  if(!line) return line;
+  if(line.startsWith("¿") && line.endsWith("?")) return line;
+  if(/[\.!?]$/.test(line)) return line;
+  return line + ".";
 }
 
 /* ===========================
@@ -3963,6 +4033,11 @@ function abrirWeb(){
   window.open('https://sites.google.com/iemanueljbetancur.edu.co/smartebook/inicio','_blank');
 }
 
+
+function abrirVerbs(){
+  // ✅ Abre el nuevo módulo de conjugaciones (verbs.html)
+  window.location.href = "verbs.html";
+}
 
 /* ===========================
    INIT / UI
@@ -4417,18 +4492,7 @@ function esParticiple(espGloss){
   const baseNorm = _deaccent(base);
   const end = baseNorm.slice(-2);
   const stem = base.slice(0,-2);
-  let part = (end==="ar") ? (stem + "ado") : (stem + "ido");
-  // ✅ Fallback de seguridad: evita 'undefined' en salida si el infinitivo viene raro
-  if(!part || part === "undefined"){
-    // intenta reconstrucción mínima
-    const b = String(base||"");
-    if(b.length >= 2){
-      const st = b.slice(0,-2);
-      const en2 = _deaccent(b).slice(-2);
-      part = (en2==="ar") ? (st + "ado") : (st + "ido");
-    }
-  }
-  if(!part || part === "undefined") part = "hecho";
+  const part = (end==="ar") ? (stem + "ado") : (stem + "ido");
   return { part, tail, reflexive, key };
 }
 
@@ -4686,8 +4750,8 @@ function generarTablas(v){
         if(t.kind==="PP" && m.key==="N") en = passivePPN(v,p);
         if(t.kind==="PP" && m.key==="Q") en = passivePPQ(v,p);
 
-        // Español: estructura correcta tipo "Se ha hecho la tarea."
-        const esLine = esSePassive(t.kind, m.key, subjPas.es);
+        // Español: pasiva real: OBJETO + ser/haber + participio + por + agente.
+        const esLine = buildSpanishPassiveLine(t.kind, m.key, v, subjPas.es, p);
         const enHTML = colorizeConjugation(en, t.kind, m.key, p, v, "passive");
 
         html += `
@@ -4925,14 +4989,18 @@ function renderPractice(v){
       q7Expected: makeExpectedSet([en7Base, ...en7Variants]),
       q8Expected: makeExpectedSet([en8Base, ...en8Variants]),
       q9Expected: makeExpectedSet([en9Base]),
-      es: {
-        4: `Se ${objVerbEs("past")} ${subjPas.es} ayer.`,
-        5: `No se ${objVerbEs("present")} ${subjPas.es} todos los días.`,
-        6: `¿Se ${objVerbEs("present")} ${subjPas.es}?`,
-        7: `Se ${objVerbEs("pp")} ${subjPas.es} ya.`,
-        8: `No se ${objVerbEs("pp")} ${subjPas.es}.`,
-        9: `¿Se ${objVerbEs("past")} ${subjPas.es} anoche?`
-      }
+      es: (function(){
+        const obj = subjPas.es;
+        const agentP = PRON[0]; // by me → por mí
+        return {
+          4: ensurePeriodES(addTailES(buildSpanishPassiveLine("S","A", v, obj, agentP), "ayer")),
+          5: ensurePeriodES(addTailES(buildSpanishPassiveLine("P","N", v, obj, agentP), "todos los días")),
+          6: addTailES(buildSpanishPassiveLine("P","Q", v, obj, agentP), ""),
+          7: ensurePeriodES(addTailES(buildSpanishPassiveLine("PP","A", v, obj, agentP), "ya")),
+          8: ensurePeriodES(addTailES(buildSpanishPassiveLine("PP","N", v, obj, agentP), "")),
+          9: addTailES(buildSpanishPassiveLine("S","Q", v, obj, agentP), "anoche")
+        };
+      })()
     };
   }
 
@@ -5550,18 +5618,21 @@ function renderReading(v){
       `${capFirst(have)} ${sEN.toLowerCase()} been ${v.c3} ${byMe} this week?`
     ];
 
+    const objES = subjPas.es;
+    const agentP = PRON[0]; // by me → por mí
+
     es = [
-      `Se ${objVerbEs("present")} ${subjPas.es} hoy.`,
-      `No se ${objVerbEs("present")} ${subjPas.es} hoy.`,
-      `¿Se ${objVerbEs("present")} ${subjPas.es} hoy?`,
+      ensurePeriodES(addTailES(buildSpanishPassiveLine("P","A", v, objES, agentP), "hoy")),
+      ensurePeriodES(addTailES(buildSpanishPassiveLine("P","N", v, objES, agentP), "hoy")),
+      addTailES(buildSpanishPassiveLine("P","Q", v, objES, agentP), "hoy"),
 
-      `Se ${objVerbEs("past")} ${subjPas.es} ayer.`,
-      `No se ${objVerbEs("past")} ${subjPas.es} ayer.`,
-      `¿Se ${objVerbEs("past")} ${subjPas.es} ayer?`,
+      ensurePeriodES(addTailES(buildSpanishPassiveLine("S","A", v, objES, agentP), "ayer")),
+      ensurePeriodES(addTailES(buildSpanishPassiveLine("S","N", v, objES, agentP), "ayer")),
+      addTailES(buildSpanishPassiveLine("S","Q", v, objES, agentP), "ayer"),
 
-      `Se ${objVerbEs("pp")} ${subjPas.es} esta semana.`,
-      `No se ${objVerbEs("pp")} ${subjPas.es} esta semana.`,
-      `¿Se ${objVerbEs("pp")} ${subjPas.es} esta semana?`
+      ensurePeriodES(addTailES(buildSpanishPassiveLine("PP","A", v, objES, agentP), "esta semana")),
+      ensurePeriodES(addTailES(buildSpanishPassiveLine("PP","N", v, objES, agentP), "esta semana")),
+      addTailES(buildSpanishPassiveLine("PP","Q", v, objES, agentP), "esta semana")
     ].map(x=>x.replace(/\s+/g," ").trim());
 
     // meta (tKind/mood) para colorear C3 en pasiva
@@ -5683,7 +5754,7 @@ function renderReading(v){
         </tbody></table>
         <div class="legend">${
           (voiceMode==="passive" && passiveOk)
-            ? `Voz pasiva con sujeto-objeto: <b>${subjForPassive(v).en}</b>.<br/>Equivalencia recomendada en español: construcción con <b>“se”</b> (correcta y natural).`
+            ? `Voz pasiva con sujeto-objeto: <b>${subjForPassive(v).en}</b>.<br/>Equivalencia recomendada en español: <b>ser + participio</b> (pasiva) y <b>por + agente</b>.`
             : `Incluye Presente, Pasado y Presente Perfecto (A/N/Q).<br/>Traducción debajo de cada oración (EN → ES).`
         }</div>
       </div>
