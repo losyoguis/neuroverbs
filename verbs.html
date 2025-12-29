@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VERBS • Conjugaciones (EN/ES) • Activa / Pasiva</title>
+
+  <style>
+    :root{
+      --bg:#070a12;
+      --card: rgba(255,255,255,.08);
+      --card2: rgba(255,255,255,.06);
+      --stroke: rgba(255,255,255,.14);
+      --text:#ffffff;
+      --muted: rgba(255,255,255,.78);
+
+      --orange:#f28b16;   /* C1 */
+      --blue:#3b82f6;     /* C2 */
+      --red:#ef4444;      /* C3 */
+      --green:#22c55e;
+
+      --shadow: 0 20px 45px rgba(0,0,0,.55);
+      --radius: 18px;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background:
+        radial-gradient(1200px 700px at 20% -10%, rgba(242,139,22,.25), transparent 55%),
+        radial-gradient(900px 600px at 90% 10%, rgba(59,130,246,.22), transparent 55%),
+        radial-gradient(900px 600px at 70% 110%, rgba(239,68,68,.20), transparent 55%),
+        linear-gradient(180deg, #070a12 0%, #0b1220 65%, #070a12 100%);
+      color:var(--text);
+      min-height:100vh;
+      padding: 16px;
+    }
+
+    .wrap{
+      width:min(1100px, 96vw);
+      margin: 0 auto;
+    }
+
+    header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+      padding: 14px 14px;
+      border:1px solid var(--stroke);
+      border-radius: var(--radius);
+      background: rgba(0,0,0,.22);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: var(--shadow);
+    }
+
+    .brand{
+      display:flex; align-items:center; gap:12px;
+    }
+    .logo{
+      width:44px; height:44px;
+      border-radius: 14px;
+      display:grid; place-items:center;
+      background: rgba(242,139,22,.18);
+      border: 1px solid rgba(242,139,22,.35);
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.12);
+      font-size: 1.35rem;
+    }
+    .title h1{
+      margin:0;
+      font-size: clamp(18px, 3.2vw, 26px);
+      letter-spacing:.3px;
+      font-weight: 950;
+      line-height: 1.05;
+    }
+    .title p{
+      margin: 2px 0 0;
+      color: var(--muted);
+      font-weight: 650;
+      font-size: .92rem;
+    }
+
+    .actions{
+      display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    }
+
+    .btn{
+      border:none;
+      cursor:pointer;
+      padding: 10px 12px;
+      border-radius: 999px;
+      font-weight: 900;
+      color: var(--text);
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.18);
+      transition: transform .08s ease, background .15s ease;
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:hover{ background: rgba(255,255,255,.18); }
+    .btn:active{ transform: translateY(1px); }
+
+    .btn.primary{
+      background: rgba(242,139,22,.18);
+      border-color: rgba(242,139,22,.35);
+    }
+    .btn.primary:hover{ background: rgba(242,139,22,.26); }
+
+    .grid{
+      margin-top: 14px;
+      display:grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 12px;
+    }
+    @media (max-width: 940px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+
+    .panel{
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.06);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+
+    .panel h2{
+      margin:0 0 10px;
+      font-size: 1.05rem;
+      font-weight: 950;
+      letter-spacing:.2px;
+    }
+
+    .row{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    input, select{
+      width:100%;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.18);
+      color: var(--text);
+      outline: none;
+      font-weight: 800;
+      min-height: 46px;
+    }
+    input::placeholder{ color: rgba(255,255,255,.6); }
+
+    .pillRow{
+      display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;
+    }
+    .pill{
+      flex: 1 1 170px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.18);
+      color: var(--text);
+      font-weight: 950;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .pill.active{
+      border-color: rgba(242,139,22,.38);
+      background: rgba(242,139,22,.16);
+    }
+
+    .metaCard{
+      margin-top:12px;
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 16px;
+      padding: 12px 12px;
+      background: rgba(0,0,0,.18);
+    }
+    .metaTop{
+      display:flex; align-items:flex-start; justify-content:space-between; gap:10px; flex-wrap:wrap;
+    }
+    .verbForms{
+      font-weight: 950;
+      font-size: 1.05rem;
+      letter-spacing:.3px;
+    }
+    .verbForms .c1{ color: var(--orange); }
+    .verbForms .c2{ color: var(--blue); }
+    .verbForms .c3{ color: var(--red); }
+    .verbMeaning{
+      margin-top:4px;
+      color: var(--muted);
+      font-weight: 750;
+    }
+
+    .smallNote{
+      margin-top:10px;
+      color: rgba(255,255,255,.72);
+      font-size: .9rem;
+      line-height: 1.35;
+    }
+
+    .controls{
+      margin-top: 12px;
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap:10px;
+    }
+    @media (max-width: 700px){
+      .controls{ grid-template-columns: 1fr; }
+    }
+
+    .toggle3{
+      display:flex; gap:8px; flex-wrap:wrap;
+    }
+    .tbtn{
+      flex: 1 1 140px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.18);
+      color: var(--text);
+      font-weight: 950;
+      cursor:pointer;
+      user-select:none;
+    }
+    .tbtn.active{
+      border-color: rgba(59,130,246,.42);
+      background: rgba(59,130,246,.18);
+    }
+
+    .tbtn.ok.active{
+      border-color: rgba(34,197,94,.45);
+      background: rgba(34,197,94,.18);
+    }
+
+    .tbtn.warn.active{
+      border-color: rgba(242,139,22,.40);
+      background: rgba(242,139,22,.16);
+    }
+
+    .audioRow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed rgba(255,255,255,.16);
+    }
+    .speedBox{
+      flex: 1 1 260px;
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+    .speedLabel{
+      font-weight: 900;
+      color: rgba(255,255,255,.85);
+      white-space:nowrap;
+    }
+    .speedValue{
+      font-weight: 950;
+      color: var(--orange);
+      min-width: 58px;
+      text-align:right;
+    }
+    input[type="range"]{ width: 100%; }
+
+    table{
+      width:100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      overflow:hidden;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+    }
+    th, td{
+      padding: 10px 10px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      vertical-align: top;
+    }
+    th{
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      font-size: .72rem;
+      color: rgba(255,255,255,.72);
+      font-weight: 950;
+      text-align:left;
+    }
+    tr:last-child td{ border-bottom:none; }
+
+    td.pron{
+      width: 90px;
+      font-weight: 950;
+      color: rgba(255,255,255,.92);
+      white-space:nowrap;
+    }
+    td.en .line{
+      font-weight: 950;
+      line-height: 1.25;
+      padding-right: 44px;
+      position: relative;
+      min-height: 22px;
+    }
+    td.en .es{
+      margin-top: 2px;
+      font-style: italic;
+      color: rgba(255,255,255,.78);
+      font-weight: 700;
+      font-size: .9rem;
+    }
+
+    .say{
+      position:absolute;
+      right:0; top:0;
+      border:none;
+      cursor:pointer;
+      width:36px; height:28px;
+      border-radius: 12px;
+      color: var(--text);
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.14);
+      font-weight: 900;
+    }
+    .say:hover{ background: rgba(255,255,255,.18); }
+
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+      font-weight: 900;
+      color: rgba(255,255,255,.9);
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    .chip b{ color: var(--orange); }
+
+    .warnBox{
+      margin-top: 10px;
+      border-radius: 14px;
+      padding: 10px 12px;
+      border: 1px solid rgba(242,139,22,.30);
+      background: rgba(242,139,22,.10);
+      color: rgba(255,255,255,.92);
+      font-weight: 750;
+      line-height:1.35;
+    }
+
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      font-size: .85rem;
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.16);
+      padding: 2px 6px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo">🧠</div>
+        <div class="title">
+          <h1>VERBS • Conjugador EN/ES</h1>
+          <p>Voz activa y pasiva • Presente simple, pasado simple y presente perfecto</p>
+        </div>
+      </div>
+
+      <div class="actions">
+        <a class="btn" href="index.html" title="Volver a la app principal">⬅️ Volver</a>
+        <button class="btn primary" type="button" onclick="focusSearch()">🔎 Buscar verbo</button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- LEFT: selector -->
+      <section class="panel">
+        <h2>1) Selecciona un verbo</h2>
+        <div class="row" style="gap:12px;">
+          <div style="flex: 1 1 360px;">
+            <input id="search" list="verbsList" placeholder="Escribe: cut, go, eat… (o en español: cortar…)" />
+            <datalist id="verbsList"></datalist>
+          </div>
+          <div style="flex: 0 0 220px; min-width:min(240px, 100%);">
+            <button class="btn primary" style="width:100%; justify-content:center;" onclick="loadFromSearch()" type="button">Cargar ✅</button>
+          </div>
+        </div>
+
+        <div class="metaCard" id="metaCard" style="display:none;">
+          <div class="metaTop">
+            <div>
+              <div class="verbForms" id="verbForms"></div>
+              <div class="verbMeaning" id="verbMeaning"></div>
+            </div>
+            <div class="chip" title="Modo y compatibilidad">
+              <span>Modo:</span> <b id="voiceChip">Activa</b>
+              <span style="opacity:.85;">•</span>
+              <span id="passiveHint" style="opacity:.9;">Pasiva disponible ✅</span>
+            </div>
+          </div>
+
+          <div class="pillRow">
+            <div class="pill active" id="pillActive" onclick="setVoice('active')">VOZ ACTIVA</div>
+            <div class="pill" id="pillPassive" onclick="setVoice('passive')">VOZ PASIVA</div>
+          </div>
+
+          <div class="controls">
+            <div>
+              <div style="font-weight:950; margin:2px 0 8px;">2) Tiempo</div>
+              <div class="toggle3">
+                <div class="tbtn warn active" id="tenseP" onclick="setTense('P')">PRESENTE</div>
+                <div class="tbtn active" id="tenseS" onclick="setTense('S')">PASADO</div>
+                <div class="tbtn active" id="tensePP" onclick="setTense('PP')">P. PERFECTO</div>
+              </div>
+            </div>
+
+            <div>
+              <div style="font-weight:950; margin:2px 0 8px;">3) Modo</div>
+              <div class="toggle3">
+                <div class="tbtn ok active" id="modeA" onclick="setMode('A')">Afirmativa</div>
+                <div class="tbtn active" id="modeN" onclick="setMode('N')">Negativa</div>
+                <div class="tbtn active" id="modeQ" onclick="setMode('Q')">Interrogativa</div>
+              </div>
+            </div>
+
+            <div>
+              <div style="font-weight:950; margin:2px 0 8px;">4) Opciones</div>
+              <label class="chip" style="cursor:pointer; user-select:none;">
+                <input id="agentToggle" type="checkbox" style="width:18px; height:18px; margin:0;" />
+                <span>Añadir agente: <span class="kbd">by someone</span> / <span class="kbd">por alguien</span></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="audioRow">
+            <div class="speedBox">
+              <div class="speedLabel">🎧 Velocidad:</div>
+              <input id="rate" type="range" min="0.6" max="1.0" step="0.05" value="0.75" oninput="updateRateLabel()" />
+              <div class="speedValue" id="rateLabel">0.75×</div>
+            </div>
+            <button class="btn" type="button" onclick="stopSpeak()">⏹️ Stop</button>
+          </div>
+
+          <div class="smallNote" id="noteBox">
+            Tip: En <b>voz pasiva</b>, el patrón base es <b>BE + V3</b> (en español: <b>ser + participio</b>).
+          </div>
+
+          <div class="warnBox" id="passiveGenerated" style="display:none;">
+            ⚠️ Nota: la pasiva mostrada aquí se <b>genera automáticamente</b> con reglas gramaticales (útil para estudiar).
+            Si quieres una pasiva con contexto más natural, luego la dejamos “100% a tu estilo” cuando me envíes la versión final del verbo.
+          </div>
+        </div>
+
+        <div class="smallNote" style="margin-top: 12px;">
+          Cómo alimentar la base de datos:
+          <br/>1) Abre este archivo y busca <span class="kbd">VERBS_DB</span>.
+          <br/>2) Copia el bloque del verbo (como el de <b>CUT</b>) y agrega el siguiente.
+        </div>
+      </section>
+
+      <!-- RIGHT: results -->
+      <section class="panel">
+        <h2 id="resultTitle">Conjugaciones</h2>
+        <div id="result"></div>
+      </section>
+    </div>
+  </div>
+
+<script>
+/* =========================================================
+   ✅ BASE DE DATOS (se alimenta con los bloques que envías)
+   - active: se carga EXACTAMENTE como lo envías (EN/ES)
+   - passive: por ahora se genera con reglas (BE + V3)
+   ========================================================= */
+
+const VERBS_DB = [
+  {
+    key: "cut",
+    c1: "CUT",
+    c2: "CUT",
+    c3: "CUT",
+    es: "Cortar",
+    // ✅ Conjugaciones ACTIVAS (exactas como las enviaste)
+    active: {
+      P: { // Present Simple
+        A: [
+          ["I", "I cut", "Yo corto"],
+          ["YOU_S", "You cut", "Tú cortas"],
+          ["HE", "He cuts", "Él corta"],
+          ["SHE", "She cuts", "Ella corta"],
+          ["IT", "It cuts", "Eso corta"],
+          ["WE", "We cut", "Nosotros cortamos"],
+          ["YOU_P", "You cut", "Ustedes cortan"],
+          ["THEY", "They cut", "Ellos cortan"]
+        ],
+        N: [
+          ["I", "I don’t cut", "Yo no corto"],
+          ["YOU_S", "You don’t cut", "Tú no cortas"],
+          ["HE", "He doesn’t cut", "Él no corta"],
+          ["SHE", "She doesn’t cut", "Ella no corta"],
+          ["IT", "It doesn’t cut", "Eso no corta"],
+          ["WE", "We don’t cut", "Nosotros no cortamos"],
+          ["YOU_P", "You don’t cut", "Ustedes no cortan"],
+          ["THEY", "They don’t cut", "Ellos no cortan"]
+        ],
+        Q: [
+          ["Do I cut?", "¿Yo corto?"],
+          ["Do you cut?", "¿Tú cortas?"],
+          ["Does he cut?", "¿Él corta?"],
+          ["Does she cut?", "¿Ella corta?"],
+          ["Does it cut?", "¿Eso corta?"],
+          ["Do we cut?", "¿Nosotros cortamos?"],
+          ["Do you cut?", "¿Ustedes cortan?"],
+          ["Do they cut?", "¿Ellos cortan?"]
+        ]
+      },
+      S: { // Past Simple
+        A: [
+          ["I", "I cut", "Yo corté"],
+          ["YOU_S", "You cut", "Tú cortaste"],
+          ["HE", "He cut", "Él cortó"],
+          ["SHE", "She cut", "Ella cortó"],
+          ["IT", "It cut", "Eso cortó"],
+          ["WE", "We cut", "Nosotros cortamos"],
+          ["YOU_P", "You cut", "Ustedes cortaron"],
+          ["THEY", "They cut", "Ellos cortaron"]
+        ],
+        N: [
+          ["I", "I didn’t cut", "Yo no corté"],
+          ["YOU_S", "You didn’t cut", "Tú no cortaste"],
+          ["HE", "He didn’t cut", "Él no cortó"],
+          ["SHE", "She didn’t cut", "Ella no cortó"],
+          ["IT", "It didn’t cut", "Eso no cortó"],
+          ["WE", "We didn’t cut", "Nosotros no cortamos"],
+          ["YOU_P", "You didn’t cut", "Ustedes no cortaron"],
+          ["THEY", "They didn’t cut", "Ellos no cortaron"]
+        ],
+        Q: [
+          ["Did I cut?", "¿Yo corté?"],
+          ["Did you cut?", "¿Tú cortaste?"],
+          ["Did he cut?", "¿Él cortó?"],
+          ["Did she cut?", "¿Ella cortó?"],
+          ["Did it cut?", "¿Eso cortó?"],
+          ["Did we cut?", "¿Nosotros cortamos?"],
+          ["Did you cut?", "¿Ustedes cortaron?"],
+          ["Did they cut?", "¿Ellos cortaron?"]
+        ]
+      },
+      PP: { // Present Perfect
+        A: [
+          ["I", "I have cut", "Yo he cortado"],
+          ["YOU_S", "You have cut", "Tú has cortado"],
+          ["HE", "He has cut", "Él ha cortado"],
+          ["SHE", "She has cut", "Ella ha cortado"],
+          ["IT", "It has cut", "Eso ha cortado"],
+          ["WE", "We have cut", "Nosotros hemos cortado"],
+          ["YOU_P", "You have cut", "Ustedes han cortado"],
+          ["THEY", "They have cut", "Ellos han cortado"]
+        ],
+        N: [
+          ["I", "I haven’t cut", "Yo no he cortado"],
+          ["YOU_S", "You haven’t cut", "Tú no has cortado"],
+          ["HE", "He hasn’t cut", "Él no ha cortado"],
+          ["SHE", "She hasn’t cut", "Ella no ha cortado"],
+          ["IT", "It hasn’t cut", "Eso no ha cortado"],
+          ["WE", "We haven’t cut", "Nosotros no hemos cortado"],
+          ["YOU_P", "You haven’t cut", "Ustedes no han cortado"],
+          ["THEY", "They haven’t cut", "Ellos no han cortado"]
+        ],
+        Q: [
+          ["Have I cut?", "¿He cortado?"],
+          ["Have you cut?", "¿Has cortado?"],
+          ["Has he cut?", "¿Él ha cortado?"],
+          ["Has she cut?", "¿Ella ha cortado?"],
+          ["Has it cut?", "¿Eso ha cortado?"],
+          ["Have we cut?", "¿Hemos cortado?"],
+          ["Have you cut?", "¿Han cortado?"],
+          ["Have they cut?", "¿Han cortado?"]
+        ]
+      }
+    }
+  }
+];
+
+/* =========================
+   ✅ PRONOMBRES (para tabla)
+   ========================= */
+const PRON = [
+  { key:"I",     label:"I",     esSubj:"Yo",      beP:"am",  beS:"was",  have:"have" },
+  { key:"YOU_S", label:"You",   esSubj:"Tú",      beP:"are", beS:"were", have:"have" },
+  { key:"HE",    label:"He",    esSubj:"Él",      beP:"is",  beS:"was",  have:"has"  },
+  { key:"SHE",   label:"She",   esSubj:"Ella",    beP:"is",  beS:"was",  have:"has"  },
+  { key:"IT",    label:"It",    esSubj:"Eso",     beP:"is",  beS:"was",  have:"has"  },
+  { key:"WE",    label:"We",    esSubj:"Nosotros",beP:"are", beS:"were", have:"have" },
+  { key:"YOU_P", label:"You",   esSubj:"Ustedes", beP:"are", beS:"were", have:"have" },
+  { key:"THEY",  label:"They",  esSubj:"Ellos",   beP:"are", beS:"were", have:"have" }
+];
+
+const state = {
+  verbKey: "cut",
+  voice: "active", // active | passive
+  tense: "P",      // P | S | PP
+  mode: "A",       // A | N | Q
+  rate: 0.75
+};
+
+let currentVerb = null;
+
+/* =========================
+   ✅ INIT
+   ========================= */
+init();
+
+function init(){
+  // datalist
+  const dl = document.getElementById("verbsList");
+  dl.innerHTML = VERBS_DB.map(v => {
+    const opts = [
+      v.key,
+      `${v.c1} – ${v.c2} – ${v.c3}`,
+      v.es,
+      `${v.key} (${v.es})`,
+      `${v.c1} (${v.es})`
+    ];
+    // Datalist: 1 opción por verbo (pero “value” amigable)
+    return `<option value="${v.key}">${opts.join(" • ")}</option>`;
+  }).join("");
+
+  document.getElementById("search").addEventListener("keydown", (e)=>{
+    if(e.key==="Enter"){ e.preventDefault(); loadFromSearch(); }
+  });
+
+  updateRateLabel();
+  loadVerb(state.verbKey);
+}
+
+/* =========================
+   ✅ UI HELPERS
+   ========================= */
+function focusSearch(){
+  const s = document.getElementById("search");
+  s.focus();
+  s.select?.();
+}
+
+function updateRateLabel(){
+  const r = document.getElementById("rate");
+  state.rate = Number(r.value || 0.75);
+  document.getElementById("rateLabel").textContent = state.rate.toFixed(2) + "×";
+}
+
+function loadFromSearch(){
+  const raw = (document.getElementById("search").value || "").trim();
+  if(!raw) return;
+  const key = normalizeKey(raw);
+
+  // intenta encontrar por key (inglés)
+  let v = VERBS_DB.find(x => x.key === key);
+
+  // intenta encontrar por infinitivo español
+  if(!v){
+    const rawLow = raw.toLowerCase();
+    v = VERBS_DB.find(x => (x.es || "").toLowerCase() === rawLow);
+  }
+
+  // intenta por C1
+  if(!v){
+    const up = raw.toUpperCase();
+    v = VERBS_DB.find(x => (x.c1 || "").toUpperCase() === up);
+  }
+
+  if(!v){
+    renderEmpty(`No encontré el verbo <b>${escapeHTML(raw)}</b> en la base de datos. (Por ahora solo está <b>cut</b>.)`);
+    return;
+  }
+
+  loadVerb(v.key);
+}
+
+function normalizeKey(s){
+  return String(s || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[–—-]/g, " ")
+    .split(/\s+/)[0];
+}
+
+function escapeHTML(str){
+  return String(str || "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+/* =========================
+   ✅ STATE SETTERS
+   ========================= */
+function setVoice(v){
+  state.voice = (v === "passive") ? "passive" : "active";
+  document.getElementById("pillActive").classList.toggle("active", state.voice==="active");
+  document.getElementById("pillPassive").classList.toggle("active", state.voice==="passive");
+  document.getElementById("voiceChip").textContent = state.voice==="active" ? "Activa" : "Pasiva";
+  render();
+}
+
+function setTense(t){
+  state.tense = (t==="S"||t==="PP") ? t : "P";
+  document.getElementById("tenseP").classList.toggle("active", state.tense==="P");
+  document.getElementById("tenseS").classList.toggle("active", state.tense==="S");
+  document.getElementById("tensePP").classList.toggle("active", state.tense==="PP");
+  render();
+}
+
+function setMode(m){
+  state.mode = (m==="N"||m==="Q") ? m : "A";
+  document.getElementById("modeA").classList.toggle("active", state.mode==="A");
+  document.getElementById("modeN").classList.toggle("active", state.mode==="N");
+  document.getElementById("modeQ").classList.toggle("active", state.mode==="Q");
+  render();
+}
+
+/* =========================
+   ✅ LOAD VERB
+   ========================= */
+function loadVerb(key){
+  const v = VERBS_DB.find(x => x.key === key);
+  if(!v){
+    renderEmpty("No se encontró el verbo.");
+    return;
+  }
+  currentVerb = v;
+  state.verbKey = v.key;
+
+  // show meta card
+  document.getElementById("metaCard").style.display = "block";
+
+  document.getElementById("verbForms").innerHTML =
+    `<span class="c1">${escapeHTML(v.c1)}</span> – <span class="c2">${escapeHTML(v.c2)}</span> – <span class="c3">${escapeHTML(v.c3)}</span>`;
+  document.getElementById("verbMeaning").textContent = `(${v.es})`;
+
+  // Passive hint
+  document.getElementById("passiveHint").textContent = "Pasiva disponible ✅";
+  document.getElementById("passiveGenerated").style.display = "none"; // se muestra si entra a pasiva
+
+  // reset search box to key
+  document.getElementById("search").value = v.key;
+
+  // defaults
+  setVoice(state.voice);
+  setTense(state.tense);
+  setMode(state.mode);
+  render();
+}
+
+/* =========================
+   ✅ RENDER
+   ========================= */
+function render(){
+  if(!currentVerb){
+    renderEmpty("Selecciona un verbo.");
+    return;
+  }
+
+  const tenseTitle = (state.tense==="P") ? "PRESENTE SIMPLE"
+                   : (state.tense==="S") ? "PASADO SIMPLE"
+                   : "PRESENTE PERFECTO";
+
+  const modeTitle = (state.mode==="A") ? "Afirmativa"
+                  : (state.mode==="N") ? "Negativa"
+                  : "Interrogativa";
+
+  const voiceTitle = (state.voice==="active") ? "VOZ ACTIVA"
+                   : "VOZ PASIVA";
+
+  document.getElementById("resultTitle").textContent = `${voiceTitle} • ${tenseTitle} • ${modeTitle}`;
+
+  const agent = document.getElementById("agentToggle").checked;
+
+  if(state.voice==="active"){
+    document.getElementById("passiveGenerated").style.display = "none";
+    renderActive(currentVerb, state.tense, state.mode);
+  }else{
+    // por ahora: generador pasivo
+    document.getElementById("passiveGenerated").style.display = "block";
+    renderPassive(currentVerb, state.tense, state.mode, agent);
+  }
+}
+
+function renderEmpty(html){
+  document.getElementById("resultTitle").textContent = "Conjugaciones";
+  document.getElementById("result").innerHTML =
+    `<div class="warnBox">${html}</div>`;
+}
+
+/* =========================
+   ✅ ACTIVE (desde BD)
+   ========================= */
+function renderActive(v, tense, mode){
+  const box = document.getElementById("result");
+
+  const data = v.active?.[tense]?.[mode];
+  if(!data){
+    renderEmpty("No hay datos para este modo/tiempo.");
+    return;
+  }
+
+  if(mode==="Q"){
+    // Interrogatives (2 cols)
+    const rows = data.map(([en, es]) => rowQ(en, es)).join("");
+    box.innerHTML = `
+      <table>
+        <thead><tr><th>Inglés</th><th>Español</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+    attachSayHandlers();
+    return;
+  }
+
+  // A / N: Pronoun + EN + ES
+  const rows = data.map(([pKey, en, es])=>{
+    const p = PRON.find(x=>x.key===pKey);
+    return rowPN(p?.label || "", en, es);
+  }).join("");
+
+  box.innerHTML = `
+    <table>
+      <thead><tr><th>Pronombre</th><th>Oración</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+  attachSayHandlers();
+}
+
+/* =========================
+   ✅ PASSIVE (generador)
+   ========================= */
+function renderPassive(v, tense, mode, agent){
+  const box = document.getElementById("result");
+  const V3 = (v.c3 || "").trim();
+  if(!V3){
+    renderEmpty("Falta C3 para generar pasiva.");
+    return;
+  }
+
+  if(mode==="Q"){
+    const rows = PRON.map(p => {
+      const en = passiveEN_Q(tense, p, V3, agent);
+      const es = passiveES_Q(tense, p, v, agent);
+      return rowQ(en, es);
+    }).join("");
+    box.innerHTML = `
+      <table>
+        <thead><tr><th>Inglés</th><th>Español</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+    attachSayHandlers();
+    return;
+  }
+
+  const rows = PRON.map(p => {
+    const en = (mode==="A")
+      ? passiveEN_A(tense, p, V3, agent)
+      : passiveEN_N(tense, p, V3, agent);
+
+    const es = (mode==="A")
+      ? passiveES_A(tense, p, v, agent)
+      : passiveES_N(tense, p, v, agent);
+
+    return rowPN(p.label, en, es);
+  }).join("");
+
+  box.innerHTML = `
+    <table>
+      <thead><tr><th>Pronombre</th><th>Oración</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+  attachSayHandlers();
+}
+
+/* =========================
+   ✅ TEMPLATES ROWS
+   ========================= */
+function rowPN(pron, en, es){
+  const sayText = escapeHTML(en);
+  return `
+    <tr>
+      <td class="pron">${escapeHTML(pron)}</td>
+      <td class="en">
+        <div class="line">
+          <button class="say" type="button" data-say="${encodeURIComponent(en)}">🔊</button>
+          ${escapeHTML(en)}
+        </div>
+        <div class="es">${escapeHTML(es)}</div>
+      </td>
+    </tr>
+  `;
+}
+
+function rowQ(en, es){
+  return `
+    <tr>
+      <td class="en">
+        <div class="line">
+          <button class="say" type="button" data-say="${encodeURIComponent(en)}">🔊</button>
+          ${escapeHTML(en)}
+        </div>
+      </td>
+      <td class="en">
+        <div class="line" style="padding-right:0;">
+          ${escapeHTML(es)}
+        </div>
+      </td>
+    </tr>
+  `;
+}
+
+/* =========================
+   ✅ PASSIVE EN (BE + V3)
+   ========================= */
+function passiveEN_A(tense, p, v3, agent){
+  if(tense==="P") return `${p.label} ${p.beP} ${v3}${agent ? " by someone" : ""}`;
+  if(tense==="S") return `${p.label} ${p.beS} ${v3}${agent ? " by someone" : ""}`;
+  return `${p.label} ${p.have} been ${v3}${agent ? " by someone" : ""}`;
+}
+function passiveEN_N(tense, p, v3, agent){
+  if(tense==="P"){
+    const negBe = (p.beP==="is") ? "isn't" : (p.beP==="am") ? "am not" : "aren't";
+    return `${p.label} ${negBe} ${v3}${agent ? " by someone" : ""}`;
+  }
+  if(tense==="S"){
+    const negWas = (p.beS==="was") ? "wasn't" : "weren't";
+    return `${p.label} ${negWas} ${v3}${agent ? " by someone" : ""}`;
+  }
+  const negHave = (p.have==="has") ? "hasn't" : "haven't";
+  return `${p.label} ${negHave} been ${v3}${agent ? " by someone" : ""}`;
+}
+function passiveEN_Q(tense, p, v3, agent){
+  if(tense==="P"){
+    const aux = (p.beP==="am") ? "Am" : (p.beP==="is") ? "Is" : "Are";
+    return `${aux} ${p.label} ${v3}${agent ? " by someone" : ""}?`;
+  }
+  if(tense==="S"){
+    const aux = (p.beS==="was") ? "Was" : "Were";
+    return `${aux} ${p.label} ${v3}${agent ? " by someone" : ""}?`;
+  }
+  const aux = (p.have==="has") ? "Has" : "Have";
+  return `${aux} ${p.label} been ${v3}${agent ? " by someone" : ""}?`;
+}
+
+/* =========================
+   ✅ PASSIVE ES (ser + participio)
+   (Para estudio: se usa "cortado/cortada")
+   ========================= */
+function participioES(v, p){
+  // Para este proyecto: si es SHE -> "cortada"; si no -> "cortado/a"
+  // Si luego quieres, lo afinamos por género/objeto real.
+  const base = (v.es || "").toLowerCase();
+  // Para "cortar" => "cortado"
+  // Lo dejamos simple: participio regular -ar: -ado, -er/-ir: -ido.
+  // Como tú nos vas a mandar la traducción exacta, aquí solo es fallback.
+  let part = "hecho";
+  if(base.endsWith("ar")) part = base.slice(0,-2) + "ado";
+  else if(base.endsWith("er") || base.endsWith("ir")) part = base.slice(0,-2) + "ido";
+  // ajuste de género básico
+  if(p.key==="SHE") return part.replace(/ado$/, "ada").replace(/ido$/, "ida");
+  if(p.key==="HE") return part;
+  return part + "/a";
+}
+
+function serES_pres(p){
+  // presente de "ser"
+  if(p.key==="I") return "soy";
+  if(p.key==="YOU_S") return "eres";
+  if(p.key==="HE"||p.key==="SHE"||p.key==="IT") return "es";
+  if(p.key==="WE") return "somos";
+  if(p.key==="YOU_P") return "son";
+  return "son";
+}
+function serES_past(p){
+  // pasado simple (pretérito) de "ser"
+  if(p.key==="I") return "fui";
+  if(p.key==="YOU_S") return "fuiste";
+  if(p.key==="HE"||p.key==="SHE"||p.key==="IT") return "fue";
+  if(p.key==="WE") return "fuimos";
+  if(p.key==="YOU_P") return "fueron";
+  return "fueron";
+}
+function haberES_presperf(p){
+  // auxiliar "haber" en presente perfecto
+  if(p.key==="I") return "he";
+  if(p.key==="YOU_S") return "has";
+  if(p.key==="HE"||p.key==="SHE"||p.key==="IT") return "ha";
+  if(p.key==="WE") return "hemos";
+  if(p.key==="YOU_P") return "han";
+  return "han";
+}
+
+function passiveES_A(tense, p, v, agent){
+  const part = participioES(v, p);
+  if(tense==="P") return `${p.esSubj} ${serES_pres(p)} ${part}${agent ? " por alguien" : ""}`;
+  if(tense==="S") return `${p.esSubj} ${serES_past(p)} ${part}${agent ? " por alguien" : ""}`;
+  // presente perfecto pasivo: "he sido cortado"
+  return `${p.esSubj} ${haberES_presperf(p)} sido ${part}${agent ? " por alguien" : ""}`;
+}
+
+function passiveES_N(tense, p, v, agent){
+  const part = participioES(v, p);
+  if(tense==="P") return `${p.esSubj} no ${serES_pres(p)} ${part}${agent ? " por alguien" : ""}`;
+  if(tense==="S") return `${p.esSubj} no ${serES_past(p)} ${part}${agent ? " por alguien" : ""}`;
+  return `${p.esSubj} no ${haberES_presperf(p)} sido ${part}${agent ? " por alguien" : ""}`;
+}
+
+function passiveES_Q(tense, p, v, agent){
+  const part = participioES(v, p);
+  if(tense==="P") return `¿${serES_pres(p)} ${part}${agent ? " por alguien" : ""}?`;
+  if(tense==="S") return `¿${serES_past(p)} ${part}${agent ? " por alguien" : ""}?`;
+  return `¿${haberES_presperf(p)} sido ${part}${agent ? " por alguien" : ""}?`;
+}
+
+/* =========================
+   ✅ TEXT TO SPEECH (EN)
+   ========================= */
+function speak(text){
+  try{
+    stopSpeak();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "en-US";
+    u.rate = state.rate || 0.75;
+    u.pitch = 1.0;
+    u.volume = 1.0;
+    window.speechSynthesis.speak(u);
+  }catch(_){}
+}
+
+function stopSpeak(){
+  try{ window.speechSynthesis.cancel(); }catch(_){}
+}
+
+function attachSayHandlers(){
+  document.querySelectorAll(".say").forEach(btn=>{
+    btn.onclick = ()=>{
+      const t = decodeURIComponent(btn.getAttribute("data-say") || "");
+      if(t) speak(t);
+    };
+  });
+}
+
+// re-render when agent checkbox changes
+document.getElementById("agentToggle").addEventListener("change", render);
+</script>
+</body>
+</html>
