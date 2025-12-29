@@ -980,20 +980,56 @@ function passiveEN_Q(tense, p, v3, agent){
    ✅ PASSIVE ES (ser + participio)
    (Para estudio: se usa "cortado/cortada")
    ========================= */
+/* =========================
+   ✅ PARTICIPIO EN ESPAÑOL (motor unificado / seguro)
+   - Usa el infinitivo en español (v.es) como base (ej: "Cortar")
+   - Soporta varios participios irregulares comunes
+   - Nunca devuelve undefined (fallback "hecho")
+   ========================= */
+function _deaccentES(s){
+  return String(s||"")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+const IRR_PART_ES = {
+  "abrir":"abierto",
+  "cubrir":"cubierto",
+  "decir":"dicho",
+  "describir":"descrito",
+  "escribir":"escrito",
+  "freir":"frito",
+  "freír":"frito",
+  "hacer":"hecho",
+  "imprimir":"impreso",
+  "morir":"muerto",
+  "poner":"puesto",
+  "resolver":"resuelto",
+  "romper":"roto",
+  "satisfacer":"satisfecho",
+  "ver":"visto",
+  "volver":"vuelto"
+};
+
 function participioES(v, p){
-  // Para este proyecto: si es SHE -> "cortada"; si no -> "cortado/a"
-  // Si luego quieres, lo afinamos por género/objeto real.
-  const base = (v.es || "").toLowerCase();
-  // Para "cortar" => "cortado"
-  // Lo dejamos simple: participio regular -ar: -ado, -er/-ir: -ido.
-  // Como tú nos vas a mandar la traducción exacta, aquí solo es fallback.
-  let part = "hecho";
-  if(base.endsWith("ar")) part = base.slice(0,-2) + "ado";
-  else if(base.endsWith("er") || base.endsWith("ir")) part = base.slice(0,-2) + "ido";
-  // ajuste de género básico
-  if(p.key==="SHE") return part.replace(/ado$/, "ada").replace(/ido$/, "ida");
-  if(p.key==="HE") return part;
-  return part + "/a";
+  // v.es se espera en infinitivo: "Cortar", "Comer", "Vivir", etc.
+  const infRaw = (v?.es || "").trim();
+  const inf = infRaw.toLowerCase();
+  const infKey = _deaccentES(inf);
+
+  let part = IRR_PART_ES[infKey] || "";
+  if(!part){
+    if(infKey.endsWith("ar")) part = infKey.slice(0,-2) + "ado";
+    else if(infKey.endsWith("er") || infKey.endsWith("ir")) part = infKey.slice(0,-2) + "ido";
+  }
+
+  if(!part) part = "hecho";
+
+  // Ajuste de género MUY básico (opcional):
+  if(p?.key==="SHE"){
+    part = part.replace(/ado$/, "ada").replace(/ido$/, "ida").replace(/to$/, "ta").replace(/cho$/, "cha");
+  }
+  return part;
 }
 
 function serES_pres(p){
@@ -1041,9 +1077,10 @@ function passiveES_N(tense, p, v, agent){
 
 function passiveES_Q(tense, p, v, agent){
   const part = participioES(v, p);
-  if(tense==="P") return `¿${serES_pres(p)} ${part}${agent ? " por alguien" : ""}?`;
-  if(tense==="S") return `¿${serES_past(p)} ${part}${agent ? " por alguien" : ""}?`;
-  return `¿${haberES_presperf(p)} sido ${part}${agent ? " por alguien" : ""}?`;
+  const subj = String(p.esSubj||"").toLowerCase(); // yo/tú/él/ella/eso/nosotros/ustedes/ellos
+  if(tense==="P")  return `¿${serES_pres(p)} ${subj} ${part}${agent ? " por alguien" : ""}?`;
+  if(tense==="S")  return `¿${serES_past(p)} ${subj} ${part}${agent ? " por alguien" : ""}?`;
+  return `¿${haberES_presperf(p)} ${subj} sido ${part}${agent ? " por alguien" : ""}?`;
 }
 
 /* =========================
