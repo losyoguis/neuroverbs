@@ -1889,7 +1889,7 @@ const ALLOWED_EMAIL_SUFFIX = "@"+ALLOWED_DOMAIN;
 const OAUTH_CLIENT_ID = "637468265896-5olh8rhf76setm52743tashi3vq1la67.apps.googleusercontent.com";
 
 // Leaderboard paging
-const LB_PAGE_SIZE = 10;
+const LB_PAGE_SIZE = 5;
 let __lbOffset = 0;
 let __lbTotal = 0; // total participantes (desde servidor)
 
@@ -2094,7 +2094,7 @@ function applyServerXpSafely(serverXp, source) {
 
 
 // =========================
-// Leaderboard paginado (10 por página)
+// Leaderboard paginado (5 por página)
 // =========================
 function resetLeaderboardPaging() {
   __lbOffset = 0;
