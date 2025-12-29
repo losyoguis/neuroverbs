@@ -5118,6 +5118,52 @@ function checkPractice(qid){
   }
 }
 
+/* ===========================
+   📚 READING STORY (ACTIVE / PASSIVE) + TRANSLATE
+   - Solo para la sección Reading (debajo de la tabla Reading)
+   =========================== */
+let readingStoryTranslationVisible = false;
+
+function getReadingStory(mode){
+  // mode: "active" | "passive"
+  if(mode === "passive"){
+    return {
+      en: [
+        `Every morning, English is studied by Lina at her school in Medellín. Irregular verbs are practiced with her classmates, and each step is guided by the app. The listening drills aren't skipped, because clear pronunciation matters. Are the verbs reviewed before class? Yes—the Reading is opened and the story is followed.`,
+        `Last Friday, a challenge was set by the teacher. The computer room was entered, and Round 1 was started. Short sentences were written, and neurons were connected with confidence. The text wasn't translated word by word; meaning was searched for. Was their focus noticed by the teacher? Extra XP was given, and a smile was shared.`,
+        `Since the program began, a stronger habit has been built by Lina. It has been learned that mistakes are part of progress, and the tricky verbs haven't been given up on. Has their fluency been improved by the students? It has, and pride is felt when the ranking is changed. Today, the app is closed, but practice is continued tomorrow.`
+      ],
+      es: [
+        `Cada mañana, el inglés es estudiado por Lina en su colegio en Medellín. Los verbos irregulares son practicados con sus compañeros, y cada paso es guiado por la app. Los ejercicios de listening no son omitidos, porque la pronunciación clara importa. ¿Los verbos son revisados antes de clase? Sí: se abre Reading y se sigue la historia.`,
+        `El viernes pasado, el profesor puso un reto. Se entró a la sala de informática y se inició el Round 1. Se escribieron oraciones cortas y se conectaron neuronas con confianza. El texto no fue traducido palabra por palabra; se buscó el significado. ¿La concentración fue notada por el profesor? Se dio XP extra y se compartió una sonrisa.`,
+        `Desde que el programa comenzó, un hábito más fuerte ha sido construido por Lina. Se ha aprendido que los errores son parte del progreso, y los verbos difíciles no han sido abandonados. ¿La fluidez ha sido mejorada por los estudiantes? Sí, y se siente orgullo cuando el ranking es cambiado. Hoy, la app es cerrada, pero la práctica es continuada mañana.`
+      ]
+    };
+  }
+
+  // ACTIVE (default)
+  return {
+    en: [
+      `Every morning, Lina studies English at her school in Medellín. She practices irregular verbs with her classmates, and the app guides each step. She doesn't skip the listening drills, because clear pronunciation matters. Does she review the verbs before class? Yes—she opens the Reading and follows the story.`,
+      `Last Friday, the teacher set a challenge. The group entered the computer room and started Round 1. They wrote short sentences, and they connected neurons with confidence. They didn't translate word by word; they looked for meaning. Did the teacher notice their focus? He smiled and gave them extra XP.`,
+      `Since the program began, Lina has built a stronger habit. She has learned that mistakes are part of progress, and she hasn't given up on the tricky verbs. Have the students improved their fluency? They have, and they feel proud when the ranking changes. Today, Lina closes the app, but the practice continues tomorrow.`
+    ],
+    es: [
+      `Cada mañana, Lina estudia inglés en su colegio en Medellín. Practica los verbos irregulares con sus compañeros, y la app guía cada paso. Ella no se salta los ejercicios de listening, porque la pronunciación clara importa. ¿Revisa los verbos antes de clase? Sí: abre Reading y sigue la historia.`,
+      `El viernes pasado, el profesor puso un reto. El grupo entró a la sala de informática y comenzó el Round 1. Escribieron oraciones cortas y conectaron neuronas con confianza. No tradujeron palabra por palabra; buscaron el significado. ¿El profesor notó su concentración? Sonrió y les dio XP extra.`,
+      `Desde que el programa comenzó, Lina ha construido un hábito más fuerte. Ha aprendido que los errores son parte del progreso, y no se ha rendido con los verbos difíciles. ¿Han mejorado los estudiantes su fluidez? Sí, y se sienten orgullosos cuando cambia el ranking. Hoy, Lina cierra la app, pero la práctica continúa mañana.`
+    ]
+  };
+}
+
+function toggleReadingStoryTranslation(){
+  readingStoryTranslationVisible = !readingStoryTranslationVisible;
+  const box = document.getElementById("readingStoryTranslation");
+  if(box) box.style.display = readingStoryTranslationVisible ? "block" : "none";
+  const btn = document.getElementById("btnReadingTranslate");
+  if(btn) btn.textContent = readingStoryTranslationVisible ? "Hide Translation" : "Translate";
+}
+
 function renderReading(v){
   const passiveOk = passiveAllowed(v);
   const verbName = `${v.c1.toUpperCase()} (${v.esp})`;
@@ -5269,6 +5315,15 @@ function renderReading(v){
     ? `<div class="warn" style="margin-top:12px;">⚠️ Este verbo no se usa naturalmente en pasiva; READING se muestra en activa para mantener la gramática correcta.</div>`
     : "";
 
+  // ✅ Historia para lectura contextual (se muestra según VOZ ACTIVA / PASIVA)
+  const storyMode = (voiceMode === "passive") ? "passive" : "active";
+  const story = getReadingStory(storyMode);
+  const storyLabel = (storyMode === "passive") ? "Passive Voice" : "Active Voice";
+  const translateBtnText = readingStoryTranslationVisible ? "Hide Translation" : "Translate";
+  const translateDisplay = readingStoryTranslationVisible ? "block" : "none";
+  const storyEN = (story?.en || []).map(p=>`<p style="margin:0 0 10px 0;">${p}</p>`).join("");
+  const storyES = (story?.es || []).map(p=>`<p style="margin:0 0 10px 0;">${p}</p>`).join("");
+
   const html = `
     <div class="practice-head" style="margin-top:18px;">
       <div class="practice-title">📖 READING (${badgeText}) — práctica completa con <b>${verbName}</b></div>
@@ -5296,6 +5351,28 @@ function renderReading(v){
             ? `Voz pasiva con sujeto-objeto: <b>${subjForPassive(v).en}</b>.<br/>Equivalencia recomendada en español: construcción con <b>“se”</b> (correcta y natural).`
             : `Incluye Presente, Pasado y Presente Perfecto (A/N/Q).<br/>Traducción debajo de cada oración (EN → ES).`
         }</div>
+      </div>
+
+      <!-- ✅ Lectura/HistorIa (mismo sentido en Active/Passive) + Translate -->
+      <div class="card" style="margin-top:16px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+          <div style="font-weight:950; color:#0f172a;">📚 STORY (${storyLabel})</div>
+          <button class="roundbtn" id="btnReadingTranslate" type="button" onclick="toggleReadingStoryTranslation()" style="text-transform:none;">${translateBtnText}</button>
+        </div>
+
+        <div id="readingStoryEnglish" style="margin-top:10px; color:#0f172a; line-height:1.6; font-weight:850;">
+          ${storyEN}
+        </div>
+
+        <div id="readingStoryTranslation" style="display:${translateDisplay}; margin-top:10px; padding-top:12px; border-top:1px dashed #cbd5e1;">
+          <div style="font-weight:950; color:#334155; margin-bottom:8px;">🇪🇸 Español</div>
+          <div style="color:#334155; line-height:1.6; font-weight:850;">${storyES}</div>
+        </div>
+
+        <div class="legend">
+          Mismo contenido en <b>Active</b> y <b>Passive</b> (Presente Simple / Pasado Simple / Presente Perfecto).
+          Incluye ejemplos <b>afirmativos</b>, <b>negativos</b> e <b>interrogativos</b> integrados en la historia.
+        </div>
       </div>
     </div>
   `;
