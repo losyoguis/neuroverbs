@@ -630,8 +630,6 @@
       max-height: 88vh !important;
     }
 
-
-
     /* ✅ Cuando un modal está abierto, bajamos la prioridad del HUD (barra de puntuación y botón flotante)
        para que NUNCA tape el contenido del modal (especialmente en Google Sites). */
     body.modal-open .stats,
@@ -1222,7 +1220,6 @@
     }
     .spellValidate:hover{ filter:brightness(1.03); transform: translateY(-1px); }
 
-
     /* ✅ Colores neuro para C1/C2/C3 (Spelling Bee) */
     .spellGrid .spellCard:nth-child(1) .spellLabel{ color: var(--c1); }
     .spellGrid .spellCard:nth-child(2) .spellLabel{ color: var(--c2); }
@@ -1404,7 +1401,6 @@
       width:100%;
       height:240px;
     }
-
 
     /* ✅✅✅ RESPONSIVE MÓVIL (estilo "app") */
     @media (max-width: 640px){
@@ -1677,7 +1673,6 @@ box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);;justify-content:flex-start;text-ali
   .statBox.xpBig .stat-value{ font-size: 3.2rem; }
 }
 
-
     /* ====== AJUSTE: reducir altura del menú de puntuación (~1/3) ====== */
     .stats{
       padding: 10px !important;
@@ -1726,8 +1721,6 @@ box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);;justify-content:flex-start;text-ali
 }
 .lbInfo{display:flex;flex-direction:row;align-items:baseline;gap:12px;flex-wrap:wrap;min-width:0;}
 
-
-
 /* === FIX: tooltips del menú de puntuación (statsBar) siempre por ENCIMA y sin quedar cortados === */
 #statsBar{ overflow-x: auto !important; overflow-y: hidden !important; scrollbar-width:none; }
 #statsBar::-webkit-scrollbar{ height: 0; }
@@ -1773,8 +1766,6 @@ box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);;justify-content:flex-start;text-ali
   transform: none !important;
 }
 
-
-
 /* ✅ Tooltips del menú de puntuación: usamos tooltip global (data-help) para evitar recortes.
    Por eso desactivamos los pseudo-tooltips basados en data-tip SOLO en la barra de puntuación. */
 #statsBar .statBox[data-tip]::after,
@@ -1800,7 +1791,6 @@ box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);;justify-content:flex-start;text-ali
   }
   #statsBar .statBox[data-tip], #statsBar .goalBox[data-tip]{ cursor: default; }
 }
-
 
     /* ===========================
        📱 MOBILE APP SHELL (extra)
@@ -2065,7 +2055,6 @@ function debugSheetsEndpoint() {
   }
 }
 
-
 function queueXpDelta(idToken, xpDelta) {
   if (!idToken) return;
   const delta = Number(xpDelta || 0);
@@ -2077,7 +2066,6 @@ function queueXpDelta(idToken, xpDelta) {
   // ✅ Siempre usamos el mismo endpoint/acción que soporta el backend (doPost -> action=upsert)
   postToSheets({ action: "upsert", idToken, xpDelta: delta });
 }
-
 
 // Trae el XP del usuario desde Sheets y lo aplica (Sheets manda)
 async function fetchAndApplyUserFromSheets() {
@@ -2119,7 +2107,6 @@ function applyServerXpSafely(serverXp, source) {
   try { actualizarStats(); } catch (_) {}
   if (source) console.log("[XP] HUD actualizado desde servidor:", sXp, "source=", source);
 }
-
 
 // =========================
 // Leaderboard paginado (5 por página)
@@ -2395,7 +2382,6 @@ window.addEventListener("load", () => {
 <div class="roundrow">
 <button class="roundbtn" data-help="Guía rápida: cómo usar la app paso a paso." onclick="abrirInstrucciones()" title="Guía rápida: cómo usar la app paso a paso." type="button">INSTRUCCIONES 📌</button>
 <button class="roundbtn ebook" data-help="Abre el e-book (Canva) dentro de la app." onclick="abrirEbook()" title="Abre el e-book (Canva) dentro de la app." type="button">E-BOOK 📚</button>
-<button class="roundbtn" data-help="📚 VERBS: consulta conjugaciones completas (EN/ES) en voz activa y pasiva." onclick="abrirVerbs()" title="VERBS: consulta conjugaciones" type="button">VERBS 📖</button>
 </div>
 <!-- ✅ FILA 2: ROUND 1 + ROUND 2 + VOZ ACTIVA + VOZ PASIVA -->
 <div class="roundrow">
@@ -2971,72 +2957,9 @@ const COMPLEMENTS = {
   swim:  {en:"the channel", es:"el canal"},
   sleep: {en:"the night", es:"la noche"}
 };
-/* ✅ Complementos genéricos (fallback) — evita que siempre sea "the task" */
-const GENERIC_COMPLEMENTS = [
-  {en:"the project", es:"el proyecto"},
-  {en:"the lesson", es:"la lección"},
-  {en:"the message", es:"el mensaje"},
-  {en:"the plan", es:"el plan"},
-  {en:"the report", es:"el informe"},
-  {en:"the document", es:"el documento"},
-  {en:"the photo", es:"la foto"},
-  {en:"the email", es:"el correo"},
-  {en:"the homework", es:"la tarea"},
-  {en:"the door", es:"la puerta"},
-  {en:"the house", es:"la casa"},
-  {en:"the keys", es:"las llaves"},
-  {en:"the car", es:"el carro"},
-  {en:"the idea", es:"la idea"},
-  {en:"the food", es:"la comida"},
-  {en:"the paper", es:"el papel"},
-  {en:"the problem", es:"el problema"},
-  {en:"the answer", es:"la respuesta"},
-  {en:"the invitation", es:"la invitación"},
-  {en:"the gift", es:"el regalo"},
-  {en:"the song", es:"la canción"},
-  {en:"the meeting", es:"la reunión"},
-  {en:"the rules", es:"las reglas"}
-];
-
-function hash32(str){
-  // hash estable (no criptográfico) para elegir un complemento sin aleatoriedad
-  let h = 2166136261;
-  str = String(str||"");
-  for(let i=0;i<str.length;i++){
-    h ^= str.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return (h >>> 0);
-}
-
-function stablePick(list, seed){
-  const arr = Array.isArray(list) ? list : [];
-  if(!arr.length) return {en:"the project", es:"el proyecto"};
-  const h = hash32(seed);
-  return arr[h % arr.length];
-}
-
 function getComplement(v){
-  const key = String(v?.c1||"").toLowerCase().trim();
-  if(COMPLEMENTS[key]) return COMPLEMENTS[key];
-
-  // Heurísticas rápidas por tipo de verbo (para que la frase “se sienta” del verbo)
-  if(["write","send","text","email","reply"].includes(key)) return {en:"a message", es:"un mensaje"};
-  if(["read","study"].includes(key)) return {en:"the story", es:"la historia"};
-  if(["speak","say","tell","ask"].includes(key)) return {en:"the truth", es:"la verdad"};
-  if(["make","build","create","do","prepare","plan"].includes(key)) return {en:"the project", es:"el proyecto"};
-  if(["open","close","shut","lock","unlock"].includes(key)) return {en:"the door", es:"la puerta"};
-  if(["take","bring","carry","fetch"].includes(key)) return {en:"the keys", es:"las llaves"};
-  if(["give","offer","lend"].includes(key)) return {en:"a gift", es:"un regalo"};
-  if(["buy","sell","pay"].includes(key)) return {en:"a ticket", es:"una entrada"};
-  if(["eat","cook","bake"].includes(key)) return {en:"the food", es:"la comida"};
-  if(["drink"].includes(key)) return {en:"water", es:"agua"};
-  if(["drive","ride"].includes(key)) return {en:"the car", es:"el carro"};
-  if(["cut","tear","fold"].includes(key)) return {en:"the paper", es:"el papel"};
-
-  // Fallback estable (varía por verbo)
-  const seed = `${key}|${String(v?.esp||"")}`;
-  return stablePick(GENERIC_COMPLEMENTS, seed);
+  const key = String(v.c1||"").toLowerCase().trim();
+  return COMPLEMENTS[key] || {en:"the task", es:"la tarea"};
 }
 
 /* Pronombres (agente en pasiva) */
@@ -3463,7 +3386,6 @@ function irAMistake(c1, g, d, round, voice){
    FIN GAMIFICACIÓN PRO
    =========================== */
 
-
 /* ===========================
    SPEECH
    =========================== */
@@ -3739,16 +3661,6 @@ function capFirst(s){
   if(!x) return x;
   return x.charAt(0).toUpperCase() + x.slice(1);
 }
-
-function lowerFirstIfArticle(np){
-  // Convierte "The ..." -> "the ..." (pero conserva nombres propios como "English")
-  const s = String(np||"").trim();
-  if(/^The\b/.test(s)) return "the" + s.slice(3);
-  if(/^A\b/.test(s)) return "a" + s.slice(1);
-  if(/^An\b/.test(s)) return "an" + s.slice(2);
-  return s;
-}
-
 function isProbablyPluralEN(np){
   // heurística simple
   const s = String(np||"").trim().toLowerCase();
@@ -3793,7 +3705,7 @@ function passivePresentQ(v, agentP){
   const plural = isProbablyPluralEN(subj);
   const be = capFirst(bePresentFor(plural));
   const by = `by ${AGENT_OBJ[agentP.key] || "them"}`;
-  return `${be} ${lowerFirstIfArticle(subj)} ${v.c3} ${by}?`;
+  return `${be} ${subj.toLowerCase()} ${v.c3} ${by}?`;
 }
 
 function passivePastA(v, agentP){
@@ -3816,7 +3728,7 @@ function passivePastQ(v, agentP){
   const plural = isProbablyPluralEN(subj);
   const be = capFirst(bePastFor(plural));
   const by = `by ${AGENT_OBJ[agentP.key] || "them"}`;
-  return `${be} ${lowerFirstIfArticle(subj)} ${v.c3} ${by}?`;
+  return `${be} ${subj.toLowerCase()} ${v.c3} ${by}?`;
 }
 
 function passivePPA(v, agentP){
@@ -3839,106 +3751,34 @@ function passivePPQ(v, agentP){
   const plural = isProbablyPluralEN(subj);
   const aux = capFirst(haveFor(plural));
   const by = `by ${AGENT_OBJ[agentP.key] || "them"}`;
-  return `${aux} ${lowerFirstIfArticle(subj)} been ${v.c3} ${by}?`;
+  return `${aux} ${subj.toLowerCase()} been ${v.c3} ${by}?`;
 }
 
-/* ===========================
-   ✅ ESPAÑOL: VOZ PASIVA (ser + participio + por + agente)
-   - Se alinea con el inglés: Objeto (complemento) → BE → V3 → by + agente
-   - Ajusta participio según género/número del objeto (la/las/el/los...)
-   =========================== */
-
-function parseObjES(objES){
-  const s = String(objES||"").trim().toLowerCase();
-  const first = (s.split(/\s+/)[0] || "");
-  const fem = new Set(["la","las","una","unas","esta","estas","esa","esas","aquella","aquellas","mi","mis","tu","tus","su","sus","nuestra","nuestras"]);
-  const masc = new Set(["el","los","un","unos","este","estos","ese","esos","aquel","aquellos","nuestro","nuestros"]);
-  let gender = fem.has(first) ? "f" : masc.has(first) ? "m" : "m";
-  let number = (["las","los","unas","unos","estas","estos","esas","esos","aquellas","aquellos","mis","tus","sus","nuestras","nuestros"].includes(first)) ? "pl" : "sg";
-  if(number==="sg"){
-    // fallback: plural si empieza con artículo plural o termina claramente en 's'
-    if(first.endsWith("s") || (s.endsWith("s") && !s.endsWith("és") && !s.endsWith("ús"))) number = "pl";
-  }
-  return {gender, number};
-}
-
-function agreePartES(part, gender, number){
-  let p = String(part||"").trim().toLowerCase();
-  if(!p) p = "hecho";
-
-  // femenino: cambia la última 'o' por 'a' si aplica (cortado->cortada, visto->vista, hecho->hecha)
-  if(gender==="f"){
-    if(/o$/.test(p)) p = p.slice(0,-1) + "a";
-  }
-
-  // plural
-  if(number==="pl"){
-    if(!/s$/.test(p)) p = p + "s";
-  }
-
-  return p;
-}
-
-function agentES(agentP){
-  const k = agentP?.key || agentP;
-  const map = {
-    I: "mí",
-    You: "ti",
-    He: "él",
-    She: "ella",
-    It: "ello",
-    We: "nosotros",
-    YouP: "ustedes",
-    They: "ellos"
-  };
-  return map[k] || "ellos";
-}
-
-function auxPassiveES(tKind, number){
-  const pl = (number==="pl");
-  if(tKind==="P")  return pl ? "son" : "es";
-  if(tKind==="S")  return pl ? "fueron" : "fue";
-  // PP
-  return pl ? "han sido" : "ha sido";
-}
-
-function buildSpanishPassiveLine(tKind, moodKey, v, objES, agentP){
+/* Español: equivalencia elegante en pasiva con "SE" (evita concordancia de participio) */
+function esSePassive(tenseKind, moodKey, objES){
   const obj = String(objES||"la tarea").trim();
-  const meta = parseObjES(obj);
-  const inf = String(v?.esp||"hacer").toLowerCase().trim();
-  const basePart = (typeof esParticipleInf === "function") ? esParticipleInf(inf) : "hecho";
-  const part = agreePartES(basePart, meta.gender, meta.number);
-  const aux = auxPassiveES(tKind, meta.number);
-  const by = `por ${agentES(agentP)}`;
-
-  if(moodKey==="Q"){
-    return `¿${obj} ${aux} ${part} ${by}?`.replace(/\s+/g," ").trim();
+  if(tenseKind==="P"){
+    if(moodKey==="A") return `Se ${objVerbEs("present")} ${obj}.`;
+    if(moodKey==="N") return `No se ${objVerbEs("present")} ${obj}.`;
+    return `¿Se ${objVerbEs("present")} ${obj}?`;
   }
-  if(moodKey==="N"){
-    // En PP: "no ha sido", en P/S: "no es / no fue"
-    return `${obj} no ${aux} ${part} ${by}`.replace(/\s+/g," ").trim();
+  if(tenseKind==="S"){
+    if(moodKey==="A") return `Se ${objVerbEs("past")} ${obj}.`;
+    if(moodKey==="N") return `No se ${objVerbEs("past")} ${obj}.`;
+    return `¿Se ${objVerbEs("past")} ${obj}?`;
   }
-  return `${obj} ${aux} ${part} ${by}`.replace(/\s+/g," ").trim();
+  // PP
+  if(moodKey==="A") return `Se ${objVerbEs("pp")} ${obj}.`;
+  if(moodKey==="N") return `No se ${objVerbEs("pp")} ${obj}.`;
+  return `¿Se ${objVerbEs("pp")} ${obj}?`;
 }
-
-// Helpers para añadir colas (hoy/ayer/esta semana) y puntuación
-function addTailES(line, tail){
-  line = String(line||"").replace(/\s+/g," ").trim();
-  tail = String(tail||"").trim();
-  if(!tail) return line;
-
-  if(line.startsWith("¿") && line.endsWith("?")){
-    const core = line.slice(0,-1).trim();
-    return `${core} ${tail}?`.replace(/\s+/g," ").trim();
-  }
-  return `${line} ${tail}`.replace(/\s+/g," ").trim();
-}
-function ensurePeriodES(line){
-  line = String(line||"").trim();
-  if(!line) return line;
-  if(line.startsWith("¿") && line.endsWith("?")) return line;
-  if(/[\.!?]$/.test(line)) return line;
-  return line + ".";
+function objVerbEs(kind){
+  // En español con "se" el verbo varía según el verbo original; aquí usamos una estructura genérica
+  // (se hace / se hizo / se ha hecho) porque el objetivo del módulo es VOZ PASIVA EN INGLÉS.
+  // Esto mantiene gramática correcta y consistente.
+  if(kind==="present") return "hace";
+  if(kind==="past") return "hizo";
+  return "ha hecho";
 }
 
 /* ===========================
@@ -4104,12 +3944,6 @@ function cerrarEbook(){
    =========================== */
 function abrirWeb(){
   window.open('https://sites.google.com/iemanueljbetancur.edu.co/smartebook/inicio','_blank');
-}
-
-
-function abrirVerbs(){
-  // ✅ Abre el nuevo módulo de conjugaciones (verbs.html)
-  window.location.href = "verbs.html";
 }
 
 /* ===========================
@@ -4368,7 +4202,6 @@ try{
 
   persistState();
 }
-
 
 /* ===========================
    🇪🇸 CONJUGADOR ESPAÑOL (para traducciones en tablas)
@@ -4823,8 +4656,8 @@ function generarTablas(v){
         if(t.kind==="PP" && m.key==="N") en = passivePPN(v,p);
         if(t.kind==="PP" && m.key==="Q") en = passivePPQ(v,p);
 
-        // Español: pasiva real: OBJETO + ser/haber + participio + por + agente.
-        const esLine = buildSpanishPassiveLine(t.kind, m.key, v, subjPas.es, p);
+        // Español: estructura correcta tipo "Se ha hecho la tarea."
+        const esLine = esSePassive(t.kind, m.key, subjPas.es);
         const enHTML = colorizeConjugation(en, t.kind, m.key, p, v, "passive");
 
         html += `
@@ -4900,7 +4733,6 @@ function addSpellingXP(v){
   // ✅ Solo 10 XP por verbo correcto
   return awardXP(10, "spelling");
 }
-
 
 function spellKeyFor(v){
   const c1 = String(v?.c1||"").toLowerCase().trim();
@@ -5062,18 +4894,14 @@ function renderPractice(v){
       q7Expected: makeExpectedSet([en7Base, ...en7Variants]),
       q8Expected: makeExpectedSet([en8Base, ...en8Variants]),
       q9Expected: makeExpectedSet([en9Base]),
-      es: (function(){
-        const obj = subjPas.es;
-        const agentP = PRON[0]; // by me → por mí
-        return {
-          4: ensurePeriodES(addTailES(buildSpanishPassiveLine("S","A", v, obj, agentP), "ayer")),
-          5: ensurePeriodES(addTailES(buildSpanishPassiveLine("P","N", v, obj, agentP), "todos los días")),
-          6: addTailES(buildSpanishPassiveLine("P","Q", v, obj, agentP), ""),
-          7: ensurePeriodES(addTailES(buildSpanishPassiveLine("PP","A", v, obj, agentP), "ya")),
-          8: ensurePeriodES(addTailES(buildSpanishPassiveLine("PP","N", v, obj, agentP), "")),
-          9: addTailES(buildSpanishPassiveLine("S","Q", v, obj, agentP), "anoche")
-        };
-      })()
+      es: {
+        4: `Se ${objVerbEs("past")} ${subjPas.es} ayer.`,
+        5: `No se ${objVerbEs("present")} ${subjPas.es} todos los días.`,
+        6: `¿Se ${objVerbEs("present")} ${subjPas.es}?`,
+        7: `Se ${objVerbEs("pp")} ${subjPas.es} ya.`,
+        8: `No se ${objVerbEs("pp")} ${subjPas.es}.`,
+        9: `¿Se ${objVerbEs("past")} ${subjPas.es} anoche?`
+      }
     };
   }
 
@@ -5406,7 +5234,7 @@ function esPreteriteYo(inf){
   if(inf.endsWith("er")||inf.endsWith("ir")) return esStem(inf)+"í";
   return inf;
 }
-function esParticipleInf(inf){
+function esParticiple(inf){
   inf = String(inf||"").toLowerCase().trim();
 
   // Participios irregulares (Colombia/Español estándar)
@@ -5477,7 +5305,7 @@ function getReadingStory(mode, v){
   const inf = String(v.esp||"hacer").toLowerCase().trim();
   const esPres = wrapTense(esPresentYo(inf), "present");
   const esPast = wrapTense(esPreteriteYo(inf), "past");
-  const esPart = esParticipleInf(inf);
+  const esPart = esParticiple(inf);
   const esPerf = wrapTense(esPart, "perfect");
 
   // Verbos "secundarios" para darle coherencia (no se colorean)
@@ -5551,7 +5379,6 @@ function getReadingStory(mode, v){
     ]
   };
 }
-
 
 let _readingStoryUtterance = null;
 function _pickEnglishVoice(){
@@ -5691,21 +5518,18 @@ function renderReading(v){
       `${capFirst(have)} ${sEN.toLowerCase()} been ${v.c3} ${byMe} this week?`
     ];
 
-    const objES = subjPas.es;
-    const agentP = PRON[0]; // by me → por mí
-
     es = [
-      ensurePeriodES(addTailES(buildSpanishPassiveLine("P","A", v, objES, agentP), "hoy")),
-      ensurePeriodES(addTailES(buildSpanishPassiveLine("P","N", v, objES, agentP), "hoy")),
-      addTailES(buildSpanishPassiveLine("P","Q", v, objES, agentP), "hoy"),
+      `Se ${objVerbEs("present")} ${subjPas.es} hoy.`,
+      `No se ${objVerbEs("present")} ${subjPas.es} hoy.`,
+      `¿Se ${objVerbEs("present")} ${subjPas.es} hoy?`,
 
-      ensurePeriodES(addTailES(buildSpanishPassiveLine("S","A", v, objES, agentP), "ayer")),
-      ensurePeriodES(addTailES(buildSpanishPassiveLine("S","N", v, objES, agentP), "ayer")),
-      addTailES(buildSpanishPassiveLine("S","Q", v, objES, agentP), "ayer"),
+      `Se ${objVerbEs("past")} ${subjPas.es} ayer.`,
+      `No se ${objVerbEs("past")} ${subjPas.es} ayer.`,
+      `¿Se ${objVerbEs("past")} ${subjPas.es} ayer?`,
 
-      ensurePeriodES(addTailES(buildSpanishPassiveLine("PP","A", v, objES, agentP), "esta semana")),
-      ensurePeriodES(addTailES(buildSpanishPassiveLine("PP","N", v, objES, agentP), "esta semana")),
-      addTailES(buildSpanishPassiveLine("PP","Q", v, objES, agentP), "esta semana")
+      `Se ${objVerbEs("pp")} ${subjPas.es} esta semana.`,
+      `No se ${objVerbEs("pp")} ${subjPas.es} esta semana.`,
+      `¿Se ${objVerbEs("pp")} ${subjPas.es} esta semana?`
     ].map(x=>x.replace(/\s+/g," ").trim());
 
     // meta (tKind/mood) para colorear C3 en pasiva
@@ -5827,7 +5651,7 @@ function renderReading(v){
         </tbody></table>
         <div class="legend">${
           (voiceMode==="passive" && passiveOk)
-            ? `Voz pasiva con sujeto-objeto: <b>${subjForPassive(v).en}</b>.<br/>Equivalencia recomendada en español: <b>ser + participio</b> (pasiva) y <b>por + agente</b>.`
+            ? `Voz pasiva con sujeto-objeto: <b>${subjForPassive(v).en}</b>.<br/>Equivalencia recomendada en español: construcción con <b>“se”</b> (correcta y natural).`
             : `Incluye Presente, Pasado y Presente Perfecto (A/N/Q).<br/>Traducción debajo de cada oración (EN → ES).`
         }</div>
       </div>
@@ -6042,7 +5866,6 @@ function renderSpelling(v){
   spellSyncUI();
 }
 
-
 function getSpellIllustrationSVG(v){
   const c1 = String(v?.c1||"").trim().toLowerCase();
   const esp = String(v?.esp||"").trim().toLowerCase();
@@ -6228,8 +6051,6 @@ function renderVerbIllustration(v){
   }
 }
 
-
-
 function spellGet(col){
   if(!spellingState) return "";
   if(col===1) return spellingState.c1Opts[spellingState.i1] || "";
@@ -6330,7 +6151,6 @@ function validateSpelling(){
   actualizarStats();
 }
 
-
   /* ========= Tooltip global (NO se recorta) ========= */
   window.addEventListener('DOMContentLoaded', ()=>{ (function initGlobalTooltip(){
     const tip = document.getElementById('globalTooltip');
@@ -6359,7 +6179,6 @@ function validateSpelling(){
       // Remueve data-tip para evitar tooltips duplicados y el cursor de ayuda
       try{ el.removeAttribute('data-tip'); }catch(_){ }
     });
-
 
     
 
