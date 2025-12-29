@@ -3458,7 +3458,7 @@ function normalizeSentence(s){
    =========================== */
 function isThirdSing(p){ return (p.key==="He" || p.key==="She" || p.key==="It"); }
 function subjCap(p){ return p.en; }
-function subjLow(p){ return p.en.toLowerCase(); }
+function subjLow(p){ return (p.en==="I") ? "I" : p.en.toLowerCase(); }
 
 function thirdPersonS(verb){
   const v = verb.toLowerCase();
@@ -5234,7 +5234,7 @@ function esPreteriteYo(inf){
   if(inf.endsWith("er")||inf.endsWith("ir")) return esStem(inf)+"í";
   return inf;
 }
-function esParticiple(inf){
+function esParticipleInf(inf){
   inf = String(inf||"").toLowerCase().trim();
 
   // Participios irregulares (Colombia/Español estándar)
@@ -5305,7 +5305,7 @@ function getReadingStory(mode, v){
   const inf = String(v.esp||"hacer").toLowerCase().trim();
   const esPres = wrapTense(esPresentYo(inf), "present");
   const esPast = wrapTense(esPreteriteYo(inf), "past");
-  const esPart = esParticiple(inf);
+  const esPart = esParticipleInf(inf);
   const esPerf = wrapTense(esPart, "perfect");
 
   // Verbos "secundarios" para darle coherencia (no se colorean)
