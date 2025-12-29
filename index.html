@@ -2395,6 +2395,7 @@ window.addEventListener("load", () => {
 <div class="roundrow">
 <button class="roundbtn" data-help="Guía rápida: cómo usar la app paso a paso." onclick="abrirInstrucciones()" title="Guía rápida: cómo usar la app paso a paso." type="button">INSTRUCCIONES 📌</button>
 <button class="roundbtn ebook" data-help="Abre el e-book (Canva) dentro de la app." onclick="abrirEbook()" title="Abre el e-book (Canva) dentro de la app." type="button">E-BOOK 📚</button>
+<button class="roundbtn" data-help="📚 VERBS: consulta conjugaciones completas (EN/ES) en voz activa y pasiva." onclick="abrirVerbs()" title="VERBS: consulta conjugaciones" type="button">VERBS 📖</button>
 </div>
 <!-- ✅ FILA 2: ROUND 1 + ROUND 2 + VOZ ACTIVA + VOZ PASIVA -->
 <div class="roundrow">
@@ -3960,6 +3961,11 @@ function abrirWeb(){
   window.open('https://sites.google.com/iemanueljbetancur.edu.co/smartebook/inicio','_blank');
 }
 
+
+function abrirVerbs(){
+  // ✅ Abre el nuevo módulo de conjugaciones (verbs.html)
+  window.location.href = "verbs.html";
+}
 
 /* ===========================
    INIT / UI
