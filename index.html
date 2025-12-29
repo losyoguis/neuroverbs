@@ -5313,9 +5313,9 @@ function getReadingStory(mode, v){
   const vPastB = wrapTense(v.c1, "past");        // did/didn't + base (sigue siendo Past)
   const vPerf  = wrapTense(v.c3, "perfect");     // have/has + V3
 
-  // En pasiva (EN) casi siempre usamos V3, pero el color depende del TIEMPO del enunciado:
-  const vP_pres = wrapTense(v.c3, "present");
-  const vP_past = wrapTense(v.c3, "past");
+  // En pasiva (EN): siempre V3 (participio) y siempre rojo (C3)
+  const vP_pres = wrapTense(v.c3, "perfect");
+  const vP_past = wrapTense(v.c3, "perfect");
   const vP_perf = wrapTense(v.c3, "perfect");
 
   // Protagonista (ES) en 1ra persona singular (yo)
@@ -5366,10 +5366,10 @@ function getReadingStory(mode, v){
         `${capFirst(have)} ${sEN.toLowerCase()} been ${vP_perf} with deeper comprehension—main ideas, details, purpose, vocabulary, and reflection? Absolutely. The story closes: ${ctx.en.closing}.`
       ],
       es: [
-        `En la mañana ${ctx.es.place}, se inicia la práctica y el verbo <b>${wrapTense(esPart, "present")}</b> se vuelve el protagonista. ${capFirstSafe(subjPas.es)} ${esBeP} ${wrapTense(esPart, "present")} por mí ${ctx.es.when}.`,
-        `¿${capFirstSafe(subjPas.es)} ${esBeP} ${wrapTense(esPart, "present")} por mí con intención? Sí. Pero ${subjPas.es} no ${esBeP} ${wrapTense(esPart, "present")} por mí cuando me distraigo: ${side.es[0]}, ${side.es[1]} y sigo enfocado.`,
-        `Ayer pasó un mini reto y ${ctx.es.twist}. ${capFirstSafe(subjPas.es)} ${esBeS} ${wrapTense(esPart, "past")} por mí, y el error se convirtió en aprendizaje.`,
-        `¿${capFirstSafe(subjPas.es)} ${esBeS} ${wrapTense(esPart, "past")} por mí perfecto? No siempre. Pero ¿${capFirstSafe(subjPas.es)} ${esBeS} ${wrapTense(esPart, "past")} por mí otra vez con calma? Sí, y gané XP.`,
+        `En la mañana ${ctx.es.place}, se inicia la práctica y el verbo <b>${wrapTense(esPart, "perfect")}</b> se vuelve el protagonista. ${capFirstSafe(subjPas.es)} ${esBeP} ${wrapTense(esPart, "perfect")} por mí ${ctx.es.when}.`,
+        `¿${capFirstSafe(subjPas.es)} ${esBeP} ${wrapTense(esPart, "perfect")} por mí con intención? Sí. Pero ${subjPas.es} no ${esBeP} ${wrapTense(esPart, "perfect")} por mí cuando me distraigo: ${side.es[0]}, ${side.es[1]} y sigo enfocado.`,
+        `Ayer pasó un mini reto y ${ctx.es.twist}. ${capFirstSafe(subjPas.es)} ${esBeS} ${wrapTense(esPart, "perfect")} por mí, y el error se convirtió en aprendizaje.`,
+        `¿${capFirstSafe(subjPas.es)} ${esBeS} ${wrapTense(esPart, "perfect")} por mí perfecto? No siempre. Pero ¿${capFirstSafe(subjPas.es)} ${esBeS} ${wrapTense(esPart, "perfect")} por mí otra vez con calma? Sí, y gané XP.`,
         `Esta semana ha crecido un hábito más fuerte: ${capFirstSafe(subjPas.es)} ${esH} sido ${wrapTense(esPart, "perfect")} por mí muchas veces. No ${esH} sido ${wrapTense(esPart, "perfect")} a la carrera.`,
         `¿${capFirstSafe(subjPas.es)} ${esH} sido ${wrapTense(esPart, "perfect")} con comprensión profunda (ideas principales y secundarias, argumentos y propósito), fluidez y atención, vocabulario y reflexión crítica? Totalmente. La historia cierra: ${ctx.es.closing}.`
       ]
