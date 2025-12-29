@@ -316,6 +316,22 @@
       flex-direction:column;
       gap:8px;
     }
+
+/* Neon subtitle for hint bullets */
+.neon-subtitle{
+  margin: 10px 0 8px;
+  text-align: center;
+  font-weight: 950;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  font-size: clamp(14px, 2.2vw, 18px);
+  color: #b7fff3;
+  text-shadow:
+    0 0 6px rgba(183,255,243,.75),
+    0 0 14px rgba(72,255,231,.55),
+    0 0 28px rgba(18,185,255,.35);
+}
+
     .hint-top{
       display:flex;
       justify-content:space-between;
@@ -2297,6 +2313,8 @@ window.addEventListener("load", () => {
         <span>Modo:</span> <small id="voiceModeLabel">Voz Activa</small>
         <span style="opacity:.85;font-weight:950" id="voiceModeMiniHint">Sujeto → Verbo</span>
       </div>
+
+      <div class="neon-subtitle" id="pistaNeon">PISTA NEURONAL</div>
 
       <ul id="pistaLista"></ul>
       <div class="exNote" id="exNote"><span>⚠ EXCEPCIÓN:</span> <span id="exText"></span></div>
