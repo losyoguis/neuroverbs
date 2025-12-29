@@ -859,9 +859,197 @@ function renderActive(v, tense, mode){
 }
 
 /* =========================
-   ✅ PASSIVE (generador)
+   ✅ PASSIVE (generador) — AHORA CON OBJETO REAL (según el verbo)
+   - EN:  Object + BE + V3 (+ by agente)
+   - ES:  Objeto + (es/fue/ha sido) + participio (+ por agente)
    ========================= */
-function renderPassive(v, tense, mode, agent){
+
+/* Complementos (objeto del activo → sujeto en pasiva) */
+const COMPLEMENTS = {
+  cut:   {en:"the paper", es:"el papel"},
+  put:   {en:"the book", es:"el libro"},
+  read:  {en:"the story", es:"la historia"},
+  eat:   {en:"an apple", es:"una manzana"},
+  drink: {en:"water", es:"agua"},
+  write: {en:"a message", es:"un mensaje"},
+  speak: {en:"English", es:"inglés"},
+  make:  {en:"a plan", es:"un plan"},
+  take:  {en:"a photo", es:"una foto"},
+  give:  {en:"a gift", es:"un regalo"},
+  buy:   {en:"a notebook", es:"un cuaderno"},
+  bring: {en:"the keys", es:"las llaves"},
+  do:    {en:"the homework", es:"la tarea"},
+  have:  {en:"a meeting", es:"una reunión"},
+  open:  {en:"the door", es:"la puerta"},
+  close: {en:"the door", es:"la puerta"}
+};
+
+const GENERIC_COMPLEMENTS = [
+  {en:"the project", es:"el proyecto"},
+  {en:"the lesson", es:"la lección"},
+  {en:"the plan", es:"el plan"},
+  {en:"the message", es:"el mensaje"},
+  {en:"the report", es:"el informe"},
+  {en:"the document", es:"el documento"},
+  {en:"the photo", es:"la foto"},
+  {en:"the email", es:"el correo"},
+  {en:"the door", es:"la puerta"},
+  {en:"the keys", es:"las llaves"},
+  {en:"the paper", es:"el papel"},
+  {en:"the problem", es:"el problema"},
+  {en:"the answer", es:"la respuesta"},
+  {en:"the invitation", es:"la invitación"},
+  {en:"the gift", es:"el regalo"}
+];
+
+function hash32(str){
+  let h = 2166136261;
+  str = String(str||"");
+  for(let i=0;i<str.length;i++){
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0);
+}
+function stablePick(list, seed){
+  const arr = Array.isArray(list) ? list : [];
+  if(!arr.length) return {en:"the project", es:"el proyecto"};
+  return arr[hash32(seed) % arr.length];
+}
+function getComplementForVerb(v){
+  const key = String(v?.key || v?.c1 || "").toLowerCase().trim();
+  if(COMPLEMENTS[key]) return COMPLEMENTS[key];
+
+  // Heurísticas rápidas
+  if(["write","send","text","email","reply"].includes(key)) return {en:"a message", es:"un mensaje"};
+  if(["read","study"].includes(key)) return {en:"the story", es:"la historia"};
+  if(["speak","say","tell","ask"].includes(key)) return {en:"the truth", es:"la verdad"};
+  if(["make","build","create","do","prepare","plan"].includes(key)) return {en:"the project", es:"el proyecto"};
+  if(["open","close","shut","lock","unlock"].includes(key)) return {en:"the door", es:"la puerta"};
+  if(["take","bring","carry","fetch"].includes(key)) return {en:"the keys", es:"las llaves"};
+  if(["give","offer","lend"].includes(key)) return {en:"a gift", es:"un regalo"};
+  if(["buy","sell","pay"].includes(key)) return {en:"a ticket", es:"una entrada"};
+  if(["eat","cook","bake"].includes(key)) return {en:"the food", es:"la comida"};
+  if(["drink"].includes(key)) return {en:"water", es:"agua"};
+  if(["cut","tear","fold"].includes(key)) return {en:"the paper", es:"el papel"};
+
+  return stablePick(GENERIC_COMPLEMENTS, `${key}|${String(v?.es||"")}`);
+}
+
+/* Helpers */
+function capFirst(s){
+  const x = String(s||"").trim();
+  if(!x) return x;
+  return x.charAt(0).toUpperCase() + x.slice(1);
+}
+function lowerFirstIfArticle(np){
+  const s = String(np||"").trim();
+  if(/^The\b/.test(s)) return "the" + s.slice(3);
+  if(/^A\b/.test(s)) return "a" + s.slice(1);
+  if(/^An\b/.test(s)) return "an" + s.slice(2);
+  return s;
+}
+function isProbablyPluralEN(np){
+  const s = String(np||"").trim().toLowerCase();
+  const last = s.split(/\s+/).pop() || "";
+  if(["you","we","they"].includes(s)) return true;
+  if(last.endsWith("ss")) return false;
+  if(last.endsWith("s") && !last.endsWith("us") && !last.endsWith("is")) return true;
+  return false;
+}
+
+/* Agentes: EN y ES */
+const AGENT_EN = { I:"me", YOU_S:"you", HE:"him", SHE:"her", IT:"it", WE:"us", YOU_P:"you", THEY:"them" };
+const AGENT_ES = { I:"mí", YOU_S:"ti", HE:"él", SHE:"ella", IT:"ello", WE:"nosotros", YOU_P:"ustedes", THEY:"ellos" };
+
+/* Participios españoles (irregulares comunes + fallback regular) */
+const ES_IRREG_PART = {
+  "abrir":"abierto",
+  "cubrir":"cubierto",
+  "decir":"dicho",
+  "escribir":"escrito",
+  "hacer":"hecho",
+  "morir":"muerto",
+  "poner":"puesto",
+  "romper":"roto",
+  "ver":"visto",
+  "volver":"vuelto",
+  "resolver":"resuelto",
+  "imprimir":"impreso",
+  "freír":"frito",
+  "satisfacer":"satisfecho"
+};
+function esParticipleFromInf(inf){
+  inf = String(inf||"").toLowerCase().trim();
+  if(ES_IRREG_PART[inf]) return ES_IRREG_PART[inf];
+  if(inf.endsWith("ar")) return inf.slice(0,-2) + "ado";
+  if(inf.endsWith("er") || inf.endsWith("ir")) return inf.slice(0,-2) + "ido";
+  return "hecho";
+}
+function parseObjES(objES){
+  const s = String(objES||"").trim().toLowerCase();
+  const first = (s.split(/\s+/)[0] || "");
+  const fem = new Set(["la","las","una","unas","esta","estas","esa","esas","aquella","aquellas","mi","mis","tu","tus","su","sus","nuestra","nuestras"]);
+  const masc = new Set(["el","los","un","unos","este","estos","ese","esos","aquel","aquellos","nuestro","nuestros"]);
+  let gender = fem.has(first) ? "f" : masc.has(first) ? "m" : "m";
+  let number = (["las","los","unas","unos","estas","estos","esas","esos","aquellas","aquellos","mis","tus","sus","nuestras","nuestros"].includes(first)) ? "pl" : "sg";
+  if(number==="sg"){
+    if(first.endsWith("s") || (s.endsWith("s") && !s.endsWith("és") && !s.endsWith("ús"))) number = "pl";
+  }
+  return {gender, number};
+}
+function agreePartES(part, gender, number){
+  let p = String(part||"").trim().toLowerCase();
+  if(!p) p = "hecho";
+  if(gender==="f" && /o$/.test(p)) p = p.slice(0,-1) + "a";
+  if(number==="pl" && !/s$/.test(p)) p = p + "s";
+  return p;
+}
+function auxPassiveES(tense, number){
+  const pl = (number==="pl");
+  if(tense==="P") return pl ? "son" : "es";
+  if(tense==="S") return pl ? "fueron" : "fue";
+  return pl ? "han sido" : "ha sido";
+}
+
+/* Construcción de pasiva EN/ES */
+function passiveEN(tense, mode, subjEN, v3, agentP, includeAgent){
+  const plural = isProbablyPluralEN(subjEN);
+  const beP = plural ? "are" : "is";
+  const beS = plural ? "were" : "was";
+  const have = plural ? "have" : "has";
+  const by = includeAgent ? ` by ${AGENT_EN[agentP.key] || "them"}` : "";
+
+  if(tense==="P"){
+    if(mode==="A") return `${subjEN} ${beP} ${v3}${by}`;
+    if(mode==="N") return `${subjEN} ${(beP==="is") ? "isn't" : "aren't"} ${v3}${by}`;
+    return `${capFirst(beP)} ${lowerFirstIfArticle(subjEN)} ${v3}${by}?`;
+  }
+  if(tense==="S"){
+    if(mode==="A") return `${subjEN} ${beS} ${v3}${by}`;
+    if(mode==="N") return `${subjEN} ${(beS==="was") ? "wasn't" : "weren't"} ${v3}${by}`;
+    return `${capFirst(beS)} ${lowerFirstIfArticle(subjEN)} ${v3}${by}?`;
+  }
+  // PP
+  if(mode==="A") return `${subjEN} ${have} been ${v3}${by}`;
+  if(mode==="N") return `${subjEN} ${(have==="has") ? "hasn't" : "haven't"} been ${v3}${by}`;
+  return `${capFirst(have)} ${lowerFirstIfArticle(subjEN)} been ${v3}${by}?`;
+}
+
+function passiveES(tense, mode, objES, partES, agentP, includeAgent){
+  const obj = String(objES||"la tarea").trim();
+  const meta = parseObjES(obj);
+  const aux = auxPassiveES(tense, meta.number);
+  const by = includeAgent ? ` por ${AGENT_ES[agentP.key] || "ellos"}` : "";
+  const lineCore = (mode==="A")
+    ? `${obj} ${aux} ${partES}${by}`
+    : (mode==="N")
+      ? `${obj} no ${aux} ${partES}${by}`
+      : `¿${obj} ${aux} ${partES}${by}?`;
+  return lineCore.replace(/\s+/g," ").trim();
+}
+
+function renderPassive(v, tense, mode, includeAgent){
   const box = document.getElementById("result");
   const V3 = (v.c3 || "").trim();
   if(!V3){
@@ -869,249 +1057,30 @@ function renderPassive(v, tense, mode, agent){
     return;
   }
 
-  if(mode==="Q"){
-    const rows = PRON.map(p => {
-      const en = passiveEN_Q(tense, p, V3, agent);
-      const es = passiveES_Q(tense, p, v, agent);
-      return rowQ(en, es);
-    }).join("");
-    box.innerHTML = `
-      <table>
-        <thead><tr><th>Inglés</th><th>Español</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-    `;
-    attachSayHandlers();
-    return;
-  }
+  const comp = getComplementForVerb(v);
+  const subjEN = capFirst(comp.en);
+  const objES = comp.es;
 
-  const rows = PRON.map(p => {
-    const en = (mode==="A")
-      ? passiveEN_A(tense, p, V3, agent)
-      : passiveEN_N(tense, p, V3, agent);
+  // participio ES del infinitivo (v.es), con concordancia según el objeto
+  const basePart = esParticipleFromInf(v.es);
+  const meta = parseObjES(objES);
+  const partES = agreePartES(basePart, meta.gender, meta.number);
 
-    const es = (mode==="A")
-      ? passiveES_A(tense, p, v, agent)
-      : passiveES_N(tense, p, v, agent);
-
-    return rowPN(p.label, en, es);
+  const rows = PRON.map(agentP => {
+    const en = passiveEN(tense, mode, subjEN, V3, agentP, includeAgent);
+    const es = passiveES(tense, mode, objES, partES, agentP, includeAgent);
+    return rowPN(agentP.label, en, es);
   }).join("");
 
   box.innerHTML = `
     <table>
-      <thead><tr><th>Pronombre</th><th>Oración</th></tr></thead>
+      <thead><tr><th>Agente</th><th>Oración</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
   `;
   attachSayHandlers();
 }
 
-/* =========================
-   ✅ TEMPLATES ROWS
-   ========================= */
-function rowPN(pron, en, es){
-  const sayText = escapeHTML(en);
-  return `
-    <tr>
-      <td class="pron">${escapeHTML(pron)}</td>
-      <td class="en">
-        <div class="line">
-          <button class="say" type="button" data-say="${encodeURIComponent(en)}">🔊</button>
-          ${escapeHTML(en)}
-        </div>
-        <div class="es">${escapeHTML(es)}</div>
-      </td>
-    </tr>
-  `;
-}
-
-function rowQ(en, es){
-  return `
-    <tr>
-      <td class="en">
-        <div class="line">
-          <button class="say" type="button" data-say="${encodeURIComponent(en)}">🔊</button>
-          ${escapeHTML(en)}
-        </div>
-      </td>
-      <td class="en">
-        <div class="line" style="padding-right:0;">
-          ${escapeHTML(es)}
-        </div>
-      </td>
-    </tr>
-  `;
-}
-
-/* =========================
-   ✅ PASSIVE EN (BE + V3)
-   ========================= */
-function passiveEN_A(tense, p, v3, agent){
-  if(tense==="P") return `${p.label} ${p.beP} ${v3}${agent ? " by someone" : ""}`;
-  if(tense==="S") return `${p.label} ${p.beS} ${v3}${agent ? " by someone" : ""}`;
-  return `${p.label} ${p.have} been ${v3}${agent ? " by someone" : ""}`;
-}
-function passiveEN_N(tense, p, v3, agent){
-  if(tense==="P"){
-    const negBe = (p.beP==="is") ? "isn't" : (p.beP==="am") ? "am not" : "aren't";
-    return `${p.label} ${negBe} ${v3}${agent ? " by someone" : ""}`;
-  }
-  if(tense==="S"){
-    const negWas = (p.beS==="was") ? "wasn't" : "weren't";
-    return `${p.label} ${negWas} ${v3}${agent ? " by someone" : ""}`;
-  }
-  const negHave = (p.have==="has") ? "hasn't" : "haven't";
-  return `${p.label} ${negHave} been ${v3}${agent ? " by someone" : ""}`;
-}
-function passiveEN_Q(tense, p, v3, agent){
-  if(tense==="P"){
-    const aux = (p.beP==="am") ? "Am" : (p.beP==="is") ? "Is" : "Are";
-    return `${aux} ${p.label} ${v3}${agent ? " by someone" : ""}?`;
-  }
-  if(tense==="S"){
-    const aux = (p.beS==="was") ? "Was" : "Were";
-    return `${aux} ${p.label} ${v3}${agent ? " by someone" : ""}?`;
-  }
-  const aux = (p.have==="has") ? "Has" : "Have";
-  return `${aux} ${p.label} been ${v3}${agent ? " by someone" : ""}?`;
-}
-
-/* =========================
-   ✅ PASSIVE ES (ser + participio)
-   (Para estudio: se usa "cortado/cortada")
-   ========================= */
-/* =========================
-   ✅ PARTICIPIO EN ESPAÑOL (motor unificado / seguro)
-   - Usa el infinitivo en español (v.es) como base (ej: "Cortar")
-   - Soporta varios participios irregulares comunes
-   - Nunca devuelve undefined (fallback "hecho")
-   ========================= */
-function _deaccentES(s){
-  return String(s||"")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-}
-
-const IRR_PART_ES = {
-  "abrir":"abierto",
-  "cubrir":"cubierto",
-  "decir":"dicho",
-  "describir":"descrito",
-  "escribir":"escrito",
-  "freir":"frito",
-  "freír":"frito",
-  "hacer":"hecho",
-  "imprimir":"impreso",
-  "morir":"muerto",
-  "poner":"puesto",
-  "resolver":"resuelto",
-  "romper":"roto",
-  "satisfacer":"satisfecho",
-  "ver":"visto",
-  "volver":"vuelto"
-};
-
-function participioES(v, p){
-  // v.es se espera en infinitivo: "Cortar", "Comer", "Vivir", etc.
-  const infRaw = (v?.es || "").trim();
-  const inf = infRaw.toLowerCase();
-  const infKey = _deaccentES(inf);
-
-  let part = IRR_PART_ES[infKey] || "";
-  if(!part){
-    if(infKey.endsWith("ar")) part = infKey.slice(0,-2) + "ado";
-    else if(infKey.endsWith("er") || infKey.endsWith("ir")) part = infKey.slice(0,-2) + "ido";
-  }
-
-  if(!part) part = "hecho";
-
-  // Ajuste de género MUY básico (opcional):
-  if(p?.key==="SHE"){
-    part = part.replace(/ado$/, "ada").replace(/ido$/, "ida").replace(/to$/, "ta").replace(/cho$/, "cha");
-  }
-  return part;
-}
-
-function serES_pres(p){
-  // presente de "ser"
-  if(p.key==="I") return "soy";
-  if(p.key==="YOU_S") return "eres";
-  if(p.key==="HE"||p.key==="SHE"||p.key==="IT") return "es";
-  if(p.key==="WE") return "somos";
-  if(p.key==="YOU_P") return "son";
-  return "son";
-}
-function serES_past(p){
-  // pasado simple (pretérito) de "ser"
-  if(p.key==="I") return "fui";
-  if(p.key==="YOU_S") return "fuiste";
-  if(p.key==="HE"||p.key==="SHE"||p.key==="IT") return "fue";
-  if(p.key==="WE") return "fuimos";
-  if(p.key==="YOU_P") return "fueron";
-  return "fueron";
-}
-function haberES_presperf(p){
-  // auxiliar "haber" en presente perfecto
-  if(p.key==="I") return "he";
-  if(p.key==="YOU_S") return "has";
-  if(p.key==="HE"||p.key==="SHE"||p.key==="IT") return "ha";
-  if(p.key==="WE") return "hemos";
-  if(p.key==="YOU_P") return "han";
-  return "han";
-}
-
-function passiveES_A(tense, p, v, agent){
-  const part = participioES(v, p);
-  if(tense==="P") return `${p.esSubj} ${serES_pres(p)} ${part}${agent ? " por alguien" : ""}`;
-  if(tense==="S") return `${p.esSubj} ${serES_past(p)} ${part}${agent ? " por alguien" : ""}`;
-  // presente perfecto pasivo: "he sido cortado"
-  return `${p.esSubj} ${haberES_presperf(p)} sido ${part}${agent ? " por alguien" : ""}`;
-}
-
-function passiveES_N(tense, p, v, agent){
-  const part = participioES(v, p);
-  if(tense==="P") return `${p.esSubj} no ${serES_pres(p)} ${part}${agent ? " por alguien" : ""}`;
-  if(tense==="S") return `${p.esSubj} no ${serES_past(p)} ${part}${agent ? " por alguien" : ""}`;
-  return `${p.esSubj} no ${haberES_presperf(p)} sido ${part}${agent ? " por alguien" : ""}`;
-}
-
-function passiveES_Q(tense, p, v, agent){
-  const part = participioES(v, p);
-  const subj = String(p.esSubj||"").toLowerCase(); // yo/tú/él/ella/eso/nosotros/ustedes/ellos
-  if(tense==="P")  return `¿${serES_pres(p)} ${subj} ${part}${agent ? " por alguien" : ""}?`;
-  if(tense==="S")  return `¿${serES_past(p)} ${subj} ${part}${agent ? " por alguien" : ""}?`;
-  return `¿${haberES_presperf(p)} ${subj} sido ${part}${agent ? " por alguien" : ""}?`;
-}
-
-/* =========================
-   ✅ TEXT TO SPEECH (EN)
-   ========================= */
-function speak(text){
-  try{
-    stopSpeak();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = "en-US";
-    u.rate = state.rate || 0.75;
-    u.pitch = 1.0;
-    u.volume = 1.0;
-    window.speechSynthesis.speak(u);
-  }catch(_){}
-}
-
-function stopSpeak(){
-  try{ window.speechSynthesis.cancel(); }catch(_){}
-}
-
-function attachSayHandlers(){
-  document.querySelectorAll(".say").forEach(btn=>{
-    btn.onclick = ()=>{
-      const t = decodeURIComponent(btn.getAttribute("data-say") || "");
-      if(t) speak(t);
-    };
-  });
-}
-
-// re-render when agent checkbox changes
 document.getElementById("agentToggle").addEventListener("change", render);
 </script>
 </body>
