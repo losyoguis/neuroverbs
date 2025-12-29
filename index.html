@@ -5124,34 +5124,142 @@ function checkPractice(qid){
    =========================== */
 let readingStoryTranslationVisible = false;
 
-function getReadingStory(mode){
+function hashStr(s){
+  s = String(s||"");
+  let h = 0;
+  for(let i=0;i<s.length;i++){
+    h = (h*31 + s.charCodeAt(i)) >>> 0;
+  }
+  return h >>> 0;
+}
+
+function wrapTense(word, tense){
+  // tense: "present" | "past" | "perfect"
+  const colorVar = (tense==="past") ? "--c2" : (tense==="perfect") ? "--c3" : "--c1";
+  return `<span style="color:var(${colorVar}); font-weight:950;">${String(word||"")}</span>`;
+}
+
+function pickStoryContext(key){
+  const contexts = [
+    {
+      en:{place:"in the classroom", when:"before the bell rings", twist:"a timer is running", closing:"the ranking moves up"},
+      es:{place:"en el salón", when:"antes de que suene el timbre", twist:"hay un cronómetro corriendo", closing:"el ranking sube"}
+    },
+    {
+      en:{place:"at home", when:"after dinner", twist:"a small mistake happens", closing:"I try again with calm"},
+      es:{place:"en casa", when:"después de la cena", twist:"pasa un pequeño error", closing:"lo intento otra vez con calma"}
+    },
+    {
+      en:{place:"in the library", when:"during a quiet break", twist:"a friend asks for help", closing:"we learn together"},
+      es:{place:"en la biblioteca", when:"durante un descanso tranquilo", twist:"un amigo pide ayuda", closing:"aprendemos juntos"}
+    },
+    {
+      en:{place:"in the playground", when:"between classes", twist:"the phone battery is low", closing:"I stay focused anyway"},
+      es:{place:"en el patio", when:"entre clases", twist:"la batería del celular está baja", closing:"me mantengo enfocado de todos modos"}
+    },
+    {
+      en:{place:"in the computer lab", when:"during practice time", twist:"the internet is slow", closing:"I keep practicing offline"},
+      es:{place:"en la sala de informática", when:"durante el tiempo de práctica", twist:"el internet está lento", closing:"sigo practicando sin internet"}
+    }
+  ];
+  const i = hashStr(key) % contexts.length;
+  return contexts[i];
+}
+
+// --- Mini helpers de español (aprox. regular) para la traducción de la historia ---
+function esInfFrom(v){
+  // intenta tomar el infinitivo principal (primera palabra)
+  const raw = String((v && v.esp) ? v.esp : "").trim();
+  if(!raw) return "hacer";
+  return raw.split(/[;,/]/)[0].trim().split(/\s+/)[0].toLowerCase();
+}
+function esStem(inf){ return inf.slice(0, -2); }
+function esPresentYo(inf){
+  if(inf==="ser") return "soy";
+  if(inf==="ir") return "voy";
+  if(inf==="estar") return "estoy";
+  if(inf.endsWith("ar")||inf.endsWith("er")||inf.endsWith("ir")) return esStem(inf)+"o";
+  return inf;
+}
+function esPreteriteYo(inf){
+  if(inf==="ser"||inf==="ir") return "fui";
+  if(inf==="estar") return "estuve";
+  if(inf.endsWith("ar")) return esStem(inf)+"é";
+  if(inf.endsWith("er")||inf.endsWith("ir")) return esStem(inf)+"í";
+  return inf;
+}
+function esParticiple(inf){
+  if(inf==="ser") return "sido";
+  if(inf==="ir") return "ido";
+  if(inf==="estar") return "estado";
+  if(inf.endsWith("ar")) return esStem(inf)+"ado";
+  if(inf.endsWith("er")||inf.endsWith("ir")) return esStem(inf)+"ido";
+  return inf;
+}
+function capFirstSafe(s){
+  s = String(s||"").trim();
+  if(!s) return s;
+  return s[0].toUpperCase() + s.slice(1);
+}
+
+function getReadingStory(mode, v){
   // mode: "active" | "passive"
+  // v: verbo actual {c1,c2,c3,esp}
+  v = v || (window.current && window.current[window.idx]) || (typeof current!=="undefined" ? current[idx] : null) || {c1:"do",c2:"did",c3:"done",esp:"hacer"};
+  const comp = getComplement(v);
+  const subjPas = subjForPassive(v);
+  const ctx = pickStoryContext(v.c1);
+
+  const vPresent = wrapTense(v.c1, "present");
+  const vPastAff = wrapTense(v.c2, "past");
+  const vPastBase = wrapTense(v.c1, "past");     // did/didn't + base (pero sigue siendo Past)
+  const vPerfect = wrapTense(v.c3, "perfect");
+
+  // Para voz pasiva, en inglés casi siempre usamos V3, pero el color depende del TIEMPO.
+  const vP_present = wrapTense(v.c3, "present");
+  const vP_past    = wrapTense(v.c3, "past");
+  const vP_perf    = wrapTense(v.c3, "perfect");
+
+  // Español (aprox.) para resaltar el verbo también por tiempo
+  const inf = esInfFrom(v);
+  const esPres = wrapTense(esPresentYo(inf), "present");
+  const esPast = wrapTense(esPreteriteYo(inf), "past");
+  const esPerf = wrapTense(esParticiple(inf), "perfect");
+  const esPart = esParticiple(inf);
+
   if(mode === "passive"){
+    const sEN = subjPas.en;
+    const plural = isProbablyPluralEN(sEN);
+    const beP = bePresentFor(plural);
+    const beS = bePastFor(plural);
+    const have = haveFor(plural);
+    const sEN_low = sEN.toLowerCase();
+
     return {
       en: [
-        `Every morning, English is studied by Lina at her school in Medellín. Irregular verbs are practiced with her classmates, and each step is guided by the app. The listening drills aren't skipped, because clear pronunciation matters. Are the verbs reviewed before class? Yes—the Reading is opened and the story is followed.`,
-        `Last Friday, a challenge was set by the teacher. The computer room was entered, and Round 1 was started. Short sentences were written, and neurons were connected with confidence. The text wasn't translated word by word; meaning was searched for. Was their focus noticed by the teacher? Extra XP was given, and a smile was shared.`,
-        `Since the program began, a stronger habit has been built by Lina. It has been learned that mistakes are part of progress, and the tricky verbs haven't been given up on. Has their fluency been improved by the students? It has, and pride is felt when the ranking is changed. Today, the app is closed, but practice is continued tomorrow.`
+        `Today, the verb <b>${vPresent}</b> is the protagonist of my practice ${ctx.en.place}. ${sEN} ${beP} ${vP_present} by me ${ctx.en.when}. ${sEN} ${(beP==="is"?"isn't":"aren't")} ${vP_present} when I feel distracted. ${capFirst(beP)} ${sEN_low} ${vP_present} by me ${ctx.en.when}? Yes—it is, and my focus stays strong.`,
+        `Yesterday, a mini challenge happened and ${ctx.en.twist}. ${sEN} ${beS} ${vP_past} by me, but it ${(beS==="was")?"wasn't":"weren't"} ${vP_past} on the first try. ${capFirst(beS)} ${sEN_low} ${vP_past} by me again? Yes—${sEN} ${beS} ${vP_past} carefully, and I earned XP.`,
+        `This week, a better habit has grown. ${sEN} ${have} been ${vP_perf} by me many times. ${sEN} ${have} not been ${vP_perf} perfectly every day, but ${capFirst(have)} ${sEN_low} been ${vP_perf} with more confidence? Absolutely. Now the story closes: ${ctx.en.closing}.`
       ],
       es: [
-        `Cada mañana, el inglés es estudiado por Lina en su colegio en Medellín. Los verbos irregulares son practicados con sus compañeros, y cada paso es guiado por la app. Los ejercicios de listening no son omitidos, porque la pronunciación clara importa. ¿Los verbos son revisados antes de clase? Sí: se abre Reading y se sigue la historia.`,
-        `El viernes pasado, el profesor puso un reto. Se entró a la sala de informática y se inició el Round 1. Se escribieron oraciones cortas y se conectaron neuronas con confianza. El texto no fue traducido palabra por palabra; se buscó el significado. ¿La concentración fue notada por el profesor? Se dio XP extra y se compartió una sonrisa.`,
-        `Desde que el programa comenzó, un hábito más fuerte ha sido construido por Lina. Se ha aprendido que los errores son parte del progreso, y los verbos difíciles no han sido abandonados. ¿La fluidez ha sido mejorada por los estudiantes? Sí, y se siente orgullo cuando el ranking es cambiado. Hoy, la app es cerrada, pero la práctica es continuada mañana.`
+        `Hoy, el verbo <b>${wrapTense(v.c1, "present")}</b> es el protagonista de mi práctica ${ctx.es.place}. ${capFirstSafe(comp.es)} es ${wrapTense(esPart, "present")} por mí ${ctx.es.when}. ${capFirstSafe(comp.es)} no es ${wrapTense(esPart, "present")} cuando me distraigo. ¿${capFirstSafe(comp.es)} es ${wrapTense(esPart, "present")} por mí ${ctx.es.when}? Sí, y mi enfoque se mantiene fuerte.`,
+        `Ayer pasó un mini reto y ${ctx.es.twist}. ${capFirstSafe(comp.es)} fue ${wrapTense(esPart, "past")} por mí, pero no fue ${wrapTense(esPart, "past")} en el primer intento. ¿${capFirstSafe(comp.es)} fue ${wrapTense(esPart, "past")} por mí otra vez? Sí: ${capFirstSafe(comp.es)} fue ${wrapTense(esPart, "past")} con cuidado, y gané XP.`,
+        `Esta semana ha crecido un mejor hábito. ${capFirstSafe(comp.es)} ha sido ${wrapTense(esPart, "perfect")} por mí muchas veces. ${capFirstSafe(comp.es)} no ha sido ${wrapTense(esPart, "perfect")} perfectamente todos los días, pero ¿ha sido ${wrapTense(esPart, "perfect")} con más confianza? Totalmente. Ahora la historia cierra: ${ctx.es.closing}.`
       ]
     };
   }
 
-  // ACTIVE (default)
+  // --- Voz activa ---
   return {
     en: [
-      `Every morning, Lina studies English at her school in Medellín. She practices irregular verbs with her classmates, and the app guides each step. She doesn't skip the listening drills, because clear pronunciation matters. Does she review the verbs before class? Yes—she opens the Reading and follows the story.`,
-      `Last Friday, the teacher set a challenge. The group entered the computer room and started Round 1. They wrote short sentences, and they connected neurons with confidence. They didn't translate word by word; they looked for meaning. Did the teacher notice their focus? He smiled and gave them extra XP.`,
-      `Since the program began, Lina has built a stronger habit. She has learned that mistakes are part of progress, and she hasn't given up on the tricky verbs. Have the students improved their fluency? They have, and they feel proud when the ranking changes. Today, Lina closes the app, but the practice continues tomorrow.`
+      `Today, the verb <b>${vPresent}</b> is the protagonist of my practice ${ctx.en.place}. I ${vPresent} ${comp.en} ${ctx.en.when}, but I don't ${vPresent} ${comp.en} when I feel distracted. Do I ${vPresent} ${comp.en} ${ctx.en.when}? Yes—and my neurons connect faster.`,
+      `Yesterday, a mini challenge happened and ${ctx.en.twist}. I ${vPastAff} ${comp.en}, but I didn't ${vPastBase} ${comp.en} on the first try. Did I ${vPastBase} ${comp.en} again? Yes—I ${vPastAff} ${comp.en} carefully, and I earned XP.`,
+      `This week, I have ${vPerfect} ${comp.en} many times. I haven't ${vPerfect} ${comp.en} perfectly every day, but have I ${vPerfect} ${comp.en} with more confidence? Absolutely. Now the story closes: ${ctx.en.closing}.`
     ],
     es: [
-      `Cada mañana, Lina estudia inglés en su colegio en Medellín. Practica los verbos irregulares con sus compañeros, y la app guía cada paso. Ella no se salta los ejercicios de listening, porque la pronunciación clara importa. ¿Revisa los verbos antes de clase? Sí: abre Reading y sigue la historia.`,
-      `El viernes pasado, el profesor puso un reto. El grupo entró a la sala de informática y comenzó el Round 1. Escribieron oraciones cortas y conectaron neuronas con confianza. No tradujeron palabra por palabra; buscaron el significado. ¿El profesor notó su concentración? Sonrió y les dio XP extra.`,
-      `Desde que el programa comenzó, Lina ha construido un hábito más fuerte. Ha aprendido que los errores son parte del progreso, y no se ha rendido con los verbos difíciles. ¿Han mejorado los estudiantes su fluidez? Sí, y se sienten orgullosos cuando cambia el ranking. Hoy, Lina cierra la app, pero la práctica continúa mañana.`
+      `Hoy, el verbo <b>${wrapTense(v.c1, "present")}</b> es el protagonista de mi práctica ${ctx.es.place}. Yo ${esPres} ${comp.es} ${ctx.es.when}, pero no ${esPres} ${comp.es} cuando me distraigo. ¿${esPres} ${comp.es} ${ctx.es.when}? Sí, y mis neuronas se conectan más rápido.`,
+      `Ayer pasó un mini reto y ${ctx.es.twist}. Yo ${esPast} ${comp.es}, pero no ${esPast} ${comp.es} en el primer intento. ¿${esPast} ${comp.es} otra vez? Sí: yo ${esPast} ${comp.es} con cuidado, y gané XP.`,
+      `Esta semana he ${esPerf} ${comp.es} muchas veces. No he ${esPerf} ${comp.es} perfectamente todos los días, pero ¿he ${esPerf} ${comp.es} con más confianza? Totalmente. Ahora la historia cierra: ${ctx.es.closing}.`
     ]
   };
 }
@@ -5317,7 +5425,7 @@ function renderReading(v){
 
   // ✅ Historia para lectura contextual (se muestra según VOZ ACTIVA / PASIVA)
   const storyMode = (voiceMode === "passive") ? "passive" : "active";
-  const story = getReadingStory(storyMode);
+  const story = getReadingStory(storyMode, v);
   const storyLabel = (storyMode === "passive") ? "Passive Voice" : "Active Voice";
   const translateBtnText = readingStoryTranslationVisible ? "Hide Translation" : "Translate";
   const translateDisplay = readingStoryTranslationVisible ? "block" : "none";
