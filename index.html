@@ -5427,7 +5427,9 @@ function speakReadingStory(){
     const voice = _pickEnglishVoice();
     if(voice) u.voice = voice;
     u.lang = (voice && voice.lang) ? voice.lang : "en-US";
-    u.rate = 1;
+    // ✅ Beginner-friendly speed (slower, clearer)
+    // Keep punctuation intact so the browser can pause naturally.
+    u.rate = 0.85;
     u.pitch = 1;
 
     _readingStoryUtterance = u;
