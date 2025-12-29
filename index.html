@@ -5397,6 +5397,83 @@ function getReadingStory(mode, v){
   };
 }
 
+
+let _readingStoryUtterance = null;
+function _pickEnglishVoice(){
+  if(typeof speechSynthesis === "undefined") return null;
+  const voices = speechSynthesis.getVoices ? speechSynthesis.getVoices() : [];
+  if(!voices || !voices.length) return null;
+  const pref = [
+    v => /^en-US/i.test(v.lang),
+    v => /^en-GB/i.test(v.lang),
+    v => /^en/i.test(v.lang),
+  ];
+  for(const f of pref){
+    const found = voices.find(f);
+    if(found) return found;
+  }
+  return voices[0] || null;
+}
+function speakReadingStory(){
+  try{
+    if(typeof speechSynthesis === "undefined") return;
+    stopReadingStory();
+    const el = document.getElementById("readingStoryEnglish");
+    if(!el) return;
+    let text = (el.textContent || "").replace(/\s+/g," ").trim();
+    if(!text) return;
+
+    const u = new SpeechSynthesisUtterance(text);
+    const voice = _pickEnglishVoice();
+    if(voice) u.voice = voice;
+    u.lang = (voice && voice.lang) ? voice.lang : "en-US";
+    u.rate = 1;
+    u.pitch = 1;
+
+    _readingStoryUtterance = u;
+
+    const playBtn = document.getElementById("btnReadingAudio");
+    const stopBtn = document.getElementById("btnReadingAudioStop");
+    if(playBtn) playBtn.disabled = true;
+    if(stopBtn) stopBtn.disabled = false;
+
+    u.onend = () => {
+      const pb = document.getElementById("btnReadingAudio");
+      const sb = document.getElementById("btnReadingAudioStop");
+      if(pb) pb.disabled = false;
+      if(sb) sb.disabled = true;
+      _readingStoryUtterance = null;
+    };
+    u.onerror = () => {
+      const pb = document.getElementById("btnReadingAudio");
+      const sb = document.getElementById("btnReadingAudioStop");
+      if(pb) pb.disabled = false;
+      if(sb) sb.disabled = true;
+      _readingStoryUtterance = null;
+    };
+
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+function stopReadingStory(){
+  try{
+    if(typeof speechSynthesis === "undefined") return;
+    if(speechSynthesis.speaking || speechSynthesis.pending) speechSynthesis.cancel();
+  }catch(e){}
+  const playBtn = document.getElementById("btnReadingAudio");
+  const stopBtn = document.getElementById("btnReadingAudioStop");
+  if(playBtn) playBtn.disabled = false;
+  if(stopBtn) stopBtn.disabled = true;
+  _readingStoryUtterance = null;
+}
+
+// Make sure voices are loaded on some browsers
+try{
+  if(typeof speechSynthesis !== "undefined"){
+    speechSynthesis.onvoiceschanged = () => {};
+  }
+}catch(e){}
+
 function toggleReadingStoryTranslation(){
   readingStoryTranslationVisible = !readingStoryTranslationVisible;
   const box = document.getElementById("readingStoryTranslation");
@@ -5406,6 +5483,7 @@ function toggleReadingStoryTranslation(){
 }
 
 function renderReading(v){
+  try{ stopReadingStory(); }catch(e){}
   const passiveOk = passiveAllowed(v);
   const verbName = `${v.c1.toUpperCase()} (${v.esp})`;
   const comp = getComplement(v);
@@ -5598,7 +5676,7 @@ function renderReading(v){
       <div class="card" style="margin-top:16px;">
         <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
           <div style="font-weight:950; color:#0f172a;">📚 STORY (${storyLabel})</div>
-          <button class="roundbtn" id="btnReadingTranslate" type="button" onclick="toggleReadingStoryTranslation()" style="text-transform:none;">${translateBtnText}</button>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;"><button class="roundbtn" id="btnReadingTranslate" type="button" onclick="toggleReadingStoryTranslation()" style="text-transform:none;">${translateBtnText}</button><button class="roundbtn" id="btnReadingAudio" type="button" onclick="speakReadingStory()" style="text-transform:none;">🔊 Play Audio</button><button class="roundbtn" id="btnReadingAudioStop" type="button" disabled onclick="stopReadingStory()" style="text-transform:none;">⏹ Stop</button></div>
         </div>
 
         <div id="readingStoryEnglish" style="margin-top:10px; color:#0f172a; line-height:1.6; font-weight:850;">
