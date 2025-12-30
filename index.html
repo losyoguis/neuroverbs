@@ -2644,8 +2644,12 @@ async function loadVerbsDbFromVerbsHtml(){
     // Evaluamos el array JS (misma origin, archivo controlado por nosotros)
     __NY_VERBS_DB__ = (new Function("return " + m[1]))();
     __NY_VERBS_DB_READY__ = Array.isArray(__NY_VERBS_DB__) && __NY_VERBS_DB__.length > 0;
+
+    if(__NY_VERBS_DB_READY__){
+      __nyNormalizeVerbsDb(__NY_VERBS_DB__);
+    }
   }catch(e){
-    // Silencioso: la app sigue funcionando con el motor interno
+    __NY_VERBS_DB_READY__ = false;
   }
 }
 
@@ -2675,25 +2679,37 @@ function __nyPronIndexForQ(pKey){
 
 function lookupSpanishLineFromVerbsHtml(tKind, modeKey, p, v){
   if(!__NY_VERBS_DB_READY__ || !v || !p) return null;
+
   const key = __nyVerbKeyFromIndexVerb(v);
   if(!key) return null;
+
   const entry = __NY_VERBS_DB__.find(e => e && e.key === key);
   if(!entry || !entry.active || !entry.active[tKind]) return null;
 
-  const block = entry.active[tKind];
+  const blk = entry.active[tKind];
+
+  // A/N/Q o affirmative/negative/interrogative
+  const modeAlias = (modeKey === "A") ? "affirmative" : (modeKey === "N") ? "negative" : "interrogative";
+  const block = blk[modeKey] || blk[modeAlias];
+  if(!Array.isArray(block)) return null;
+
   if(modeKey === "Q"){
-    const arr = block.Q;
-    if(!Array.isArray(arr)) return null;
+    // Q suele venir como pares [en, es] en orden I,You,He,She,It,We,YouP,They
     const idx = __nyPronIndexForQ(p.key);
-    const row = arr[idx];
-    return row && row[1] ? row[1] : null;
+    const row = block[idx];
+    if(Array.isArray(row)){
+      if(row.length === 2) return row[1] || null;
+      if(row.length >= 3) return row[2] || null; // si incluye pronKey
+    }
+    return null;
   }
 
-  const arr = block[modeKey];
-  if(!Array.isArray(arr)) return null;
-  const pk = __nyPronKeyToDb(p.key);
-  const row = arr.find(r => r && r[0] === pk);
-  return row && row[2] ? row[2] : null;
+  // A/N: filas [pronKey, en, es]
+  const pKeyDb = __nyPronKeyToDb(p.key);
+  const found = block.find(r => Array.isArray(r) && __nyPronKeyToDb(r[0]) === pKeyDb);
+  if(found) return found[2] || null;
+
+  return null;
 }
 
 // Cargamos la DB lo más pronto posible (sin bloquear la app)
@@ -3829,7 +3845,49 @@ function passivePPQ(v, agentP){
 }
 
 /* Español: equivalencia elegante en pasiva con "SE" (evita concordancia de participio) */
-function esSePassive(tenseKind, moodKey, objES){
+function esSePassive(verbKey, tenseKind, moodKey, objES){
+  const obj = (objES || "").trim();
+  const v = (__NY_VERBS_DB_READY__ && Array.isArray(__NY_VERBS_DB__)) ? __NY_VERBS_DB__.find(x => x && x.key === verbKey) : null;
+  const forms = v?.__esForms || (v ? __nyDeriveEsForms(v) : null);
+
+  const looksPlural = (s) => {
+    const t = (s || "").trim().toLowerCase();
+    return t.startsWith("los ") || t.startsWith("las ") || t.startsWith("unos ") || t.startsWith("unas ");
+  };
+
+  const pick = (sing, plur) => looksPlural(obj) ? (plur || sing) : sing;
+
+  // Fallback genérico si no hay formas específicas
+  const fallback = () => {
+    const o = { c1: objVerbEs("c1"), c2: objVerbEs("c2"), c3: objVerbEs("c3") };
+    return esSePassiveLegacy(tenseKind, moodKey, objES);
+  };
+
+  if(!forms) return fallback();
+
+  let core = "";
+  if(tenseKind === "P"){
+    core = pick(forms.pres3sg, forms.pres3pl);
+  }else if(tenseKind === "S"){
+    core = pick(forms.past3sg, forms.past3pl);
+  }else if(tenseKind === "PP"){
+    const aux = looksPlural(obj) ? "han" : "ha";
+    core = (forms.pp ? `${aux} ${forms.pp}` : "");
+  }
+
+  if(!core) return fallback();
+
+  if(moodKey === "A"){
+    return `Se ${core} ${obj}.`;
+  }
+  if(moodKey === "N"){
+    return `No se ${core} ${obj}.`;
+  }
+  // Q
+  return `¿Se ${core} ${obj}?`;
+}
+
+function esSePassiveLegacy(tenseKind, moodKey, objES){
   const obj = String(objES||"la tarea").trim();
   if(tenseKind==="P"){
     if(moodKey==="A") return `Se ${objVerbEs("present")} ${obj}.`;
@@ -4746,7 +4804,7 @@ function generarTablas(v){
         if(t.kind==="PP" && m.key==="Q") en = passivePPQ(v,p);
 
         // Español: estructura correcta tipo "Se ha hecho la tarea."
-        const esLine = esSePassive(t.kind, m.key, subjPas.es);
+        const esLine = esSePassive(v.key, t.kind, m.key, subjPas.es);
         const enHTML = colorizeConjugation(en, t.kind, m.key, p, v, "passive");
 
         html += `
