@@ -2419,6 +2419,16 @@ window.addEventListener("load", () => {
 </div>
 <div class="neon-subtitle" id="pistaNeon">PISTA NEURONAL</div>
 <ul id="pistaLista"></ul>
+<!-- 🎯 Pattern Quiz (auto) -->
+<div id="patternQuiz" style="margin-top:12px;display:none">
+  <div style="font-weight:900;margin-bottom:6px;">🎯 ¿Cuál es el patrón del día?</div>
+  <input id="patternInput" placeholder="Ej: ING → ANG → UNG"
+         style="width:100%;padding:10px;border-radius:10px;border:2px solid #c084fc;font-weight:700"/>
+  <button class="btn-main" style="margin-top:8px"
+          onclick="checkPatternAnswer()">COMPROBAR 🧠</button>
+  <div id="patternFeedback" style="margin-top:6px;font-weight:900"></div>
+</div>
+
 <div class="exNote" id="exNote"><span>⚠ EXCEPCIÓN:</span> <span id="exText"></span></div>
 </div>
 <div class="target" id="verbo-esp">...</div>
@@ -6668,5 +6678,104 @@ let activeEl = null;
   })(); });
 </script>
 <!-- XP sync watcher removed: XP is synced only from exercise actions + server fetch to avoid double-counting -->
+
+<script>
+/* ===============================
+   🌈 NEÓN + EXCEPCIONES
+   =============================== */
+function isException(v){ return /\*$/.test(v); }
+function cleanVerb(v){ return v.replace('*',''); }
+function neon(txt, color){ return `<span style="color:${color};text-shadow:0 0 8px ${color}">${txt}</span>`; }
+function highlightEnding(word){
+  if(/ee$/.test(word)) return word.replace(/ee$/, neon("ee","#38bdf8"));
+  if(/ew$/.test(word)) return word.replace(/ew$/, neon("ew","#a855f7"));
+  if(/ing$/.test(word)) return word.replace(/ing$/, neon("ing","#22d3ee"));
+  if(/ang$/.test(word)) return word.replace(/ang$/, neon("ang","#f97316"));
+  if(/ung$/.test(word)) return word.replace(/ung$/, neon("ung","#ef4444"));
+  if(/own$/.test(word)) return word.replace(/own$/, neon("own","#22c55e"));
+  if(/aken$/.test(word)) return word.replace(/aken$/, neon("aken","#fb7185"));
+  if(/ook$/.test(word)) return word.replace(/ook$/, neon("ook","#fb923c"));
+  if(/t$/.test(word))  return word.replace(/t$/,  neon("t","#22c55e"));
+  if(/d$/.test(word))  return word.replace(/d$/,  neon("d","#22c55e"));
+  if(/en$/.test(word)) return word.replace(/en$/, neon("en","#ef4444"));
+  return word;
+}
+
+/* ===============================
+   🎯 PATRÓN QUIZ + XP
+   =============================== */
+let __currentPatternText = "";
+let __patternsMastered = new Set();
+
+function setPattern(text){
+  __currentPatternText = (text||"").toLowerCase();
+  const q = document.getElementById("patternQuiz");
+  if(q) q.style.display = text ? "block" : "none";
+}
+function normalizePattern(t){
+  return (t||"").toLowerCase().replace(/\s+/g,"").replace(/→|-/g,"");
+}
+function checkPatternAnswer(){
+  const input = document.getElementById("patternInput")?.value || "";
+  const fb = document.getElementById("patternFeedback");
+  if(!input){ fb.innerHTML = "⚠️ Escribe el patrón que descubriste."; return; }
+  if(normalizePattern(input).includes(normalizePattern(__currentPatternText))){
+    fb.innerHTML = `<span style="color:#22c55e">✅ ¡Patrón correcto! +25 XP</span>`;
+    if(typeof addXP === "function") addXP(25);
+    __patternsMastered.add(__currentPatternText);
+    const ps = document.getElementById("patternStat");
+    if(ps) ps.textContent = __patternsMastered.size;
+  }else{
+    fb.innerHTML = `<span style="color:#ef4444">❌ Revisa la transformación.</span>`;
+  }
+}
+
+/* ===============================
+   🧠 PISTA NEURONAL GLOBAL (ALL DAYS)
+   =============================== */
+(function(){
+  const _orig = window.renderGroupHint;
+  window.renderGroupHint = function(){
+    if(typeof _orig === "function") _orig.apply(this, arguments);
+    const lista = document.getElementById("pistaLista");
+    if(!lista || !window.currentDayVerbs || !currentDayVerbs.length) return;
+
+    const verbs = currentDayVerbs.map(v=>({
+      c1: cleanVerb(v.c1||""),
+      c2: cleanVerb(v.c2||""),
+      c3: cleanVerb(v.c3||""),
+      exc: isException(v.c1||"")
+    }));
+
+    const noExc = verbs.filter(v=>!v.exc);
+    let patternText = "";
+
+    const sameC1C3 = noExc.length && noExc.every(v=>v.c1===v.c3);
+    const sameC2C3 = noExc.length && noExc.every(v=>v.c2===v.c3);
+    const allDiff  = noExc.length && noExc.every(v=>v.c1!==v.c2 && v.c2!==v.c3);
+
+    if(sameC1C3 && !sameC2C3){
+      lista.innerHTML += `<li>🔁 <b>Participio vuelve al infinitivo</b> (C1 = C3).</li>`;
+      patternText = "C1 = C3";
+    } else if(sameC2C3){
+      lista.innerHTML += `<li>🔗 <b>Pasado y participio iguales</b> (C2 = C3).</li>`;
+      patternText = "C2 = C3";
+    } else if(allDiff){
+      lista.innerHTML += `<li>🔀 <b>Tres formas diferentes</b> (C1 ≠ C2 ≠ C3).</li>`;
+      patternText = "C1 ≠ C2 ≠ C3";
+    }
+
+    lista.innerHTML += `<li style="margin-top:10px;font-weight:900">🧩 Verbos del día:</li>`;
+    verbs.forEach(v=>{
+      const st = v.exc ? "opacity:.6;font-style:italic" : "";
+      const ex = v.exc ? " ⚠️ Excepción" : "";
+      lista.innerHTML += `<li style="${st}">${highlightEnding(v.c1)} – ${highlightEnding(v.c2)} – ${highlightEnding(v.c3)}${ex}</li>`;
+    });
+
+    setPattern(patternText);
+  };
+})();
+</script>
+
 </body>
 </html>
