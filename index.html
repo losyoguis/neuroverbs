@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 
 <html lang="es">
@@ -2406,7 +2407,7 @@ window.addEventListener("load", () => {
 <label>Día</label>
 <select id="sel-dia" onchange="cargarDia()"></select>
 </div>
-
+<button class="btn-mini" data-help="🧠 Abre la Red Neuronal del día: pistas, asociación y reto para ganar XP." onclick="abrirAyuda()">RED NEURONAL 🧠</button>
 </div>
 <div class="hint" id="pistaBox">
 <div class="hint-top">
@@ -2419,15 +2420,6 @@ window.addEventListener("load", () => {
 </div>
 <div class="neon-subtitle" id="pistaNeon">PISTA NEURONAL</div>
 <ul id="pistaLista"></ul>
-<div class="red-neuronal-info" style="margin-top:10px; padding:12px 14px; border-radius:14px;
-     background:rgba(245,158,11,.18); border:1px dashed var(--secondary);">
-  <div style="font-weight:950; margin-bottom:6px;">🧠 Red Neuronal – Asociación clave</div>
-  <ul style="margin:0; padding-left:18px; line-height:1.45; font-weight:850;">
-    <li>El patrón que se repite es que el verbo es de <b>una sílaba</b> y termina en <b>t</b> o <b>d</b>.</li>
-    <li>Familia verbal: el infinitivo, el pasado y el participio <b>son los mismos</b> (<b>C1 = C2 = C3</b>).</li>
-  </ul>
-</div>
-
 <div class="exNote" id="exNote"><span>⚠ EXCEPCIÓN:</span> <span id="exText"></span></div>
 </div>
 <div class="target" id="verbo-esp">...</div>
@@ -2507,24 +2499,13 @@ window.addEventListener("load", () => {
 <button class="roundbtn web" data-help="🌐 Abrir el SmartEbook / Neuroaprendizaje del Inglés (Google Sites)." onclick="abrirWeb()" title="Abre el sitio web SmartEbook (Google Sites) en una pestaña nueva." type="button">Neuroaprendizaje del Inglés 🌐</button>
 </footer>
 </div>
-
-
-<!-- ✅ MODAL: RED NEURONAL -->
-<div class="overlay" id="overlay" style="display:none;">
-  <div class="modal">
-    <h2>🧠 Red Neuronal – Asociación clave</h2>
-    <div style="margin:10px 0; line-height:1.5; font-weight:850;">
-      <p>El patrón que se repite es que el verbo es de <b>una sílaba</b> y termina en <b>t</b> o <b>d</b>.</p>
-      <p>Familia verbal: el infinitivo, el pasado y el participio son los mismos
-      (<b>C1 = C2 = C3</b>).</p>
-    </div>
-    <div id="ayuda"></div>
-    <button class="btn-main" onclick="cerrarAyuda()" style="margin-top:14px">
-      ASOCIAR ✅
-    </button>
-  </div>
+<div class="overlay" id="overlay">
+<div class="modal">
+<h2>🧠 Red neuronal del día</h2>
+<div id="ayuda"></div>
+<button class="btn-main" data-help="Volver al ejercicio: cierra la Red Neuronal." onclick="cerrarAyuda()" style="margin-top:14px">ASOCIAR ✅</button>
 </div>
-
+</div>
 <!-- ✅ MODAL: INSTRUCCIONES -->
 <div class="overlay" id="instOverlay" style="display:none;">
 <div class="modal modal-top">
@@ -5936,10 +5917,8 @@ function renderReading(v){
   if(p2f) p2f.innerText = `${idx+1} de ${current.length}`;
 }
 
-
-
 /* ===========================
-   RED NEURONAL (MODAL)
+   RED NEURONAL (igual)
    =========================== */
 function abrirAyuda(){
   const lista = current.map((v,i)=>`
@@ -5948,21 +5927,23 @@ function abrirAyuda(){
       <b>${v.c1.toUpperCase()}</b> — ${v.c1} / ${v.c2} / ${v.c3}
       <span style="color:#64748b">(${v.esp})</span>
       ${v.ex ? `<div style="margin-top:6px; color:#b91c1c; font-weight:900;">⚠ EXCEPCIÓN: ${v.ex}</div>` : ``}
-      ${(currentRound===2) ? `<div style="margin-top:6px; font-weight:900;">🟣 Complemento: ${getComplement(v).en}</div>` : ``}
-      ${(voiceMode==="passive") ? `<div style="margin-top:6px; font-weight:900;">🟠 Pasiva: ${passiveAllowed(v) ? "BE + V3" : "No aplica natural"}</div>` : ``}
+      ${(v.alt2||v.alt3) ? `<div style="margin-top:6px; color:#0f172a; font-weight:900;">✅ Alternativas aceptadas: ${[
+        ...(v.alt2?getOptions("",v.alt2).filter(Boolean):[]),
+        ...(v.alt3?getOptions("",v.alt3).filter(Boolean):[])
+      ].filter(Boolean).join(", ")}</div>` : ``}
+      ${(currentRound===2) ? `<div style="margin-top:6px; color:#0b1220; font-weight:950;">🟣 Complemento: <span style="color:#0b1220; background:#fde68a; padding:2px 8px; border-radius:999px;">${getComplement(v).en}</span></div>` : ``}
+      ${(voiceMode==="passive") ? `<div style="margin-top:6px; color:#0b1220; font-weight:950;">🟠 Pasiva: ${passiveAllowed(v) ? "BE + V3 (+ by agente)" : "No aplica natural (intransitivo)"}</div>` : ``}
     </div>
   `).join("");
 
-  document.getElementById("ayuda").innerHTML = lista || "No hay verbos en este día.";
-  document.getElementById("overlay").style.display = "flex";
+  document.getElementById('ayuda').innerHTML = lista || "No hay verbos en este día.";
+  document.getElementById('overlay').style.display="flex";
   syncModalOpen();
 }
-
 function cerrarAyuda(){
-  document.getElementById("overlay").style.display = "none";
+  document.getElementById('overlay').style.display="none";
   syncModalOpen();
 }
-
 
 window.addEventListener("load", async () => {
   // Sincroniza la base de verbos antes de iniciar la UI (Grupo/Día + Active/Passive)
@@ -6688,22 +6669,5 @@ let activeEl = null;
   })(); });
 </script>
 <!-- XP sync watcher removed: XP is synced only from exercise actions + server fetch to avoid double-counting -->
-
-<script>
-function renderRedVerbosDia(){
-  const box = document.getElementById("redVerbosDia");
-  if(!box || !Array.isArray(current)) return;
-  box.innerHTML = current.map(v=>`
-    <span style="padding:4px 10px; border-radius:999px; font-weight:900;
-      background:#0b1220; color:#ffb24a; border:1px solid #ffb24a;">
-      ${v.c1.toUpperCase()}
-    </span>
-  `).join("");
-}
-document.addEventListener("DOMContentLoaded", ()=>{
-  setTimeout(renderRedVerbosDia, 100);
-});
-</script>
-
 </body>
 </html>
