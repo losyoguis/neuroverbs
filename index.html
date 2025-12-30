@@ -2508,6 +2508,23 @@ window.addEventListener("load", () => {
 </footer>
 </div>
 
+
+<!-- ✅ MODAL: RED NEURONAL -->
+<div class="overlay" id="overlay" style="display:none;">
+  <div class="modal">
+    <h2>🧠 Red Neuronal – Asociación clave</h2>
+    <div style="margin:10px 0; line-height:1.5; font-weight:850;">
+      <p>El patrón que se repite es que el verbo es de <b>una sílaba</b> y termina en <b>t</b> o <b>d</b>.</p>
+      <p>Familia verbal: el infinitivo, el pasado y el participio son los mismos
+      (<b>C1 = C2 = C3</b>).</p>
+    </div>
+    <div id="ayuda"></div>
+    <button class="btn-main" onclick="cerrarAyuda()" style="margin-top:14px">
+      ASOCIAR ✅
+    </button>
+  </div>
+</div>
+
 <!-- ✅ MODAL: INSTRUCCIONES -->
 <div class="overlay" id="instOverlay" style="display:none;">
 <div class="modal modal-top">
@@ -5920,35 +5937,32 @@ function renderReading(v){
 }
 
 
-/* ===========================
-   RED NEURONAL INLINE
-   =========================== */
-let redInlineVisible = false;
 
+/* ===========================
+   RED NEURONAL (MODAL)
+   =========================== */
 function abrirAyuda(){
-  const box = document.getElementById("pistaBox");
   const lista = current.map((v,i)=>`
-    <li style="margin:6px 0; font-weight:900;">
+    <div style="padding:8px 0; border-bottom:1px solid #e2e8f0;">
       <b>${String(i+1).padStart(2,"0")}.</b>
-      <span style="color:var(--c1);">${v.c1.toUpperCase()}</span>
-      — ${v.c1} / <span style="color:var(--c2);">${v.c2}</span> / <span style="color:var(--c3);">${v.c3}</span>
+      <b>${v.c1.toUpperCase()}</b> — ${v.c1} / ${v.c2} / ${v.c3}
       <span style="color:#64748b">(${v.esp})</span>
-      ${v.ex ? `<div style="margin-top:6px;color:#b91c1c;font-weight:900;">⚠ EXCEPCIÓN: ${v.ex}</div>` : ``}
-      ${(currentRound===2) ? `<div style="margin-top:6px;font-weight:900;">🟣 Complemento: ${getComplement(v).en}</div>` : ``}
-      ${(voiceMode==="passive") ? `<div style="margin-top:6px;font-weight:900;">🟠 Pasiva: ${passiveAllowed(v) ? "BE + V3" : "No aplica"}</div>` : ``}
-    </li>
+      ${v.ex ? `<div style="margin-top:6px; color:#b91c1c; font-weight:900;">⚠ EXCEPCIÓN: ${v.ex}</div>` : ``}
+      ${(currentRound===2) ? `<div style="margin-top:6px; font-weight:900;">🟣 Complemento: ${getComplement(v).en}</div>` : ``}
+      ${(voiceMode==="passive") ? `<div style="margin-top:6px; font-weight:900;">🟠 Pasiva: ${passiveAllowed(v) ? "BE + V3" : "No aplica natural"}</div>` : ``}
+    </div>
   `).join("");
 
-  document.getElementById("pistaNeon").innerText = "RED NEURONAL";
-  document.getElementById("pistaLista").innerHTML = lista || "<li>No hay verbos.</li>";
-  box.style.display = "block";
-  redInlineVisible = true;
+  document.getElementById("ayuda").innerHTML = lista || "No hay verbos en este día.";
+  document.getElementById("overlay").style.display = "flex";
+  syncModalOpen();
 }
 
 function cerrarAyuda(){
-  document.getElementById("pistaNeon").innerText = "PISTA NEURONAL";
-  redInlineVisible = false;
+  document.getElementById("overlay").style.display = "none";
+  syncModalOpen();
 }
+
 
 window.addEventListener("load", async () => {
   // Sincroniza la base de verbos antes de iniciar la UI (Grupo/Día + Active/Passive)
