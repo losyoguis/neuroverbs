@@ -1938,6 +1938,34 @@ box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);;justify-content:flex-start;text-ali
 }
 </style>
 
+
+<style>
+/* ===== FORCE VISIBILITY UNDER PISTA NEURONAL ===== */
+#pistaNeonUnderTitle{
+  position: relative;
+  z-index: 10;
+  margin-top: 20px;
+  text-align: center;
+}
+#pistaNeonUnderTitle ul{
+  list-style: none;
+  padding: 0;
+  margin: 0 auto;
+}
+#pistaNeonUnderTitle li{
+  font-size: 1.25rem;
+  font-weight: 900;
+  margin: 6px 0;
+  opacity: 0;
+  transform: translateY(12px);
+}
+#pistaNeonUnderTitle li.show{
+  opacity: 1;
+  transform: translateY(0);
+  transition: all .45s ease;
+}
+</style>
+
 </head>
 <body class="has-floating-stats">
 <!-- ✅✅✅ CONSOLE GOOGLE -->
@@ -2472,6 +2500,11 @@ window.addEventListener("load", () => {
 <span id="voiceModeMiniHint" style="opacity:.85;font-weight:950">Sujeto → Verbo</span>
 </div>
 <div class="neon-subtitle" id="pistaNeon">PISTA NEURONAL</div>
+
+<div id="pistaNeonUnderTitle">
+  <ul id="pistaNeonUnderTitleList"></ul>
+</div>
+
 
 <div id="pistaNeonVerbos">
   <ul id="pistaNeonVerbosLista"></ul>
