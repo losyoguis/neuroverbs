@@ -2637,21 +2637,25 @@ let __NY_VERBS_DB_READY__ = false;
 async function loadVerbsDbFromVerbsHtml(){
   try{
     const res = await fetch("verbs.html", { cache: "no-store" });
-    if(!res.ok) return;
+    if(!res.ok) return { ok:false, error: "HTTP " + res.status };
     const txt = await res.text();
     const m = txt.match(/const\s+VERBS_DB\s*=\s*(\[[\s\S]*?\n\s*\]);/);
-    if(!m) return;
+    if(!m) return { ok:false, error: "VERBS_DB not found" };
     // Evaluamos el array JS (misma origin, archivo controlado por nosotros)
     __NY_VERBS_DB__ = (new Function("return " + m[1]))();
     __NY_VERBS_DB_READY__ = Array.isArray(__NY_VERBS_DB__) && __NY_VERBS_DB__.length > 0;
 
     if(__NY_VERBS_DB_READY__){
       __nyNormalizeVerbsDb(__NY_VERBS_DB__);
+      return { ok:true };
     }
+    return { ok:false, error: "VERBS_DB empty" };
   }catch(e){
     __NY_VERBS_DB_READY__ = false;
+    return { ok:false, error: e };
   }
 }
+
 
 
   // ===== Sincronización de verbos (index.html ↔ verbs.html) =====
@@ -2663,7 +2667,7 @@ async function loadVerbsDbFromVerbsHtml(){
     __verbsHtmlSyncPromise = (async () => {
       const res = await loadVerbsDbFromVerbsHtml();
 
-      const rawDb = window.__NY_VERBS_DB_READY__ || window.__NY_VERBS_DB__ || [];
+      const rawDb = (window.__NY_VERBS_DB_READY__ ? window.__NY_VERBS_DB__ : []);
       if (res?.ok && Array.isArray(rawDb) && rawDb.length) {
         const toNum = (x) => {
           const m = String(x ?? "").match(/(\d+)/);
