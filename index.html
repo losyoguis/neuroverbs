@@ -6674,5 +6674,22 @@ let activeEl = null;
   })(); });
 </script>
 <!-- XP sync watcher removed: XP is synced only from exercise actions + server fetch to avoid double-counting -->
+
+<script>
+function renderRedVerbosDia(){
+  const box = document.getElementById("redVerbosDia");
+  if(!box || !Array.isArray(current)) return;
+  box.innerHTML = current.map(v=>`
+    <span style="padding:4px 10px; border-radius:999px; font-weight:900;
+      background:#0b1220; color:#ffb24a; border:1px solid #ffb24a;">
+      ${v.c1.toUpperCase()}
+    </span>
+  `).join("");
+}
+document.addEventListener("DOMContentLoaded", ()=>{
+  setTimeout(renderRedVerbosDia, 100);
+});
+</script>
+
 </body>
 </html>
