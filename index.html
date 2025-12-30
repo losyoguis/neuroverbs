@@ -2498,13 +2498,7 @@ window.addEventListener("load", () => {
 <button class="roundbtn web" data-help="🌐 Abrir el SmartEbook / Neuroaprendizaje del Inglés (Google Sites)." onclick="abrirWeb()" title="Abre el sitio web SmartEbook (Google Sites) en una pestaña nueva." type="button">Neuroaprendizaje del Inglés 🌐</button>
 </footer>
 </div>
-<div class="overlay" id="overlay">
-<div class="modal">
-<h2>🧠 Red neuronal del día</h2>
-<div id="ayuda"></div>
-<button class="btn-main" data-help="Volver al ejercicio: cierra la Red Neuronal." onclick="cerrarAyuda()" style="margin-top:14px">ASOCIAR ✅</button>
-</div>
-</div>
+
 <!-- ✅ MODAL: INSTRUCCIONES -->
 <div class="overlay" id="instOverlay" style="display:none;">
 <div class="modal modal-top">
@@ -5916,32 +5910,35 @@ function renderReading(v){
   if(p2f) p2f.innerText = `${idx+1} de ${current.length}`;
 }
 
+
 /* ===========================
-   RED NEURONAL (igual)
+   RED NEURONAL INLINE
    =========================== */
+let redInlineVisible = false;
+
 function abrirAyuda(){
+  const box = document.getElementById("pistaBox");
   const lista = current.map((v,i)=>`
-    <div style="padding:8px 0; border-bottom:1px solid #e2e8f0;">
+    <li style="margin:6px 0; font-weight:900;">
       <b>${String(i+1).padStart(2,"0")}.</b>
-      <b>${v.c1.toUpperCase()}</b> — ${v.c1} / ${v.c2} / ${v.c3}
+      <span style="color:var(--c1);">${v.c1.toUpperCase()}</span>
+      — ${v.c1} / <span style="color:var(--c2);">${v.c2}</span> / <span style="color:var(--c3);">${v.c3}</span>
       <span style="color:#64748b">(${v.esp})</span>
-      ${v.ex ? `<div style="margin-top:6px; color:#b91c1c; font-weight:900;">⚠ EXCEPCIÓN: ${v.ex}</div>` : ``}
-      ${(v.alt2||v.alt3) ? `<div style="margin-top:6px; color:#0f172a; font-weight:900;">✅ Alternativas aceptadas: ${[
-        ...(v.alt2?getOptions("",v.alt2).filter(Boolean):[]),
-        ...(v.alt3?getOptions("",v.alt3).filter(Boolean):[])
-      ].filter(Boolean).join(", ")}</div>` : ``}
-      ${(currentRound===2) ? `<div style="margin-top:6px; color:#0b1220; font-weight:950;">🟣 Complemento: <span style="color:#0b1220; background:#fde68a; padding:2px 8px; border-radius:999px;">${getComplement(v).en}</span></div>` : ``}
-      ${(voiceMode==="passive") ? `<div style="margin-top:6px; color:#0b1220; font-weight:950;">🟠 Pasiva: ${passiveAllowed(v) ? "BE + V3 (+ by agente)" : "No aplica natural (intransitivo)"}</div>` : ``}
-    </div>
+      ${v.ex ? `<div style="margin-top:6px;color:#b91c1c;font-weight:900;">⚠ EXCEPCIÓN: ${v.ex}</div>` : ``}
+      ${(currentRound===2) ? `<div style="margin-top:6px;font-weight:900;">🟣 Complemento: ${getComplement(v).en}</div>` : ``}
+      ${(voiceMode==="passive") ? `<div style="margin-top:6px;font-weight:900;">🟠 Pasiva: ${passiveAllowed(v) ? "BE + V3" : "No aplica"}</div>` : ``}
+    </li>
   `).join("");
 
-  document.getElementById('ayuda').innerHTML = lista || "No hay verbos en este día.";
-  document.getElementById('overlay').style.display="flex";
-  syncModalOpen();
+  document.getElementById("pistaNeon").innerText = "RED NEURONAL";
+  document.getElementById("pistaLista").innerHTML = lista || "<li>No hay verbos.</li>";
+  box.style.display = "block";
+  redInlineVisible = true;
 }
+
 function cerrarAyuda(){
-  document.getElementById('overlay').style.display="none";
-  syncModalOpen();
+  document.getElementById("pistaNeon").innerText = "PISTA NEURONAL";
+  redInlineVisible = false;
 }
 
 window.addEventListener("load", async () => {
