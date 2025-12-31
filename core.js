@@ -14,3 +14,16 @@ document.addEventListener("DOMContentLoaded", () => {
   loadVerbs();
   updateHUD();
 });
+
+
+import { loadVerbs } from "./core.data.js";
+import { updateHUD } from "./core.ui.js";
+
+// 👇 EXPONER AL HTML
+window.loadVerbs = loadVerbs;
+window.updateHUD = updateHUD;
+
+document.addEventListener("DOMContentLoaded", () => {
+  loadVerbs();
+  updateHUD();
+});
