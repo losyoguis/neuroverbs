@@ -105,9 +105,21 @@
 
 <!-- XP sync watcher removed: XP is synced only from exercise actions + server fetch to avoid double-counting -->
 <script>
-/* ✅ Forzar cuentas del dominio institucional en el selector de Google (GIS) */
+/* ✅ Forzar dominio institucional + redirigir siempre al entrar */
 (function () {
-  const ALLOWED_DOMAIN = "iemanueljbetancur.edu.co";
+  const ALLOWED_DOMAIN = 'iemanueljbetancur.edu.co';
+  const TARGET = 'https://losyoguis.github.io/neuroverbs/mjb';
+
+  function decodeJwtPayload(jwt) {
+    try {
+      const part = jwt.split(".")[1];
+      const b64 = part.replace(/-/g, "+").replace(/_/g, "/");
+      const json = decodeURIComponent(atob(b64).split("").map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2)).join(""));
+      return JSON.parse(json);
+    } catch (_) {
+      return null;
+    }
+  }
 
   function patch() {
     if (!window.google || !google.accounts || !google.accounts.id || !google.accounts.id.initialize) return false;
@@ -117,23 +129,49 @@
 
     google.accounts.id.initialize = function (cfg) {
       cfg = cfg || {};
-      // "hd" limita las cuentas mostradas durante la selección a un dominio Workspace.
-      // Ref: https://developers.google.com/identity/gsi/web/reference/js-reference
-      if (!("hd" in cfg) || !cfg.hd) cfg.hd = ALLOWED_DOMAIN;
+
+      // 1) Hint de dominio (Workspace) para que el selector muestre cuentas institucionales
+      if (!cfg.hd) cfg.hd = ALLOWED_DOMAIN;
+
+      // 2) Envolver callback para redirigir SIEMPRE que la cuenta sea institucional
+      const userCb = cfg.callback;
+      cfg.callback = function (resp) {
+        let ok = false;
+        try {
+          const token = resp && resp.credential;
+          if (token) {
+            const payload = decodeJwtPayload(token);
+            const email = (payload && payload.email ? String(payload.email) : "").toLowerCase();
+            ok = email.endsWith("@" + ALLOWED_DOMAIN);
+          }
+        } catch (e) {
+          console.error(e);
+        }
+
+        // Ejecuta el callback original (si existe)
+        try { if (typeof userCb === "function") userCb(resp); } catch (e) { console.error(e); }
+
+        // Redirección final
+        if (ok && resp && resp.credential) {
+          const next = TARGET + "#id_token=" + encodeURIComponent(resp.credential) + "&src=mjb";
+          setTimeout(() => window.location.replace(next), 150);
+        }
+      };
+
       return orig.call(this, cfg);
     };
+
     google.accounts.id.initialize.__mjb_patched__ = true;
     return true;
   }
 
-  // GIS carga async; esperamos hasta que exista
   const t = setInterval(() => { if (patch()) clearInterval(t); }, 50);
 })();
 </script>
 <script>
 /* ✅ Ingresar como invitado → redirige a Neuroverbs */
 (function () {
-  const TARGET = 'https://losyoguis.github.io/neuroverbs/';
+  const TARGET = 'https://losyoguis.github.io/neuroverbs/mjb';
   const btn = document.getElementById("guestBtn");
   if (!btn) return;
   btn.addEventListener("click", () => window.location.href = TARGET);
