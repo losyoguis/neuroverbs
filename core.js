@@ -3806,7 +3806,7 @@ window.addEventListener("resize", pinStatsBar);
 window.addEventListener("scroll", pinStatsBar);
 
 /* ===========================
-   🐝 SPELLING BEE (DELETREO C1/C2/C3)
+   🐝 SPELLING YOGUS BEE (DELETREO C1/C2/C3)
    =========================== */
 function uniqueList(arr){
   const seen = new Set();
