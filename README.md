@@ -1,9 +1,6 @@
-# NeuroVerbs (GitHub ready)
+# NeuroVerbs
 
-Actualización v6:
-- READING en voz PASIVA: solo inglés (sin líneas .es por oración)
-- Se oculta el botón/badge EN ➜ ES en READING cuando está en PASIVA
-- Se fuerza a ocultar la traducción de STORY en PASIVA
-- Tablas en PASIVA: sin español (si aplica)
-
-Archivos: index.html, ui.css, verbs.html, core.js
+Actualización v4 (DEFINITIVA):
+- Voz pasiva SIN traducción al español en READING (forzado a nivel de render)
+- Voz pasiva SIN español en tablas
+- Voz activa conserva EN/ES

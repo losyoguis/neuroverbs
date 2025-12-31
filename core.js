@@ -2705,7 +2705,7 @@ function generarTablas(v){
               <td class="en-col">
                 <button class="btn-listen" type="button" data-say="${encodeURIComponent(en)}">🔊</button>
                 <span class="en">${enHTML}</span>
-                ${(voiceMode!=="passive") ? '<div class="es">'+esLine+'</div>' : ''}
+                ${voiceMode !== "passive" ? `<div class="es">${esLine}</div>` : ``}
               </td>
             </tr>`;
           return;
@@ -2733,7 +2733,7 @@ function generarTablas(v){
             <td class="en-col">
               <button class="btn-listen" type="button" data-say="${encodeURIComponent(en)}">🔊</button>
               <span class="en">${enHTML}</span>
-              ${(voiceMode!=="passive") ? '<div class="es">'+esLine+'</div>' : ''}
+              ${voiceMode !== "passive" ? `<div class="es">${esLine}</div>` : ``}
             </td>
           </tr>`;
       });
@@ -3691,14 +3691,14 @@ function renderReading(v){
   const story = getReadingStory(storyMode, v);
   const storyLabel = (storyMode === "passive") ? "Passive Voice" : "Active Voice";
   const translateBtnText = readingStoryTranslationVisible ? "Hide Translation" : "Translate";
-  const translateDisplay = (voiceMode!=="passive" && readingStoryTranslationVisible) ? "block" : "none";
+  const translateDisplay = readingStoryTranslationVisible ? "block" : "none";
   const storyEN = (story?.en || []).map(p=>`<p style="margin:0 0 10px 0;">${p}</p>`).join("");
   const storyES = (story?.es || []).map(p=>`<p style="margin:0 0 10px 0;">${p}</p>`).join("");
 
   const html = `
     <div class="practice-head" style="margin-top:18px;">
       <div class="practice-title">📖 READING (${badgeText}) — práctica completa con <b>${verbName}</b></div>
-      ${(voiceMode!=="passive") ? '<div class="practice-badge">EN ➜ ES</div>' : ''}
+      <div class="practice-badge">EN ➜ ES</div>
     </div>
 
     ${warnPassive}
@@ -3712,7 +3712,7 @@ function renderReading(v){
               <td>
                 <button class="btn-listen" type="button" data-say="${encodeURIComponent(line)}">🔊</button>
                 <span class="en">${enHTML[i]}</span>
-                ${(voiceMode!=="passive") ? '<span class="es">'+es[i]+'</span>' : ''}
+                <span class="es">${es[i]}</span>
               </td>
             </tr>
           `).join("")}
@@ -3728,7 +3728,7 @@ function renderReading(v){
       <div class="card" style="margin-top:16px;">
         <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
           <div style="font-weight:950; color:#0f172a;">📚 STORY (${storyLabel})</div>
-          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;"><button class="roundbtn" id="btnReadingTranslate" type="button" onclick="toggleReadingStoryTranslation()" style="display:${voiceMode===\'passive\'?\'none\':\'inline-flex\'}; text-transform:none;">${translateBtnText}</button><button class="roundbtn" id="btnReadingAudio" type="button" onclick="speakReadingStory()" style="text-transform:none;">🔊 Play Audio</button><button class="roundbtn" id="btnReadingAudioStop" type="button" disabled onclick="stopReadingStory()" style="text-transform:none;">⏹ Stop</button></div>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;"><button class="roundbtn" id="btnReadingTranslate" type="button" onclick="toggleReadingStoryTranslation()" style="text-transform:none;">${translateBtnText}</button><button class="roundbtn" id="btnReadingAudio" type="button" onclick="speakReadingStory()" style="text-transform:none;">🔊 Play Audio</button><button class="roundbtn" id="btnReadingAudioStop" type="button" disabled onclick="stopReadingStory()" style="text-transform:none;">⏹ Stop</button></div>
         </div>
 
         <div id="readingStoryEnglish" style="margin-top:10px; color:#0f172a; line-height:1.6; font-weight:850;">
