@@ -4690,5 +4690,78 @@ function pastParticipleEs(verb) {
   if (verb === 'cortar') return 'cortado';
   return verb;
 }
+/* =========================================================
+   🇪🇸 PASIVA INGLÉS → ESPAÑOL CORRECTO (LATAM / ACADÉMICO)
+   ========================================================= */
+
+const AGENT_ES = {
+  me: 'por mí',
+  you: 'por ti',
+  him: 'por él',
+  her: 'por ella',
+  us: 'por nosotros',
+  them: 'por ellos'
+};
+
+function passiveEnglishToSpanish({
+  tense,        // 'P' | 'S' | 'PP'
+  negative,     // true | false
+  question,     // true | false
+  subjectEs,    // "El papel"
+  participleEs,// "cortado"
+  agentEn       // "me" | "you" | null
+}) {
+
+  /* ===== CON AGENTE → PASIVA REAL ===== */
+  if (agentEn && AGENT_ES[agentEn]) {
+    const agentEs = AGENT_ES[agentEn];
+
+    let ser;
+    if (tense === 'P') ser = 'es';
+    if (tense === 'S') ser = 'fue';
+    if (tense === 'PP') ser = 'ha sido';
+
+    if (negative) ser = 'no ' + ser;
+
+    if (question) {
+      return `¿${subjectEs} ${ser} ${participleEs} ${agentEs}?`;
+    }
+
+    return `${subjectEs} ${ser} ${participleEs} ${agentEs}.`;
+  }
+
+  /* ===== SIN AGENTE → PASIVA REFLEJA ===== */
+  let verbo;
+  if (tense === 'P') verbo = 'se corta';
+  if (tense === 'S') verbo = 'se cortó';
+  if (tense === 'PP') verbo = 'se ha cortado';
+
+  if (negative) verbo = 'no ' + verbo;
+
+  if (question) {
+    return `¿${capitalize(verbo)} ${subjectEs.toLowerCase()}?`;
+  }
+
+  return `${capitalize(verbo)} ${subjectEs.toLowerCase()}.`;
+}
+
+function capitalize(txt) {
+  return txt.charA
+  
+  t(0).toUpperCase() + txt.slice(1);
+}
 
 
+// detectar agente en la oración inglesa
+let agentMatch = enSentence.match(/by\s+(me|you|him|her|us|them)/i);
+let agentEn = agentMatch ? agentMatch[1].toLowerCase() : null;
+
+// generar español correcto
+es = passiveEnglishToSpanish({
+  tense: tense,                 // 'P' | 'S' | 'PP'
+  negative: isNegative,         // boolean
+  question: isQuestion,         // boolean
+  subjectEs: 'El papel',
+  participleEs: 'cortado',
+  agentEn: agentEn
+});
