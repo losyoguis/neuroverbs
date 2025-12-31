@@ -2705,7 +2705,7 @@ function generarTablas(v){
               <td class="en-col">
                 <button class="btn-listen" type="button" data-say="${encodeURIComponent(en)}">🔊</button>
                 <span class="en">${enHTML}</span>
-                <div class="es">${esLine}</div>
+                ${voiceMode !== "passive" ? `<div class="es">${esLine}</div>` : ``}
               </td>
             </tr>`;
           return;
@@ -2733,7 +2733,7 @@ function generarTablas(v){
             <td class="en-col">
               <button class="btn-listen" type="button" data-say="${encodeURIComponent(en)}">🔊</button>
               <span class="en">${enHTML}</span>
-              <div class="es">${esLine}</div>
+              ${voiceMode !== "passive" ? `<div class="es">${esLine}</div>` : ``}
             </td>
           </tr>`;
       });
