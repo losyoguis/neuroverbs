@@ -1,6 +1,5 @@
 # NeuroVerbs
 
-App educativa de neuroaprendizaje de verbos irregulares.
-
-✔ Voz activa: inglés + español
-✔ Voz pasiva: solo inglés (decisión pedagógica)
+Actualización v2:
+- Voz pasiva SIN traducción al español (tablas + reading)
+- Voz activa conserva EN/ES
