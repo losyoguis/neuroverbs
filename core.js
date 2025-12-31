@@ -1004,9 +1004,9 @@ let voiceMode = "active"; // "active" | "passive"
 const PRACTICE_XP = 10;
 let practiceAwarded = new Set();
 let connectAwarded = new Set(); // evita farmear XP repitiendo VALIDAR (deletreo)
-let spellAwarded = new Set(); // evita farmear XP repitiendo VALIDAR DELETREO (Spelling Bee)
+let spellAwarded = new Set(); // evita farmear XP repitiendo VALIDAR DELETREO (Spelling Yoguis Bee)
 let spellingState = null;
-let lastSpellPickKey = null; // para evitar repetir el mismo verbo en Spelling Bee
+let lastSpellPickKey = null; // para evitar repetir el mismo verbo en Spelling Yoguis Bee
 
 let practiceState = null;
 
@@ -3892,7 +3892,7 @@ function renderSpelling(v){
     <div class="spellWrap">
       <div class="spellHead">
         <div>
-          <h3 class="spellTitle">🐝 Spelling Bee</h3>
+          <h3 class="spellTitle">🐝 Spelling Yoguis Bee</h3>
           <div class="spellSub">Deletrea las 3 formas (C1/C2/C3) del verbo actual. Verbo aleatorio del día (para repasar más).</div>
         </div>
       </div>
