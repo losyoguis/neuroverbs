@@ -4570,5 +4570,57 @@ function translatePassiveES(opts) {
 
   return `${sentence}.`;
 }
+function capitalize(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+/**
+ * Devuelve la raíz verbal para pasiva refleja
+ * cortado → corta
+ */
+function participleRoot(participle) {
+  return participle
+    .replace(/ado$/, 'a')
+    .replace(/ido$/, 'e');
+}
+
+/**
+ * Devuelve pasado simple para pasiva refleja
+ * cortado → cortó
+ */
+function pastSimpleRoot(participle) {
+  return participle
+    .replace(/ado$/, 'ó')
+    .replace(/ido$/, 'ió');
+}
+
+translatePassiveES({
+  tense: 'P',
+  negative: false,
+  question: false,
+  hasAgent: true,
+  subjectEs: 'El papel',
+  participleEs: 'cortado',
+  agentEs: 'por mí'
+});
+
+translatePassiveES({
+  tense: 'P',
+  negative: false,
+  question: false,
+  hasAgent: false,
+  subjectEs: 'El papel',
+  participleEs: 'cortado'
+});
+
+es = translatePassiveES({
+  tense,
+  negative,
+  question,
+  hasAgent,
+  subjectEs: 'El papel',
+  participleEs: 'cortado',
+  agentEs: agentEs
+});
 
 
