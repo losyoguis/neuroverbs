@@ -1,0 +1,365 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2761
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fnil\fcharset0 Menlo-Regular;}
+{\colortbl;\red255\green255\blue255;\red21\green98\blue39;\red246\green247\blue249;}
+{\*\expandedcolortbl;;\cssrgb\c7451\c45098\c20000;\cssrgb\c97255\c97647\c98039;}
+\margl1440\margr1440\vieww28300\viewh16080\viewkind0
+\deftab720
+\pard\pardeftab720\partightenfactor0
+
+\f0\fs26 \cf2 \cb3 \expnd0\expndtw0\kerning0
+/**\
+ * Neuroverbs - Google Sheets backend (Apps Script Web App) - FIXED v3\
+ *\
+ * \uc0\u9989  Guarda usuarios y XP en la hoja: users\
+ * \uc0\u9989  Genera leaderboard SIN f\'f3rmulas (evita #ERROR por configuraci\'f3n regional)\
+ * \uc0\u9989  Acepta upsert por POST (no-cors) y tambi\'e9n por GET+JSONP (m\'e1s f\'e1cil de depurar)\
+ *\
+ * Deploy:\
+ *  - Implementar > Nueva implementaci\'f3n > Aplicaci\'f3n web\
+ *  - Ejecutar como: Yo\
+ *  - Acceso: Cualquiera con el enlace (o "Cualquiera en el dominio" si as\'ed lo exige tu Workspace)\
+ */\
+\
+// ===== CONFIG =====\
+const CLIENT_ID = "637468265896-5olh8rhf76setm52743tashi3vq1la67.apps.googleusercontent.com";\
+const ALLOWED_DOMAIN = "iemanueljbetancur.edu.co"; // "" para permitir cualquiera\
+\
+const SPREADSHEET_ID = "1vWWeSgAKLLoZINQFnvoGB3UR_w4knxs_br1ncSNdQW4";\
+\
+const USERS_SHEET = "users";\
+const LEADERBOARD_SHEET = "leaderboard"; // opcional, se rellena con valores (no f\'f3rmulas)\
+const LOGS_SHEET = "logs";\
+\
+const WRITE_LEADERBOARD_SHEET = true;\
+const LEADERBOARD_MAX_ROWS = 500;\
+\
+// Permite registrar usuario v\'eda GET/JSONP (\'fatil para debug). POST sigue funcionando.\
+const ALLOW_GET_UPSERT = true;\
+\
+// ===== Utils =====\
+function nowISO_() \{ return new Date().toISOString(); \}\
+\
+function ss_() \{ return SpreadsheetApp.openById(SPREADSHEET_ID); \}\
+\
+function getOrCreateSheet_(name) \{\
+  const ss = ss_();\
+  let sh = ss.getSheetByName(name);\
+  if (!sh) sh = ss.insertSheet(name);\
+  return sh;\
+\}\
+\
+function ensureUsersHeader_() \{\
+  const sh = getOrCreateSheet_(USERS_SHEET);\
+  const want = ["sub","email","name","picture","xp","createdAt","lastLoginAt"];\
+  if (sh.getLastRow() === 0) \{\
+    sh.appendRow(want);\
+    sh.setFrozenRows(1);\
+    return;\
+  \}\
+  const header = sh.getRange(1,1,1,Math.max(7, sh.getLastColumn())).getValues()[0].slice(0,7);\
+  const ok = want.every((v,i)=> String(header[i]||"").trim().toLowerCase() === v.toLowerCase());\
+  if (!ok) \{\
+    if (sh.getMaxColumns() < 7) sh.insertColumnsAfter(sh.getMaxColumns(), 7 - sh.getMaxColumns());\
+    sh.getRange(1,1,1,7).setValues([want]);\
+    sh.setFrozenRows(1);\
+  \}\
+\}\
+\
+function ensureLogsHeader_() \{\
+  const sh = getOrCreateSheet_(LOGS_SHEET);\
+  if (sh.getLastRow() === 0) \{\
+    sh.appendRow(["ts","level","msg","data"]);\
+    sh.setFrozenRows(1);\
+  \}\
+\}\
+\
+function log_(level, msg, data) \{\
+  try \{\
+    ensureLogsHeader_();\
+    getOrCreateSheet_(LOGS_SHEET).appendRow([\
+      nowISO_(),\
+      level,\
+      msg,\
+      data ? JSON.stringify(data).slice(0, 50000) : ""\
+    ]);\
+  \} catch(e) \{\}\
+\}\
+\
+function json_(obj) \{\
+  return ContentService.createTextOutput(JSON.stringify(obj))\
+    .setMimeType(ContentService.MimeType.JSON);\
+\}\
+\
+function jsonp_(obj, callbackName) \{\
+  const js = `$\{callbackName\}($\{JSON.stringify(obj)\});`;\
+  return ContentService.createTextOutput(js).setMimeType(ContentService.MimeType.JAVASCRIPT);\
+\}\
+\
+// ===== Auth =====\
+function verifyIdToken_(idToken) \{\
+  const url = "https://oauth2.googleapis.com/tokeninfo?id_token=" + encodeURIComponent(idToken);\
+  const res = UrlFetchApp.fetch(url, \{ muteHttpExceptions: true \});\
+  const code = res.getResponseCode();\
+  if (code !== 200) throw new Error("Invalid idToken. tokeninfo=" + res.getContentText());\
+\
+  const payload = JSON.parse(res.getContentText());\
+  if (payload.aud !== CLIENT_ID) throw new Error("AUD mismatch. aud=" + payload.aud);\
+\
+  const email = String(payload.email || "").toLowerCase();\
+  if (ALLOWED_DOMAIN) \{\
+    const suffix = "@" + String(ALLOWED_DOMAIN).toLowerCase();\
+    if (!email.endsWith(suffix)) throw new Error("Email no permitido. Solo " + suffix);\
+  \}\
+\
+  return \{\
+    sub: String(payload.sub || ""),\
+    email: payload.email || "",\
+    name: payload.name || payload.email || "Usuario",\
+    picture: payload.picture || ""\
+  \};\
+\}\
+\
+// ===== Data =====\
+function findRowBySub_(sh, sub) \{\
+  const lastRow = sh.getLastRow();\
+  if (lastRow < 2) return 0;\
+\
+  const rng = sh.getRange(2, 1, lastRow - 1, 1);\
+  const hit = rng.createTextFinder(String(sub)).matchEntireCell(true).findNext();\
+  return hit ? hit.getRow() : 0;\
+\}\
+\
+function upsertUser_(profile, xpDelta) \{\
+  ensureUsersHeader_();\
+  const sh = getOrCreateSheet_(USERS_SHEET);\
+\
+  const lock = LockService.getScriptLock();\
+  lock.waitLock(25000);\
+\
+  try \{\
+    const row = findRowBySub_(sh, profile.sub);\
+    const ts = nowISO_();\
+    const delta = Number(xpDelta || 0);\
+    const safeDelta = (Number.isFinite(delta) ? delta : 0);\
+\
+    if (!row) \{\
+      sh.appendRow([\
+        profile.sub,\
+        profile.email,\
+        profile.name,\
+        profile.picture,\
+        Math.max(0, safeDelta),\
+        ts,\
+        ts\
+      ]);\
+      return \{ created: true, xp: Math.max(0, safeDelta) \};\
+    \} else \{\
+      const currentXp = Number(sh.getRange(row, 5).getValue() || 0);\
+      const newXp = Math.max(0, currentXp + safeDelta);\
+\
+      sh.getRange(row, 2).setValue(profile.email);\
+      sh.getRange(row, 3).setValue(profile.name);\
+      sh.getRange(row, 4).setValue(profile.picture);\
+      sh.getRange(row, 5).setValue(newXp);\
+\
+      const createdAt = sh.getRange(row, 6).getValue() || ts;\
+      sh.getRange(row, 6).setValue(createdAt);\
+      sh.getRange(row, 7).setValue(ts);\
+\
+      return \{ created: false, xp: newXp \};\
+    \}\
+  \} finally \{\
+    try \{ lock.releaseLock(); \} catch(_) \{\}\
+  \}\
+\}\
+\
+function readAllUsers_() \{\
+  ensureUsersHeader_();\
+  const sh = getOrCreateSheet_(USERS_SHEET);\
+  const lastRow = sh.getLastRow();\
+  if (lastRow < 2) return [];\
+\
+  const values = sh.getRange(2, 1, lastRow - 1, 7).getValues();\
+  return values\
+    .filter(r => r[0])\
+    .map(r => (\{\
+      sub: String(r[0] || ""),\
+      email: String(r[1] || ""),\
+      name: String(r[2] || ""),\
+      picture: String(r[3] || ""),\
+      xp: Number(r[4] || 0),\
+      createdAt: r[5] || "",\
+      lastLoginAt: r[6] || ""\
+    \}));\
+\}\
+\
+function computeLeaderboard_(users) \{\
+  const arr = users.slice();\
+  arr.sort((a,b) => \{\
+    const dx = (Number(b.xp||0) - Number(a.xp||0));\
+    if (dx !== 0) return dx;\
+    const ta = String(a.lastLoginAt||"");\
+    const tb = String(b.lastLoginAt||"");\
+    if (tb > ta) return 1;\
+    if (tb < ta) return -1;\
+    return String(a.name||"").localeCompare(String(b.name||""), "es");\
+  \});\
+  return arr;\
+\}\
+\
+function refreshLeaderboardSheet_() \{\
+  if (!WRITE_LEADERBOARD_SHEET) return;\
+\
+  const sh = getOrCreateSheet_(LEADERBOARD_SHEET);\
+  // Limpia f\'f3rmulas viejas que causen #ERROR\
+  sh.clearContents();\
+\
+  const header = ["sub","email","name","picture","xp","createdAt","lastLoginAt"];\
+  sh.getRange(1,1,1,7).setValues([header]);\
+  sh.setFrozenRows(1);\
+\
+  const users = computeLeaderboard_(readAllUsers_());\
+  const take = Math.min(users.length, LEADERBOARD_MAX_ROWS);\
+  if (take === 0) return;\
+\
+  const rows = users.slice(0, take).map(u => [\
+    u.sub, u.email, u.name, u.picture, u.xp, u.createdAt, u.lastLoginAt\
+  ]);\
+  sh.getRange(2,1,rows.length,7).setValues(rows);\
+\}\
+\
+function getUserBySub_(sub) \{\
+  ensureUsersHeader_();\
+  const sh = getOrCreateSheet_(USERS_SHEET);\
+  const row = findRowBySub_(sh, sub);\
+  if (!row) return null;\
+  const r = sh.getRange(row, 1, 1, 7).getValues()[0];\
+  return \{\
+    sub: r[0],\
+    email: r[1],\
+    name: r[2],\
+    picture: r[3],\
+    xp: Number(r[4] || 0),\
+    createdAt: r[5],\
+    lastLoginAt: r[6]\
+  \};\
+\}\
+\
+function getLeaderboardPage_(limit, offset) \{\
+  const lim = Math.min(Math.max(Number(limit || 10), 1), 50);\
+  const off = Math.max(Number(offset || 0), 0);\
+\
+  const users = computeLeaderboard_(readAllUsers_());\
+  const total = users.length;\
+  const page = users.slice(off, off + lim);\
+\
+  return \{ total, rows: page \};\
+\}\
+\
+// ===== Request parsing =====\
+function parsePostBody_(e) \{\
+  let raw = "";\
+  try \{ raw = e && e.postData && e.postData.contents ? String(e.postData.contents) : ""; \} catch(_)\{\}\
+\
+  if (!raw) return (e && e.parameter) ? e.parameter : \{\};\
+\
+  // Some clients send payload=...\
+  if (raw.startsWith("payload=")) \{\
+    try \{ raw = decodeURIComponent(raw.slice(8)); \} catch(_)\{\}\
+  \}\
+\
+  // Try JSON\
+  try \{ return JSON.parse(raw); \} catch(_)\{\}\
+\
+  // Fallback: querystring\
+  try \{\
+    const out = \{\};\
+    raw.split("&").forEach(kv => \{\
+      const [k,v] = kv.split("=");\
+      if (!k) return;\
+      out[decodeURIComponent(k)] = decodeURIComponent(v || "");\
+    \});\
+    return out;\
+  \} catch(_) \{\
+    return \{\};\
+  \}\
+\}\
+\
+// ===== Web App =====\
+function doGet(e) \{\
+  const p = (e && e.parameter) ? e.parameter : \{\};\
+  const action = String(p.action || "ping").toLowerCase();\
+  const cb = p.callback;\
+\
+  try \{\
+    let payload;\
+\
+    if (action === "ping") \{\
+      payload = \{ ok: true, ts: nowISO_(), service: "neuroverbs-sheets-v3" \};\
+\
+    \} else if (action === "refreshleaderboard") \{\
+      refreshLeaderboardSheet_();\
+      payload = \{ ok: true \};\
+\
+    \} else if (action === "leaderboard") \{\
+      const page = getLeaderboardPage_(p.limit || 10, p.offset || 0);\
+      payload = \{ ok: true, total: page.total, rows: page.rows \};\
+      // refresca vista opcional\
+      try \{ refreshLeaderboardSheet_(); \} catch(_) \{\}\
+\
+    \} else if (action === "user") \{\
+      const sub = String(p.sub || "");\
+      if (!sub) throw new Error("Missing sub");\
+      payload = \{ ok: true, user: getUserBySub_(sub) \};\
+\
+    \} else if ((action === "upsert" || action === "xp") && ALLOW_GET_UPSERT) \{\
+      const idToken = String(p.idToken || "");\
+      if (!idToken) throw new Error("Missing idToken");\
+      const xpDelta = Number(p.xpDelta || 0);\
+\
+      const profile = verifyIdToken_(idToken);\
+      const res = upsertUser_(profile, xpDelta);\
+\
+      // refresca vista opcional\
+      try \{ refreshLeaderboardSheet_(); \} catch(_) \{\}\
+\
+      payload = \{ ok: true, user: \{ sub: profile.sub, xp: res.xp \} \};\
+\
+    \} else \{\
+      throw new Error("Unknown action: " + action);\
+    \}\
+\
+    return cb ? jsonp_(payload, cb) : json_(payload);\
+\
+  \} catch (err) \{\
+    log_("ERROR", "doGet " + action, \{ error: String(err), stack: err && err.stack, params: p \});\
+    const payload = \{ ok: false, error: String(err.message || err) \};\
+    return cb ? jsonp_(payload, cb) : json_(payload);\
+  \}\
+\}\
+\
+function doPost(e) \{\
+  try \{\
+    const body = parsePostBody_(e);\
+    const action = String(body.action || "upsert").toLowerCase();\
+    const idToken = String(body.idToken || "");\
+    const xpDelta = Number(body.xpDelta || 0);\
+\
+    if (!idToken) throw new Error("Missing idToken");\
+    const profile = verifyIdToken_(idToken);\
+\
+    if (action === "upsert" || action === "xp") \{\
+      const res = upsertUser_(profile, xpDelta);\
+      try \{ refreshLeaderboardSheet_(); \} catch(_) \{\}\
+      log_("INFO", "upsert", \{ email: profile.email, xpDelta, xp: res.xp \});\
+      return json_(\{ ok: true, user: \{ sub: profile.sub, xp: res.xp \} \});\
+    \}\
+\
+    throw new Error("Unknown action: " + action);\
+\
+  \} catch (err) \{\
+    log_("ERROR", "doPost", \{ error: String(err), stack: err && err.stack \});\
+    return json_(\{ ok: false, error: String(err.message || err) \});\
+  \}\
+\}\
+}
