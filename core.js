@@ -3540,6 +3540,7 @@ function renderReading(v){
   const verbName = `${v.c1.toUpperCase()} (${v.esp})`;
   const comp = getComplement(v);
   const subjPas = subjForPassive(v);
+  const hideEsInReading = (voiceMode === "passive" && passiveOk);
 
   const addTailEs = (line, tail)=>{
     line = String(line||"").replace(/\s+/g," ").trim();
@@ -3690,15 +3691,29 @@ function renderReading(v){
   const storyMode = (voiceMode === "passive") ? "passive" : "active";
   const story = getReadingStory(storyMode, v);
   const storyLabel = (storyMode === "passive") ? "Passive Voice" : "Active Voice";
-  const translateBtnText = readingStoryTranslationVisible ? "Hide Translation" : "Translate";
-  const translateDisplay = readingStoryTranslationVisible ? "block" : "none";
-  const storyEN = (story?.en || []).map(p=>`<p style="margin:0 0 10px 0;">${p}</p>`).join("");
-  const storyES = (story?.es || []).map(p=>`<p style="margin:0 0 10px 0;">${p}</p>`).join("");
+  const showStoryTranslate = !hideEsInReading;
+  if(hideEsInReading) readingStoryTranslationVisible = false;
+  const translateBtnText = (showStoryTranslate && readingStoryTranslationVisible) ? \"Hide Translation\" : \"Translate\";
+  const translateDisplay = (showStoryTranslate && readingStoryTranslationVisible) ? \"block\" : \"none\";
+  const storyEN = (story?.en || []).map(p=>`<p style=\"margin:0 0 10px 0;\">${p}</p>`).join(\"\");
+  const storyES = (story?.es || []).map(p=>`<p style=\"margin:0 0 10px 0;\">${p}</p>`).join(\"\");
+  const translateBtnHTML = showStoryTranslate
+    ? `<button class=\"roundbtn\" id=\"btnReadingTranslate\" type=\"button\" onclick=\"toggleReadingStoryTranslation()\" style=\"text-transform:none;\">${translateBtnText}</button>`
+    : \"\";
+  const storyTranslationHTML = showStoryTranslate
+    ? `<div id=\"readingStoryTranslation\" style=\"display:${translateDisplay}; margin-top:10px; padding-top:12px; border-top:1px dashed #cbd5e1;\">
+          <div style=\"font-weight:950; color:#334155; margin-bottom:8px;\">🇪🇸 Español</div>
+          <div style=\"color:#334155; line-height:1.6; font-weight:850;\">${storyES}</div>
+        </div>`
+    : \"\";
+  const storyLegendHTML = hideEsInReading
+    ? `Same content in <b>Active</b> and <b>Passive</b> (Present Simple / Past Simple / Present Perfect). Includes <b>affirmative</b>, <b>negative</b>, and <b>interrogative</b> examples embedded in the story.`
+    : `Mismo contenido en <b>Active</b> y <b>Passive</b> (Presente Simple / Pasado Simple / Presente Perfecto).<br/>Incluye ejemplos <b>afirmativos</b>, <b>negativos</b> e <b>interrogativos</b> integrados en la historia.`;
 
   const html = `
     <div class="practice-head" style="margin-top:18px;">
       <div class="practice-title">📖 READING (${badgeText}) — práctica completa con <b>${verbName}</b></div>
-      <div class="practice-badge">EN ➜ ES</div>
+      <div class="practice-badge">${hideEsInReading ? "EN" : "EN ➜ ES"}</div>
     </div>
 
     ${warnPassive}
@@ -3712,14 +3727,14 @@ function renderReading(v){
               <td>
                 <button class="btn-listen" type="button" data-say="${encodeURIComponent(line)}">🔊</button>
                 <span class="en">${enHTML[i]}</span>
-                <span class="es">${es[i]}</span>
+                ${hideEsInReading ? "" : `<span class="es">${es[i]}</span>`}
               </td>
             </tr>
           `).join("")}
         </tbody></table>
         <div class="legend">${
           (voiceMode==="passive" && passiveOk)
-            ? `Voz pasiva con sujeto-objeto: <b>${subjForPassive(v).en}</b>.<br/>Equivalencia recomendada en español: construcción con <b>“se”</b> (correcta y natural).`
+            ? `Includes Present, Past and Present Perfect (A/N/Q).`
             : `Incluye Presente, Pasado y Presente Perfecto (A/N/Q).<br/>Traducción debajo de cada oración (EN → ES).`
         }</div>
       </div>
@@ -3728,22 +3743,16 @@ function renderReading(v){
       <div class="card" style="margin-top:16px;">
         <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
           <div style="font-weight:950; color:#0f172a;">📚 STORY (${storyLabel})</div>
-          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;"><button class="roundbtn" id="btnReadingTranslate" type="button" onclick="toggleReadingStoryTranslation()" style="text-transform:none;">${translateBtnText}</button><button class="roundbtn" id="btnReadingAudio" type="button" onclick="speakReadingStory()" style="text-transform:none;">🔊 Play Audio</button><button class="roundbtn" id="btnReadingAudioStop" type="button" disabled onclick="stopReadingStory()" style="text-transform:none;">⏹ Stop</button></div>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">${translateBtnHTML}<button class="roundbtn" id="btnReadingAudio" type="button" onclick="speakReadingStory()" style="text-transform:none;">🔊 Play Audio</button><button class="roundbtn" id="btnReadingAudioStop" type="button" disabled onclick="stopReadingStory()" style="text-transform:none;">⏹ Stop</button></div>
         </div>
 
         <div id="readingStoryEnglish" style="margin-top:10px; color:#0f172a; line-height:1.6; font-weight:850;">
           ${storyEN}
         </div>
 
-        <div id="readingStoryTranslation" style="display:${translateDisplay}; margin-top:10px; padding-top:12px; border-top:1px dashed #cbd5e1;">
-          <div style="font-weight:950; color:#334155; margin-bottom:8px;">🇪🇸 Español</div>
-          <div style="color:#334155; line-height:1.6; font-weight:850;">${storyES}</div>
-        </div>
+        ${storyTranslationHTML}
 
-        <div class="legend">
-          Mismo contenido en <b>Active</b> y <b>Passive</b> (Presente Simple / Pasado Simple / Presente Perfecto).
-          Incluye ejemplos <b>afirmativos</b>, <b>negativos</b> e <b>interrogativos</b> integrados en la historia.
-        </div>
+        <div class="legend">${storyLegendHTML}</div>
       </div>
     </div>
   `;
