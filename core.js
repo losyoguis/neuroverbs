@@ -4511,3 +4511,64 @@ let activeEl = null;
     }, {passive:true});
   })(); });
 
+  /**
+ * Genera traducción correcta al español latinoamericano
+ * para la VOZ PASIVA inglesa (BE + V3)
+ *
+ * @param {Object} opts
+ * @param {string} opts.tense  - 'P' | 'S' | 'PP'
+ * @param {boolean} opts.negative
+ * @param {boolean} opts.question
+ * @param {boolean} opts.hasAgent
+ * @param {string} opts.subjectEs   - ej: "El papel"
+ * @param {string} opts.participleEs - ej: "cortado"
+ * @param {string} opts.agentEs     - ej: "por mí"
+ * @returns {string}
+ */
+function translatePassiveES(opts) {
+  const {
+    tense,
+    negative,
+    question,
+    hasAgent,
+    subjectEs,
+    participleEs,
+    agentEs
+  } = opts;
+
+  // -----------------------------
+  // 1. PASIVA REFLEJA (SIN AGENTE)
+  // -----------------------------
+  if (!hasAgent) {
+    let verb;
+
+    if (tense === 'P') verb = 'se ' + (negative ? 'no ' : '') + participleRoot(participleEs);
+    if (tense === 'S') verb = 'se ' + (negative ? 'no ' : '') + pastSimpleRoot(participleEs);
+    if (tense === 'PP') verb = 'se ' + (negative ? 'no ' : '') + 'ha ' + participleEs;
+
+    if (question) {
+      return `¿${capitalize(verb)} ${subjectEs.toLowerCase()}?`;
+    }
+
+    return `${capitalize(verb)} ${subjectEs.toLowerCase()}.`;
+  }
+
+  // -----------------------------------
+  // 2. PASIVA PERIFRÁSTICA (CON AGENTE)
+  // -----------------------------------
+  let ser;
+
+  if (tense === 'P') ser = negative ? 'no es' : 'es';
+  if (tense === 'S') ser = negative ? 'no fue' : 'fue';
+  if (tense === 'PP') ser = negative ? 'no ha sido' : 'ha sido';
+
+  let sentence = `${subjectEs} ${ser} ${participleEs} ${agentEs}`;
+
+  if (question) {
+    return `¿${capitalize(ser)} ${subjectEs.toLowerCase()} ${participleEs} ${agentEs}?`;
+  }
+
+  return `${sentence}.`;
+}
+
+
