@@ -304,6 +304,31 @@
 <div class="gt-arrow" id="gtArrow"></div>
 </div>
 
+<!-- desde mjb -->
+
+
+<script>
+  (function () {
+    const hash = (location.hash || "").replace(/^#/, "");
+    const params = new URLSearchParams(hash);
+    const idToken = params.get("id_token");
+
+    if (idToken) {
+      // Guarda el token (ajusta la key como quieras)
+      localStorage.setItem("mjb_id_token", idToken);
+
+      // Limpia el hash para que no quede visible
+      history.replaceState(null, "", location.pathname + location.search);
+      console.log("✅ Token recibido desde MJB login");
+    }
+  })();
+</script>
+
+
+
+
+
 <!-- XP sync watcher removed: XP is synced only from exercise actions + server fetch to avoid double-counting -->
 <script src="core.js"></script></body>
+
 </html>
