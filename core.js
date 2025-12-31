@@ -4622,5 +4622,73 @@ es = translatePassiveES({
   participleEs: 'cortado',
   agentEs: agentEs
 });
+/**
+ * Genera español NATIVO a partir de una pasiva inglesa
+ * (modelo usado en español latinoamericano)
+ */
+function generateSpanishFromPassive({
+  tense,        // 'P' | 'S' | 'PP'
+  negative,     // true | false
+  question,     // true | false
+  hasAgent,     // true | false
+  subjectEs,    // "el papel"
+  verbEs,       // infinitivo: "cortar"
+  agentPron     // "yo", "tú", "él", etc.
+}) {
+
+  // -----------------------------
+  // 1️⃣ CON AGENTE → ACTIVA NATURAL
+  // -----------------------------
+  if (hasAgent) {
+    let verb;
+
+    if (tense === 'P') verb = conjugateEs(verbEs, 'P', agentPron);
+    if (tense === 'S') verb = conjugateEs(verbEs, 'S', agentPron);
+    if (tense === 'PP') verb = conjugateEs(verbEs, 'PP', agentPron);
+
+    let sentence = `${agentPron} ${negative ? 'no ' : ''}${verb} ${subjectEs}`;
+
+    if (question) {
+      return `¿${capitalize(sentence)}?`;
+    }
+
+    return `${capitalize(sentence)}.`;
+  }
+
+  // --------------------------------
+  // 2️⃣ SIN AGENTE → PASIVA REFLEJA
+  // --------------------------------
+  let verb;
+
+  if (tense === 'P') verb = conjugateEs(verbEs, 'P', 'se');
+  if (tense === 'S') verb = conjugateEs(verbEs, 'S', 'se');
+  if (tense === 'PP') verb = `se ${negative ? 'no ' : ''}ha ${pastParticipleEs(verbEs)}`;
+
+  let sentence = `${verb} ${subjectEs}`;
+
+  if (question) {
+    return `¿${capitalize(sentence)}?`;
+  }
+
+  return `${capitalize(sentence)}.`;
+}
+function capitalize(str) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+// ⚠️ Simplificada para CUT (extensible a tabla real)
+function conjugateEs(verb, tense, pron) {
+  if (verb === 'cortar') {
+    if (tense === 'P') return 'corto';
+    if (tense === 'S') return 'corté';
+    if (tense === 'PP') return 'he cortado';
+  }
+  return verb;
+}
+
+function pastParticipleEs(verb) {
+  if (verb === 'cortar') return 'cortado';
+  return verb;
+}
 
 
