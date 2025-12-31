@@ -2726,17 +2726,22 @@ function generarTablas(v){
 
         // Español: estructura correcta tipo "Se ha hecho la tarea."
         const esLine = esSePassive(v.key, t.kind, m.key, subjPas.es);
-        const enHTML = colorizeConjugation(en, t.kind, m.key, p, v, "passive");
 
-        html += `
-          <tr>
-            <td class="en-col">
-              <button class="btn-listen" type="button" data-say="${encodeURIComponent(en)}">🔊</button>
-              <span class="en">${enHTML}</span>
-              <div class="es">${esLine}</div>
-            </td>
-          </tr>`;
-      });
+        const enHTML = colorizeConjugation(en, t.kind, m.key, p, v, "passive");
+        
+// Español: se OCULTA en VOZ PASIVA (decisión pedagógica)
+const esLine = esSePassive(v.key, t.kind, m.key, subjPas.es);
+const enHTML = colorizeConjugation(en, t.kind, m.key, p, v, "passive");
+
+html += `
+  <tr>
+    <td class="en-col">
+      <button class="btn-listen" type="button" data-say="${encodeURIComponent(en)}">🔊</button>
+      <span class="en">${enHTML}</span>
+      ${voiceMode !== "passive" ? `<div class="es">${esLine}</div>` : ``}
+    </td>
+  </tr>`;
+
 
       html += `</tbody></table>
         <div class="legend">${
