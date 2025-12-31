@@ -2007,9 +2007,9 @@ function init(){
   loadState();
 
   const gNames=[
-    "GRUPO 1: (Day 1-8) - Patrón t/d",
-    "GRUPO 2: C2=C3",
-    "GRUPO 3: Todas diferentes"
+    "GRUPO 1: (Day 1-8) |   C1 = C2 = C3",
+    "GRUPO 2: (Day 9-25) |  C1 ≠ C2 = C3",
+    "GRUPO 3: (Day 26-40) | C1 ≠ C2 ≠ C3"
   ];
   document.getElementById('sel-grupo').innerHTML =
     gNames.map((n,i)=>`<option value="${i+1}">${n}</option>`).join('');
