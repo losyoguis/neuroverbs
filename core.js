@@ -3563,6 +3563,12 @@ function renderReading(v){
   let es = [];
   let meta = [];
 
+  // 🔎 Control: en "READING" de VOZ PASIVA (cuando aplica), ocultamos traducción al español.
+  const isPassiveReading = (voiceMode==="passive" && passiveOk);
+  const showReadingSpanish = !isPassiveReading;
+  if(!showReadingSpanish) readingStoryTranslationVisible = false;
+
+
   if(voiceMode==="passive" && passiveOk){
     const sEN = subjPas.en;
     const plural = isProbablyPluralEN(sEN);
@@ -3712,7 +3718,7 @@ function renderReading(v){
               <td>
                 <button class="btn-listen" type="button" data-say="${encodeURIComponent(line)}">🔊</button>
                 <span class="en">${enHTML[i]}</span>
-                <span class="es">${es[i]}</span>
+                ${showReadingSpanish ? `<span class="es">${es[i]}</span>` : ""}
               </td>
             </tr>
           `).join("")}
@@ -3728,17 +3734,19 @@ function renderReading(v){
       <div class="card" style="margin-top:16px;">
         <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
           <div style="font-weight:950; color:#0f172a;">📚 STORY (${storyLabel})</div>
-          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;"><button class="roundbtn" id="btnReadingTranslate" type="button" onclick="toggleReadingStoryTranslation()" style="text-transform:none;">${translateBtnText}</button><button class="roundbtn" id="btnReadingAudio" type="button" onclick="speakReadingStory()" style="text-transform:none;">🔊 Play Audio</button><button class="roundbtn" id="btnReadingAudioStop" type="button" disabled onclick="stopReadingStory()" style="text-transform:none;">⏹ Stop</button></div>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">${showReadingSpanish ? '<button class="roundbtn" id="btnReadingTranslate" type="button" onclick="toggleReadingStoryTranslation()" style="text-transform:none;">' + translateBtnText + '</button>' : ""}<button class="roundbtn" id="btnReadingAudio" type="button" onclick="speakReadingStory()" style="text-transform:none;">🔊 Play Audio</button><button class="roundbtn" id="btnReadingAudioStop" type="button" disabled onclick="stopReadingStory()" style="text-transform:none;">⏹ Stop</button></div>
         </div>
 
         <div id="readingStoryEnglish" style="margin-top:10px; color:#0f172a; line-height:1.6; font-weight:850;">
           ${storyEN}
         </div>
+        ${showReadingSpanish ? `
 
         <div id="readingStoryTranslation" style="display:${translateDisplay}; margin-top:10px; padding-top:12px; border-top:1px dashed #cbd5e1;">
           <div style="font-weight:950; color:#334155; margin-bottom:8px;">🇪🇸 Español</div>
           <div style="color:#334155; line-height:1.6; font-weight:850;">${storyES}</div>
         </div>
+` : ``}
 
         <div class="legend">
           Mismo contenido en <b>Active</b> y <b>Passive</b> (Presente Simple / Pasado Simple / Presente Perfecto).
