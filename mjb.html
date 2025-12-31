@@ -105,10 +105,10 @@
 
 <!-- XP sync watcher removed: XP is synced only from exercise actions + server fetch to avoid double-counting -->
 <script>
-/* ✅ Forzar dominio institucional + redirigir siempre al entrar */
+/* ✅ Dominio institucional + auto-login + redirección */
 (function () {
   const ALLOWED_DOMAIN = 'iemanueljbetancur.edu.co';
-  const TARGET = 'https://losyoguis.github.io/neuroverbs/mjb';
+  const TARGET = 'https://losyoguis.github.io/neuroverbs/';
 
   function decodeJwtPayload(jwt) {
     try {
@@ -121,47 +121,90 @@
     }
   }
 
+  // ✅ Si ya está autenticado en ESTA página, redirige sin pedir clic
+  // (esto aplica cuando core.js ya guardó sesión del usuario aquí)
+  function tryRedirectIfAlreadyAuthed() {
+    try {
+      const raw = localStorage.getItem("rank_user") || localStorage.getItem("mjb_user") || "";
+      if (!raw) return false;
+      const u = JSON.parse(raw);
+      const email = (u.email || "").toLowerCase();
+      if (email && email.endsWith("@" + ALLOWED_DOMAIN)) {
+        window.location.replace(TARGET);
+        return true;
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  // Intenta redirigir inmediatamente si detecta sesión local
+  if (tryRedirectIfAlreadyAuthed()) return;
+
   function patch() {
     if (!window.google || !google.accounts || !google.accounts.id || !google.accounts.id.initialize) return false;
 
-    const orig = google.accounts.id.initialize;
-    if (orig.__mjb_patched__) return true;
+    const origInit = google.accounts.id.initialize;
+    if (origInit.__mjb_patched__) return true;
 
     google.accounts.id.initialize = function (cfg) {
       cfg = cfg || {};
 
-      // 1) Hint de dominio (Workspace) para que el selector muestre cuentas institucionales
+      // 1) Hint de dominio (Workspace)
       if (!cfg.hd) cfg.hd = ALLOWED_DOMAIN;
 
-      // 2) Envolver callback para redirigir SIEMPRE que la cuenta sea institucional
+      // 2) Auto select si ya hay una sesión válida en Google
+      if (!("auto_select" in cfg)) cfg.auto_select = true;
+      if (!("itp_support" in cfg)) cfg.itp_support = true;
+
+      // 3) Envolver callback: guardar usuario + redirigir a /neuroverbs/
       const userCb = cfg.callback;
       cfg.callback = function (resp) {
         let ok = false;
+        let payload = null;
+
         try {
           const token = resp && resp.credential;
           if (token) {
-            const payload = decodeJwtPayload(token);
+            payload = decodeJwtPayload(token);
             const email = (payload && payload.email ? String(payload.email) : "").toLowerCase();
             ok = email.endsWith("@" + ALLOWED_DOMAIN);
+
+            // guarda “sesión” local para redirección automática futura
+            if (ok) {
+              localStorage.setItem("rank_user", JSON.stringify({
+                name: payload.name || "",
+                email,
+                picture: payload.picture || "",
+                ts: Date.now()
+              }));
+            }
           }
         } catch (e) {
           console.error(e);
         }
 
-        // Ejecuta el callback original (si existe)
+        // Callback original
         try { if (typeof userCb === "function") userCb(resp); } catch (e) { console.error(e); }
 
         // Redirección final
-        if (ok && resp && resp.credential) {
-          const next = TARGET + "#id_token=" + encodeURIComponent(resp.credential) + "&src=mjb";
-          setTimeout(() => window.location.replace(next), 150);
+        if (ok) {
+          // Si quieres pasar el token al destino:
+          // const next = TARGET + "#id_token=" + encodeURIComponent(resp.credential) + "&src=mjb";
+          // window.location.replace(next);
+          window.location.replace(TARGET);
         }
       };
 
-      return orig.call(this, cfg);
+      return origInit.call(this, cfg);
     };
 
     google.accounts.id.initialize.__mjb_patched__ = true;
+
+    // ✅ Dispara One Tap / auto sign-in cuando sea posible
+    try {
+      google.accounts.id.prompt();
+    } catch (_) {}
+
     return true;
   }
 
@@ -171,7 +214,7 @@
 <script>
 /* ✅ Ingresar como invitado → redirige a Neuroverbs */
 (function () {
-  const TARGET = 'https://losyoguis.github.io/neuroverbs/mjb';
+  const TARGET = 'https://losyoguis.github.io/neuroverbs/';
   const btn = document.getElementById("guestBtn");
   if (!btn) return;
   btn.addEventListener("click", () => window.location.href = TARGET);
