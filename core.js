@@ -2545,7 +2545,13 @@ const __NY_PRESENT_ES_OVERRIDES__ = {
     A: { I:"Yo extiendo", You:"Tú extiendes", He:"Él extiende", She:"Ella extiende", It:"Eso extiende", We:"Nosotros extendemos", YouP:"Ustedes extienden", They:"Ellos extienden" },
     N: { I:"Yo no extiendo", You:"Tú no extiendes", He:"Él no extiende", She:"Ella no extiende", It:"Eso no extiende", We:"Nosotros no extendemos", YouP:"Ustedes no extienden", They:"Ellos no extienden" },
     Q: { I:"¿Extiendo yo?", You:"¿Extiendes tú?", He:"¿Extiende él?", She:"¿Extiende ella?", It:"¿Extiende eso?", We:"¿Extendemos nosotros?", YouP:"¿Extienden ustedes?", They:"¿Extienden ellos?" }
+  },
+  overstand: {
+    A: { I:"Yo sobresalgo / comprendo", You:"Tú sobresales / comprendes", He:"Él sobresale / comprende", She:"Ella sobresale / comprende", It:"Eso sobresale / comprende", We:"Nosotros sobresalimos", YouP:"Ustedes sobresalen", They:"Ellos sobresalen" },
+    N: { I:"Yo no sobresalgo", You:"Tú no sobresales", He:"Él no sobresale", She:"Ella no sobresale", It:"Eso no sobresale", We:"Nosotros no sobresalimos", YouP:"Ustedes no sobresalen", They:"Ellos no sobresalen" },
+    Q: { I:"¿Yo sobresalgo?", You:"¿Tú sobresales?", He:"¿Él sobresale?", She:"¿Ella sobresale?", It:"¿Eso sobresale?", We:"¿Nosotros sobresalimos?", YouP:"¿Ustedes sobresalen?", They:"¿Ellos sobresalen?" }
   }
+
 };
 
 function __nySpanishPresentOverrideLine(tKind, modeKey, p, v){
