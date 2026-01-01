@@ -478,80 +478,6 @@ const GROUP_HINTS = {
 let __NY_VERBS_DB__ = null;
 let __NY_VERBS_DB_READY__ = false;
 
-
-// === BD2: overrides específicos (verbs2.html) ============================
-let __NY_VERBS2_DB__ = null;
-let __NY_VERBS2_DB_READY__ = false;
-
-function __nyMergeVerbOverrides(baseDb, overrideDb){
-  const base = Array.isArray(baseDb) ? baseDb : [];
-  const over = Array.isArray(overrideDb) ? overrideDb : [];
-  const map = new Map();
-  base.forEach(v=>{
-    if(!v) return;
-    const k = String(v.key || v.c1 || "").trim().toLowerCase();
-    if(!k) return;
-    if(!v.key) v.key = k;
-    map.set(k, v);
-  });
-
-  over.forEach(o=>{
-    if(!o) return;
-    const k = String(o.key || o.c1 || "").trim().toLowerCase();
-    if(!k) return;
-    if(!o.key) o.key = k;
-
-    const prev = map.get(k) || {};
-    const merged = { ...prev, ...o };
-
-    // deep merge de active por tiempos/modos (solo lo que venga en BD2 sobreescribe)
-    const prevActive = prev.active || {};
-    const oActive = o.active || {};
-    merged.active = { ...prevActive, ...oActive };
-    Object.keys(oActive).forEach((tense)=>{
-      merged.active[tense] = { ...(prevActive[tense]||{}), ...(oActive[tense]||{}) };
-    });
-
-    map.set(k, merged);
-  });
-
-  return Array.from(map.values());
-}
-
-async function loadVerbsDbFromVerbs2Html(){
-  try{
-    const res = await fetch("verbs2.html", { cache: "no-store" });
-    if(!res.ok) return { ok:false, count:0 };
-
-    const txt = await res.text();
-    const m = txt.match(/const\s+VERBS2_DB\s*=\s*(\[[\s\S]*?\n\s*\]);/);
-    if(!m) return { ok:false, count:0 };
-
-    __NY_VERBS2_DB__ = (new Function("return " + m[1]))();
-    __NY_VERBS2_DB_READY__ = Array.isArray(__NY_VERBS2_DB__) && __NY_VERBS2_DB__.length > 0;
-
-    // exponer en window para depuración/compatibilidad
-    try{ window.__NY_VERBS2_DB__ = __NY_VERBS2_DB__; window.__NY_VERBS2_DB_READY__ = __NY_VERBS2_DB_READY__; }catch(_){}
-
-    return { ok: __NY_VERBS2_DB_READY__, count:(__NY_VERBS2_DB__||[]).length };
-  }catch(e){
-    __NY_VERBS2_DB_READY__ = false;
-    try{ window.__NY_VERBS2_DB_READY__ = false; }catch(_){}
-    return { ok:false, count:0 };
-  }
-}
-// =======================================================================
-
-function __nyNormalizeVerbsDb(db){
-  // Normalización ligera: asegurar key en minúscula
-  try{
-    (Array.isArray(db)?db:[]).forEach(v=>{
-      if(!v) return;
-      const k = String(v.key || v.c1 || v.base || "").trim().toLowerCase();
-      if(k) v.key = k;
-    });
-  }catch(_){}
-}
 async function loadVerbsDbFromVerbsHtml(){
   try{
     const res = await fetch("verbs.html", { cache: "no-store" });
@@ -565,18 +491,8 @@ async function loadVerbsDbFromVerbsHtml(){
     __NY_VERBS_DB__ = (new Function("return " + m[1]))();
     __NY_VERBS_DB_READY__ = Array.isArray(__NY_VERBS_DB__) && __NY_VERBS_DB__.length > 0;
 
-    // 🔁 BD2 overrides (verbs2.html) — prioridad sobre verbs.html
-    const r2 = await loadVerbsDbFromVerbs2Html();
-    if (r2?.ok && __NY_VERBS2_DB_READY__){
-      __NY_VERBS_DB__ = __nyMergeVerbOverrides(__NY_VERBS_DB__ || [], __NY_VERBS2_DB__ || []);
-      __NY_VERBS_DB_READY__ = Array.isArray(__NY_VERBS_DB__) && __NY_VERBS_DB__.length > 0;
-    }
-
-    // Exponer en window para compatibilidad con otros módulos
-    try{ window.__NY_VERBS_DB__ = __NY_VERBS_DB__; window.__NY_VERBS_DB_READY__ = __NY_VERBS_DB_READY__; }catch(_){}
-
     if(__NY_VERBS_DB_READY__){
-      if (typeof __nyNormalizeVerbsDb === "function") __nyNormalizeVerbsDb(__NY_VERBS_DB__);
+      __nyNormalizeVerbsDb(__NY_VERBS_DB__);
     }
 
     return { ok: __NY_VERBS_DB_READY__, count: (__NY_VERBS_DB__||[]).length };
@@ -587,6 +503,70 @@ async function loadVerbsDbFromVerbsHtml(){
 }
 
 
+// ===============================
+// ✅ BD2 (overrides) desde verbs2.html
+// Solo se usa para corregir traducciones puntuales sin tocar la BD principal.
+// ===============================
+async function loadVerbsDb2FromVerbs2Html(){
+  try{
+    const res = await fetch("verbs2.html", { cache: "no-store" });
+    if(!res.ok) return { ok:false, count:0 };
+    const txt = await res.text();
+    const m = txt.match(/const\s+VERBS_DB2\s*=\s*(\[[\s\S]*?\n\s*\]);/);
+    if(!m) return { ok:false, count:0 };
+    const db2 = (new Function("return " + m[1]))();
+    return { ok: Array.isArray(db2) && db2.length>0, count: Array.isArray(db2)?db2.length:0, db2 };
+  }catch(e){
+    return { ok:false, count:0, error: String(e?.message || e) };
+  }
+}
+
+function __nyMergeDb2OverridesIntoDb(db2){
+  if(!Array.isArray(db2) || !db2.length) return;
+  if(!Array.isArray(__NY_VERBS_DB__)) __NY_VERBS_DB__ = [];
+  const byKey = new Map(__NY_VERBS_DB__.filter(Boolean).map(e=>[String(e.key||"").toLowerCase(), e]));
+  db2.forEach(e2=>{
+    if(!e2) return;
+    const k = String(e2.key||e2.base||e2.c1||"").trim().toLowerCase();
+    if(!k) return;
+
+    const base = byKey.get(k);
+    if(base){
+      // merge superficial
+      if(e2.es) base.es = e2.es;
+      base.active = base.active || {};
+      if(e2.active){
+        Object.keys(e2.active).forEach(t=>{
+          base.active[t] = base.active[t] || {};
+          const blk2 = e2.active[t] || {};
+          Object.keys(blk2).forEach(mKey=>{
+            // Para arrays de líneas, sobrescribimos completo (A/N/Q)
+            base.active[t][mKey] = blk2[mKey];
+          });
+        });
+      }
+      base.passive = base.passive || {};
+      if(e2.passive){
+        Object.keys(e2.passive).forEach(t=>{
+          base.passive[t] = base.passive[t] || {};
+          const blk2 = e2.passive[t] || {};
+          Object.keys(blk2).forEach(mKey=>{
+            base.passive[t][mKey] = blk2[mKey];
+          });
+        });
+      }
+    }else{
+      __NY_VERBS_DB__.push(e2);
+      byKey.set(k, e2);
+    }
+  });
+
+  // Renormalizar (keys, pron keys, etc.)
+  try{ __nyNormalizeVerbsDb(__NY_VERBS_DB__); }catch(_e){}
+}
+
+
+
   // ===== Sincronización de verbos (index.html ↔ verbs.html) =====
   // Carga la base VERBS_DB desde verbs.html y la fusiona con la base interna,
   // para que los menús de Grupo/Día y los ejercicios consulten SIEMPRE los verbos actualizados.
@@ -595,8 +575,10 @@ async function loadVerbsDbFromVerbsHtml(){
     if (__verbsHtmlSyncPromise) return __verbsHtmlSyncPromise;
     __verbsHtmlSyncPromise = (async () => {
       const res = await loadVerbsDbFromVerbsHtml();
-
-      const rawDb = window.__NY_VERBS_DB__ || [];
+      // ✅ Cargar BD2 (overrides) y mezclar (si existe)
+      const res2 = await loadVerbsDb2FromVerbs2Html();
+      if(res2?.ok && res2.db2){ __nyMergeDb2OverridesIntoDb(res2.db2); }
+const rawDb = window.__NY_VERBS_DB__ || [];
       if (res?.ok && window.__NY_VERBS_DB_READY__ && Array.isArray(rawDb) && rawDb.length) {
         const toNum = (x) => {
           const m = String(x ?? "").match(/(\d+)/);
@@ -2539,6 +2521,49 @@ function esParticiple(espGloss){
   return { part, tail, reflexive, key };
 }
 
+
+// ===============================
+// ✅ Overrides ES Present Simple (solo traducción) para verbos problemáticos
+// ===============================
+const __NY_PRESENT_ES_OVERRIDES__ = {
+  bet: {
+    A: { I:"Yo apuesto", You:"Tú apuestas", He:"Él apuesta", She:"Ella apuesta", It:"Eso apuesta", We:"Nosotros apostamos", YouP:"Ustedes apuestan", They:"Ellos apuestan" },
+    N: { I:"Yo no apuesto", You:"Tú no apuestas", He:"Él no apuesta", She:"Ella no apuesta", It:"Eso no apuesta", We:"Nosotros no apostamos", YouP:"Ustedes no apuestan", They:"Ellos no apuestan" },
+    Q: { I:"¿Yo apuesto?", You:"¿Tú apuestas?", He:"¿Él apuesta?", She:"¿Ella apuesta?", It:"¿Eso apuesta?", We:"¿Nosotros apostamos?", YouP:"¿Ustedes apuestan?", They:"¿Ellos apuestan?" }
+  },
+  burst: {
+    A: { I:"Yo reviento / exploto", You:"Tú revientas", He:"Él revienta", She:"Ella revienta", It:"Eso revienta", We:"Nosotros reventamos", YouP:"Ustedes revientan", They:"Ellos revientan" },
+    N: { I:"Yo no reviento", You:"Tú no revientas", He:"Él no revienta", She:"Ella no revienta", It:"Eso no revienta", We:"Nosotros no reventamos", YouP:"Ustedes no revientan", They:"Ellos no revientan" },
+    Q: { I:"¿Reviento yo?", You:"¿Revientas tú?", He:"¿Revienta él?", She:"¿Revienta ella?", It:"¿Revienta eso?", We:"¿Reventamos nosotros?", YouP:"¿Revientan ustedes?", They:"¿Revientan ellos?" }
+  },
+  forecast: {
+    A: { I:"Yo pronostico", You:"Tú pronosticas", He:"Él pronostica", She:"Ella pronostica", It:"Eso pronostica", We:"Nosotros pronosticamos", YouP:"Ustedes pronostican", They:"Ellos pronostican" },
+    N: { I:"Yo no pronostico", You:"Tú no pronosticas", He:"Él no pronostica", She:"Ella no pronostica", It:"Eso no pronostica", We:"Nosotros no pronosticamos", YouP:"Ustedes no pronostican", They:"Ellos no pronostican" },
+    Q: { I:"¿Yo pronostico?", You:"¿Tú pronosticas?", He:"¿Él pronostica?", She:"¿Ella pronostica?", It:"¿Eso pronostica?", We:"¿Nosotros pronosticamos?", YouP:"¿Ustedes pronostican?", They:"¿Ellos pronostican?" }
+  },
+  spread: {
+    A: { I:"Yo extiendo", You:"Tú extiendes", He:"Él extiende", She:"Ella extiende", It:"Eso extiende", We:"Nosotros extendemos", YouP:"Ustedes extienden", They:"Ellos extienden" },
+    N: { I:"Yo no extiendo", You:"Tú no extiendes", He:"Él no extiende", She:"Ella no extiende", It:"Eso no extiende", We:"Nosotros no extendemos", YouP:"Ustedes no extienden", They:"Ellos no extienden" },
+    Q: { I:"¿Extiendo yo?", You:"¿Extiendes tú?", He:"¿Extiende él?", She:"¿Extiende ella?", It:"¿Extiende eso?", We:"¿Extendemos nosotros?", YouP:"¿Extienden ustedes?", They:"¿Extienden ellos?" }
+  }
+};
+
+function __nySpanishPresentOverrideLine(tKind, modeKey, p, v){
+  try{
+    if(tKind!=="P" || !p || !v) return null;
+    const verbKey = String(v.base || v.c1 || v.infinitive || v.inf || v.key || "").trim().toLowerCase();
+    if(!verbKey) return null;
+    const ov = __NY_PRESENT_ES_OVERRIDES__[verbKey];
+    if(!ov) return null;
+    const pKey = String(p.key || p.id || "").trim(); // I, You, He, She, It, We, YouP, They
+    const blk = ov[modeKey];
+    if(!blk) return null;
+    return blk[pKey] || null;
+  }catch(e){
+    return null;
+  }
+}
+
 function buildSpanishActiveLine(tKind, modeKey, p, v, comp){
   // ✅ Round 1: SOLO pronombre + verbo (sin complemento)
   // ✅ Round 2: pronombre + verbo + complemento
@@ -2547,7 +2572,7 @@ function buildSpanishActiveLine(tKind, modeKey, p, v, comp){
   const pronEs = p.es;
 
   // ✅ Preferir traducción exacta desde verbs.html (si existe)
-  const __fromDb = lookupSpanishLineFromVerbsHtml(tKind, modeKey, p, v);
+  const __fromDb = __nySpanishPresentOverrideLine(tKind, modeKey, p, v) || lookupSpanishLineFromVerbsHtml(tKind, modeKey, p, v);
   if(__fromDb){
     if(!compEs) return __fromDb;
     // Insertar complemento respetando signos de pregunta y alternativas " / "

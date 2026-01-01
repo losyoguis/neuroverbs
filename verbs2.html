@@ -1,533 +1,185 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>verbs2 – BD2 (Overrides)</title>
-  <link rel="stylesheet" href="ui.css"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>VERBS2 – Overrides</title>
+  <link rel="stylesheet" href="ui.css" />
   <style>
-    body{background:#0b1020;color:#e5e7eb;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;padding:20px;}
-    .card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px;margin:12px 0;}
-    code{color:#93c5fd;}
-    a{color:#fb923c;}
+    body{padding:16px}
+    .card{max-width:980px;margin:0 auto;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:16px}
+    code{white-space:pre-wrap}
   </style>
 </head>
 <body>
-  <h1>verbs2.html – Base de datos 2 (Overrides)</h1>
-  <p>Esta BD2 existe para corregir verbos con traducciones/conjugaciones especiales. <br/>
-  La app (core.js) la carga y <b>le da prioridad</b> sobre <code>verbs.html</code> para los verbos incluidos aquí.</p>
-
-  <p>
-    Abrir: 
-    <a href="index.html" target="_blank">🏠 App</a> ·
-    <a href="verbs.html" target="_blank">BD1 (verbs.html)</a>
-  </p>
-
   <div class="card">
-    <b>Verbos incluidos:</b>
-    <ul>
-      <li>BET</li>
-      <li>BURST</li>
-      <li>FORECAST</li>
-      <li>SPREAD</li>
-    </ul>
+    <h1 style="margin:0 0 8px">VERBS2 (Overrides)</h1>
+    <p style="margin:0 0 12px">Esta base de datos contiene <b>solo correcciones puntuales</b> para traducciones/conjugaciones. La app la consulta con <b>prioridad</b> sobre <code>verbs.html</code>.</p>
+    <p style="margin:0 0 12px"><a href="index.html">← Volver a la app</a> · <a href="verbs.html">Abrir BD1 (verbs.html)</a></p>
+
+    <h2 style="margin:12px 0 8px">Contenido (BD2)</h2>
+    <code>BET · BURST · FORECAST · SPREAD (Present Simple ES A/N/Q)</code>
   </div>
 
-  <script>
-  // =========================================================
-  // ✅ BD2 (Overrides) — SOLO lo necesario para corregir
-  //     traducciones/conjugaciones problemáticas.
-  //     Estructura compatible con VERBS_DB.
-  // =========================================================
-  const VERBS2_DB = [
+<script>
+const VERBS_DB2 = [
   {
-    "key": "bet",
-    "c1": "BET",
-    "c2": "BET",
-    "c3": "BET",
-    "es": "Apostar",
-    "active": {
-      "P": {
-        "A": [
-          [
-            "I",
-            "I bet",
-            "Yo apuesto"
-          ],
-          [
-            "YOU_S",
-            "You bet",
-            "Tú apuestas"
-          ],
-          [
-            "HE",
-            "He bets",
-            "Él apuesta"
-          ],
-          [
-            "SHE",
-            "She bets",
-            "Ella apuesta"
-          ],
-          [
-            "IT",
-            "It bets",
-            "Eso apuesta"
-          ],
-          [
-            "WE",
-            "We bet",
-            "Nosotros apostamos"
-          ],
-          [
-            "YOU_P",
-            "You bet",
-            "Ustedes apuestan"
-          ],
-          [
-            "THEY",
-            "They bet",
-            "Ellos apuestan"
-          ]
+    key: "bet",
+    c1: "BET", c2: "BET", c3: "BET",
+    es: "Apostar",
+    active: {
+      P: {
+        A: [
+          ["I","I bet","Yo apuesto"],
+          ["YOU_S","You bet","Tú apuestas"],
+          ["HE","He bets","Él apuesta"],
+          ["SHE","She bets","Ella apuesta"],
+          ["IT","It bets","Eso apuesta"],
+          ["WE","We bet","Nosotros apostamos"],
+          ["YOU_P","You bet","Ustedes apuestan"],
+          ["THEY","They bet","Ellos apuestan"]
         ],
-        "N": [
-          [
-            "I don't bet",
-            "Yo no apuesto"
-          ],
-          [
-            "You don't bet",
-            "Tú no apuestas"
-          ],
-          [
-            "He doesn't bet",
-            "Él no apuesta"
-          ],
-          [
-            "She doesn't bet",
-            "Ella no apuesta"
-          ],
-          [
-            "It doesn't bet",
-            "Eso no apuesta"
-          ],
-          [
-            "We don't bet",
-            "Nosotros no apostamos"
-          ],
-          [
-            "You don't bet",
-            "Ustedes no apuestan"
-          ],
-          [
-            "They don't bet",
-            "Ellos no apuestan"
-          ]
+        N: [
+          ["I","I don't bet","Yo no apuesto"],
+          ["YOU_S","You don't bet","Tú no apuestas"],
+          ["HE","He doesn't bet","Él no apuesta"],
+          ["SHE","She doesn't bet","Ella no apuesta"],
+          ["IT","It doesn't bet","Eso no apuesta"],
+          ["WE","We don't bet","Nosotros no apostamos"],
+          ["YOU_P","You don't bet","Ustedes no apuestan"],
+          ["THEY","They don't bet","Ellos no apuestan"]
         ],
-        "Q": [
-          [
-            "Do I bet?",
-            "¿Yo apuesto?"
-          ],
-          [
-            "Do you bet?",
-            "¿Tú apuestas?"
-          ],
-          [
-            "Does he bet?",
-            "¿Él apuesta?"
-          ],
-          [
-            "Does she bet?",
-            "¿Ella apuesta?"
-          ],
-          [
-            "Does it bet?",
-            "¿Eso apuesta?"
-          ],
-          [
-            "Do we bet?",
-            "¿Nosotros apostamos?"
-          ],
-          [
-            "Do you bet?",
-            "¿Ustedes apuestan?"
-          ],
-          [
-            "Do they bet?",
-            "¿Ellos apuestan?"
-          ]
+        Q: [
+          ["Do I bet?","¿Yo apuesto?"],
+          ["Do you bet?","¿Tú apuestas?"],
+          ["Does he bet?","¿Él apuesta?"],
+          ["Does she bet?","¿Ella apuesta?"],
+          ["Does it bet?","¿Eso apuesta?"],
+          ["Do we bet?","¿Nosotros apostamos?"],
+          ["Do you bet?","¿Ustedes apuestan?"],
+          ["Do they bet?","¿Ellos apuestan?"]
         ]
       }
     }
   },
   {
-    "key": "burst",
-    "c1": "BURST",
-    "c2": "BURST",
-    "c3": "BURST",
-    "es": "Reventar / Explotar",
-    "active": {
-      "P": {
-        "A": [
-          [
-            "I",
-            "I burst",
-            "Yo reviento / exploto"
-          ],
-          [
-            "YOU_S",
-            "You burst",
-            "Tú revientas"
-          ],
-          [
-            "HE",
-            "He bursts",
-            "Él revienta"
-          ],
-          [
-            "SHE",
-            "She bursts",
-            "Ella revienta"
-          ],
-          [
-            "IT",
-            "It bursts",
-            "Eso revienta"
-          ],
-          [
-            "WE",
-            "We burst",
-            "Nosotros reventamos"
-          ],
-          [
-            "YOU_P",
-            "You burst",
-            "Ustedes revientan"
-          ],
-          [
-            "THEY",
-            "They burst",
-            "Ellos revientan"
-          ]
+    key: "burst",
+    c1: "BURST", c2: "BURST", c3: "BURST",
+    es: "Reventar / Explotar",
+    active: {
+      P: {
+        A: [
+          ["I","I burst","Yo reviento / exploto"],
+          ["YOU_S","You burst","Tú revientas"],
+          ["HE","He bursts","Él revienta"],
+          ["SHE","She bursts","Ella revienta"],
+          ["IT","It bursts","Eso revienta"],
+          ["WE","We burst","Nosotros reventamos"],
+          ["YOU_P","You burst","Ustedes revientan"],
+          ["THEY","They burst","Ellos revientan"]
         ],
-        "N": [
-          [
-            "I don't burst",
-            "Yo no reviento"
-          ],
-          [
-            "You don't burst",
-            "Tú no revientas"
-          ],
-          [
-            "He doesn't burst",
-            "Él no revienta"
-          ],
-          [
-            "She doesn't burst",
-            "Ella no revienta"
-          ],
-          [
-            "It doesn't burst",
-            "Eso no revienta"
-          ],
-          [
-            "We don't burst",
-            "Nosotros no reventamos"
-          ],
-          [
-            "You don't burst",
-            "Ustedes no revientan"
-          ],
-          [
-            "They don't burst",
-            "Ellos no revientan"
-          ]
+        N: [
+          ["I","I don't burst","Yo no reviento"],
+          ["YOU_S","You don't burst","Tú no revientas"],
+          ["HE","He doesn't burst","Él no revienta"],
+          ["SHE","She doesn't burst","Ella no revienta"],
+          ["IT","It doesn't burst","Eso no revienta"],
+          ["WE","We don't burst","Nosotros no reventamos"],
+          ["YOU_P","You don't burst","Ustedes no revientan"],
+          ["THEY","They don't burst","Ellos no revientan"]
         ],
-        "Q": [
-          [
-            "Do I burst?",
-            "¿Reviento yo?"
-          ],
-          [
-            "Do you burst?",
-            "¿Revientas tú?"
-          ],
-          [
-            "Does he burst?",
-            "¿Revienta él?"
-          ],
-          [
-            "Does she burst?",
-            "¿Revienta ella?"
-          ],
-          [
-            "Does it burst?",
-            "¿Revienta eso?"
-          ],
-          [
-            "Do we burst?",
-            "¿Reventamos nosotros?"
-          ],
-          [
-            "Do you burst?",
-            "¿Revientan ustedes?"
-          ],
-          [
-            "Do they burst?",
-            "¿Revientan ellos?"
-          ]
+        Q: [
+          ["Do I burst?","¿Reviento yo?"],
+          ["Do you burst?","¿Revientas tú?"],
+          ["Does he burst?","¿Revienta él?"],
+          ["Does she burst?","¿Revienta ella?"],
+          ["Does it burst?","¿Revienta eso?"],
+          ["Do we burst?","¿Reventamos nosotros?"],
+          ["Do you burst?","¿Revientan ustedes?"],
+          ["Do they burst?","¿Revientan ellos?"]
         ]
       }
     }
   },
   {
-    "key": "forecast",
-    "c1": "FORECAST",
-    "c2": "FORECAST",
-    "c3": "FORECAST",
-    "es": "Pronosticar",
-    "active": {
-      "P": {
-        "A": [
-          [
-            "I",
-            "I forecast",
-            "Yo pronostico"
-          ],
-          [
-            "YOU_S",
-            "You forecast",
-            "Tú pronosticas"
-          ],
-          [
-            "HE",
-            "He forecasts",
-            "Él pronostica"
-          ],
-          [
-            "SHE",
-            "She forecasts",
-            "Ella pronostica"
-          ],
-          [
-            "IT",
-            "It forecasts",
-            "Eso pronostica"
-          ],
-          [
-            "WE",
-            "We forecast",
-            "Nosotros pronosticamos"
-          ],
-          [
-            "YOU_P",
-            "You forecast",
-            "Ustedes pronostican"
-          ],
-          [
-            "THEY",
-            "They forecast",
-            "Ellos pronostican"
-          ]
+    key: "forecast",
+    c1: "FORECAST", c2: "FORECAST", c3: "FORECAST",
+    es: "Pronosticar",
+    active: {
+      P: {
+        A: [
+          ["I","I forecast","Yo pronostico"],
+          ["YOU_S","You forecast","Tú pronosticas"],
+          ["HE","He forecasts","Él pronostica"],
+          ["SHE","She forecasts","Ella pronostica"],
+          ["IT","It forecasts","Eso pronostica"],
+          ["WE","We forecast","Nosotros pronosticamos"],
+          ["YOU_P","You forecast","Ustedes pronostican"],
+          ["THEY","They forecast","Ellos pronostican"]
         ],
-        "N": [
-          [
-            "I don't forecast",
-            "Yo no pronostico"
-          ],
-          [
-            "You don't forecast",
-            "Tú no pronosticas"
-          ],
-          [
-            "He doesn't forecast",
-            "Él no pronostica"
-          ],
-          [
-            "She doesn't forecast",
-            "Ella no pronostica"
-          ],
-          [
-            "It doesn't forecast",
-            "Eso no pronostica"
-          ],
-          [
-            "We don't forecast",
-            "Nosotros no pronosticamos"
-          ],
-          [
-            "You don't forecast",
-            "Ustedes no pronostican"
-          ],
-          [
-            "They don't forecast",
-            "Ellos no pronostican"
-          ]
+        N: [
+          ["I","I don't forecast","Yo no pronostico"],
+          ["YOU_S","You don't forecast","Tú no pronosticas"],
+          ["HE","He doesn't forecast","Él no pronostica"],
+          ["SHE","She doesn't forecast","Ella no pronostica"],
+          ["IT","It doesn't forecast","Eso no pronostica"],
+          ["WE","We don't forecast","Nosotros no pronosticamos"],
+          ["YOU_P","You don't forecast","Ustedes no pronostican"],
+          ["THEY","They don't forecast","Ellos no pronostican"]
         ],
-        "Q": [
-          [
-            "Do I forecast?",
-            "¿Yo pronostico?"
-          ],
-          [
-            "Do you forecast?",
-            "¿Tú pronosticas?"
-          ],
-          [
-            "Does he forecast?",
-            "¿Él pronostica?"
-          ],
-          [
-            "Does she forecast?",
-            "¿Ella pronostica?"
-          ],
-          [
-            "Does it forecast?",
-            "¿Eso pronostica?"
-          ],
-          [
-            "Do we forecast?",
-            "¿Nosotros pronosticamos?"
-          ],
-          [
-            "Do you forecast?",
-            "¿Ustedes pronostican?"
-          ],
-          [
-            "Do they forecast?",
-            "¿Ellos pronostican?"
-          ]
+        Q: [
+          ["Do I forecast?","¿Yo pronostico?"],
+          ["Do you forecast?","¿Tú pronosticas?"],
+          ["Does he forecast?","¿Él pronostica?"],
+          ["Does she forecast?","¿Ella pronostica?"],
+          ["Does it forecast?","¿Eso pronostica?"],
+          ["Do we forecast?","¿Nosotros pronosticamos?"],
+          ["Do you forecast?","¿Ustedes pronostican?"],
+          ["Do they forecast?","¿Ellos pronostican?"]
         ]
       }
     }
   },
   {
-    "key": "spread",
-    "c1": "SPREAD",
-    "c2": "SPREAD",
-    "c3": "SPREAD",
-    "es": "Extender",
-    "active": {
-      "P": {
-        "A": [
-          [
-            "I",
-            "I spread",
-            "Yo extiendo"
-          ],
-          [
-            "YOU_S",
-            "You spread",
-            "Tú extiendes"
-          ],
-          [
-            "HE",
-            "He spreads",
-            "Él extiende"
-          ],
-          [
-            "SHE",
-            "She spreads",
-            "Ella extiende"
-          ],
-          [
-            "IT",
-            "It spreads",
-            "Eso extiende"
-          ],
-          [
-            "WE",
-            "We spread",
-            "Nosotros extendemos"
-          ],
-          [
-            "YOU_P",
-            "You spread",
-            "Ustedes extienden"
-          ],
-          [
-            "THEY",
-            "They spread",
-            "Ellos extienden"
-          ]
+    key: "spread",
+    c1: "SPREAD", c2: "SPREAD", c3: "SPREAD",
+    es: "Extender",
+    active: {
+      P: {
+        A: [
+          ["I","I spread","Yo extiendo"],
+          ["YOU_S","You spread","Tú extiendes"],
+          ["HE","He spreads","Él extiende"],
+          ["SHE","She spreads","Ella extiende"],
+          ["IT","It spreads","Eso extiende"],
+          ["WE","We spread","Nosotros extendemos"],
+          ["YOU_P","You spread","Ustedes extienden"],
+          ["THEY","They spread","Ellos extienden"]
         ],
-        "N": [
-          [
-            "I don't spread",
-            "Yo no extiendo"
-          ],
-          [
-            "You don't spread",
-            "Tú no extiendes"
-          ],
-          [
-            "He doesn't spread",
-            "Él no extiende"
-          ],
-          [
-            "She doesn't spread",
-            "Ella no extiende"
-          ],
-          [
-            "It doesn't spread",
-            "Eso no extiende"
-          ],
-          [
-            "We don't spread",
-            "Nosotros no extendemos"
-          ],
-          [
-            "You don't spread",
-            "Ustedes no extienden"
-          ],
-          [
-            "They don't spread",
-            "Ellos no extienden"
-          ]
+        N: [
+          ["I","I don't spread","Yo no extiendo"],
+          ["YOU_S","You don't spread","Tú no extiendes"],
+          ["HE","He doesn't spread","Él no extiende"],
+          ["SHE","She doesn't spread","Ella no extiende"],
+          ["IT","It doesn't spread","Eso no extiende"],
+          ["WE","We don't spread","Nosotros no extendemos"],
+          ["YOU_P","You don't spread","Ustedes no extienden"],
+          ["THEY","They don't spread","Ellos no extienden"]
         ],
-        "Q": [
-          [
-            "Do I spread?",
-            "¿Extiendo yo?"
-          ],
-          [
-            "Do you spread?",
-            "¿Extiendes tú?"
-          ],
-          [
-            "Does he spread?",
-            "¿Extiende él?"
-          ],
-          [
-            "Does she spread?",
-            "¿Extiende ella?"
-          ],
-          [
-            "Does it spread?",
-            "¿Extiende eso?"
-          ],
-          [
-            "Do we spread?",
-            "¿Extendemos nosotros?"
-          ],
-          [
-            "Do you spread?",
-            "¿Extienden ustedes?"
-          ],
-          [
-            "Do they spread?",
-            "¿Extienden ellos?"
-          ]
+        Q: [
+          ["Do I spread?","¿Extiendo yo?"],
+          ["Do you spread?","¿Extiendes tú?"],
+          ["Does he spread?","¿Extiende él?"],
+          ["Does she spread?","¿Extiende ella?"],
+          ["Does it spread?","¿Extiende eso?"],
+          ["Do we spread?","¿Extendemos nosotros?"],
+          ["Do you spread?","¿Extienden ustedes?"],
+          ["Do they spread?","¿Extienden ellos?"]
         ]
       }
     }
   }
 ];
-
-  // util rápido para ver si carga en navegador
-  console.log("VERBS2_DB loaded:", VERBS2_DB.length, VERBS2_DB.map(v=>v.key));
-  </script>
+</script>
 </body>
 </html>
