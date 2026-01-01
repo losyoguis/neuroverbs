@@ -1,0 +1,789 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>verbs2 — BD de correcciones (Neuroverbs)</title>
+  <link rel="stylesheet" href="ui.css" />
+  <style>
+    body{background:#0b1020; color:#eaf0ff; font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; margin:0;}
+    .wrap{max-width:1100px; margin:0 auto; padding:22px 14px 40px;}
+    .top{display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;}
+    .pill{display:inline-flex; gap:10px; align-items:center; padding:10px 14px; border-radius:999px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12);}
+    .links a{color:#9fe7ff; text-decoration:none; font-weight:800;}
+    .links a:hover{text-decoration:underline;}
+    pre{white-space:pre-wrap; background:rgba(0,0,0,.25); border:1px solid rgba(255,255,255,.12); padding:14px; border-radius:14px; overflow:auto;}
+    .card{margin-top:14px; padding:14px; border-radius:16px; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12);}
+    .tag{display:inline-block; padding:4px 10px; border-radius:999px; background:rgba(255,165,0,.18); border:1px solid rgba(255,165,0,.4); font-weight:900;}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div class="pill"><span class="tag">BD2</span> <strong>verbs2</strong> — base de datos de correcciones para verbos que “fallan” en la traducción.</div>
+      <div class="pill links">
+        <a href="index.html">↩️ Volver al entrenamiento</a>
+        <span>•</span>
+        <a href="verbs.html">📚 Verbs (BD principal)</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <p style="margin:0 0 10px 0; opacity:.9">
+        Esta BD se carga automáticamente desde <code>core.js</code>. Cuando el verbo existe aquí,
+        <strong>tiene prioridad</strong> sobre la BD principal para la traducción al español (Activa).
+      </p>
+      <pre><code>const VERBS_DB2 = [
+  {
+    "key": "bet",
+    "group": 1,
+    "day": 4,
+    "c1": "BET",
+    "c2": "BET",
+    "c3": "BET",
+    "es": "Apostar",
+    "active": {
+      "P": {
+        "A": [
+          [
+            "I",
+            "I bet",
+            "Yo apuesto"
+          ],
+          [
+            "YOU_S",
+            "You bet",
+            "Tú apuestas"
+          ],
+          [
+            "HE",
+            "He bets",
+            "Él apuesta"
+          ],
+          [
+            "SHE",
+            "She bets",
+            "Ella apuesta"
+          ],
+          [
+            "IT",
+            "It bets",
+            "Eso apuesta"
+          ],
+          [
+            "WE",
+            "We bet",
+            "Nosotros apostamos"
+          ],
+          [
+            "YOU_P",
+            "You bet",
+            "Ustedes apuestan"
+          ],
+          [
+            "THEY",
+            "They bet",
+            "Ellos apuestan"
+          ]
+        ],
+        "N": [
+          [
+            "I",
+            "I don't bet",
+            "Yo no apuesto"
+          ],
+          [
+            "YOU_S",
+            "You don't bet",
+            "Tú no apuestas"
+          ],
+          [
+            "HE",
+            "He doesn't bet",
+            "Él no apuesta"
+          ],
+          [
+            "SHE",
+            "She doesn't bet",
+            "Ella no apuesta"
+          ],
+          [
+            "IT",
+            "It doesn't bet",
+            "Eso no apuesta"
+          ],
+          [
+            "WE",
+            "We don't bet",
+            "Nosotros no apostamos"
+          ],
+          [
+            "YOU_P",
+            "You don't bet",
+            "Ustedes no apuestan"
+          ],
+          [
+            "THEY",
+            "They don't bet",
+            "Ellos no apuestan"
+          ]
+        ],
+        "Q": [
+          [
+            "Do I bet?",
+            "¿Yo apuesto?"
+          ],
+          [
+            "Do you bet?",
+            "¿Tú apuestas?"
+          ],
+          [
+            "Does he bet?",
+            "¿Él apuesta?"
+          ],
+          [
+            "Does she bet?",
+            "¿Ella apuesta?"
+          ],
+          [
+            "Does it bet?",
+            "¿Eso apuesta?"
+          ],
+          [
+            "Do we bet?",
+            "¿Nosotros apostamos?"
+          ],
+          [
+            "Do you bet?",
+            "¿Ustedes apuestan?"
+          ],
+          [
+            "Do they bet?",
+            "¿Ellos apuestan?"
+          ]
+        ]
+      },
+      "S": {
+        "A": [
+          [
+            "I",
+            "I bet",
+            "Yo aposté"
+          ],
+          [
+            "YOU_S",
+            "You bet",
+            "Tú apostaste"
+          ],
+          [
+            "HE",
+            "He bet",
+            "Él apostó"
+          ],
+          [
+            "SHE",
+            "She bet",
+            "Ella apostó"
+          ],
+          [
+            "IT",
+            "It bet",
+            "Eso apostó"
+          ],
+          [
+            "WE",
+            "We bet",
+            "Nosotros apostamos"
+          ],
+          [
+            "YOU_P",
+            "You bet",
+            "Ustedes apostaron"
+          ],
+          [
+            "THEY",
+            "They bet",
+            "Ellos apostaron"
+          ]
+        ],
+        "N": [
+          [
+            "I",
+            "I didn't bet",
+            "Yo no aposté"
+          ],
+          [
+            "YOU_S",
+            "You didn't bet",
+            "Tú no apostaste"
+          ],
+          [
+            "HE",
+            "He didn't bet",
+            "Él no apostó"
+          ],
+          [
+            "SHE",
+            "She didn't bet",
+            "Ella no apostó"
+          ],
+          [
+            "IT",
+            "It didn't bet",
+            "Eso no apostó"
+          ],
+          [
+            "WE",
+            "We didn't bet",
+            "Nosotros no apostamos"
+          ],
+          [
+            "YOU_P",
+            "You didn't bet",
+            "Ustedes no apostaron"
+          ],
+          [
+            "THEY",
+            "They didn't bet",
+            "Ellos no apostaron"
+          ]
+        ],
+        "Q": [
+          [
+            "Did I bet?",
+            "¿Yo aposté?"
+          ],
+          [
+            "Did you bet?",
+            "¿Tú apostaste?"
+          ],
+          [
+            "Did he bet?",
+            "¿Él apostó?"
+          ],
+          [
+            "Did she bet?",
+            "¿Ella apostó?"
+          ],
+          [
+            "Did it bet?",
+            "¿Eso apostó?"
+          ],
+          [
+            "Did we bet?",
+            "¿Nosotros apostamos?"
+          ],
+          [
+            "Did you bet?",
+            "¿Ustedes apostaron?"
+          ],
+          [
+            "Did they bet?",
+            "¿Ellos apostaron?"
+          ]
+        ]
+      },
+      "PP": {
+        "A": [
+          [
+            "I",
+            "I have bet",
+            "Yo he apostado"
+          ],
+          [
+            "YOU_S",
+            "You have bet",
+            "Tú has apostado"
+          ],
+          [
+            "HE",
+            "He has bet",
+            "Él ha apostado"
+          ],
+          [
+            "SHE",
+            "She has bet",
+            "Ella ha apostado"
+          ],
+          [
+            "IT",
+            "It has bet",
+            "Eso ha apostado"
+          ],
+          [
+            "WE",
+            "We have bet",
+            "Nosotros hemos apostado"
+          ],
+          [
+            "YOU_P",
+            "You have bet",
+            "Ustedes han apostado"
+          ],
+          [
+            "THEY",
+            "They have bet",
+            "Ellos han apostado"
+          ]
+        ],
+        "N": [
+          [
+            "I",
+            "I haven’t bet",
+            "Yo no he apostado"
+          ],
+          [
+            "YOU_S",
+            "You haven’t bet",
+            "Tú no has apostado"
+          ],
+          [
+            "HE",
+            "He hasn’t bet",
+            "Él no ha apostado"
+          ],
+          [
+            "SHE",
+            "She hasn’t bet",
+            "Ella no ha apostado"
+          ],
+          [
+            "IT",
+            "It hasn’t bet",
+            "Eso no ha apostado"
+          ],
+          [
+            "WE",
+            "We haven’t bet",
+            "Nosotros no hemos apostado"
+          ],
+          [
+            "YOU_P",
+            "You haven’t bet",
+            "Ustedes no han apostado"
+          ],
+          [
+            "THEY",
+            "They haven’t bet",
+            "Ellos no han apostado"
+          ]
+        ],
+        "Q": [
+          [
+            "Have I bet?",
+            "¿He apostado?"
+          ],
+          [
+            "Have you bet?",
+            "¿Has apostado?"
+          ],
+          [
+            "Has he bet?",
+            "¿Ha apostado él?"
+          ],
+          [
+            "Has she bet?",
+            "¿Ha apostado ella?"
+          ],
+          [
+            "Has it bet?",
+            "¿Ha apostado eso?"
+          ],
+          [
+            "Have we bet?",
+            "¿Hemos apostado?"
+          ],
+          [
+            "Have you bet?",
+            "¿Han apostado ustedes?"
+          ],
+          [
+            "Have they bet?",
+            "¿Han apostado ellos?"
+          ]
+        ]
+      }
+    }
+  }
+];</code></pre>
+    </div>
+  </div>
+
+  <script>
+  // ✅ BD2: correcciones puntuales (se irá ampliando)
+  const VERBS_DB2 = [
+  {
+    "key": "bet",
+    "group": 1,
+    "day": 4,
+    "c1": "BET",
+    "c2": "BET",
+    "c3": "BET",
+    "es": "Apostar",
+    "active": {
+      "P": {
+        "A": [
+          [
+            "I",
+            "I bet",
+            "Yo apuesto"
+          ],
+          [
+            "YOU_S",
+            "You bet",
+            "Tú apuestas"
+          ],
+          [
+            "HE",
+            "He bets",
+            "Él apuesta"
+          ],
+          [
+            "SHE",
+            "She bets",
+            "Ella apuesta"
+          ],
+          [
+            "IT",
+            "It bets",
+            "Eso apuesta"
+          ],
+          [
+            "WE",
+            "We bet",
+            "Nosotros apostamos"
+          ],
+          [
+            "YOU_P",
+            "You bet",
+            "Ustedes apuestan"
+          ],
+          [
+            "THEY",
+            "They bet",
+            "Ellos apuestan"
+          ]
+        ],
+        "N": [
+          [
+            "I",
+            "I don't bet",
+            "Yo no apuesto"
+          ],
+          [
+            "YOU_S",
+            "You don't bet",
+            "Tú no apuestas"
+          ],
+          [
+            "HE",
+            "He doesn't bet",
+            "Él no apuesta"
+          ],
+          [
+            "SHE",
+            "She doesn't bet",
+            "Ella no apuesta"
+          ],
+          [
+            "IT",
+            "It doesn't bet",
+            "Eso no apuesta"
+          ],
+          [
+            "WE",
+            "We don't bet",
+            "Nosotros no apostamos"
+          ],
+          [
+            "YOU_P",
+            "You don't bet",
+            "Ustedes no apuestan"
+          ],
+          [
+            "THEY",
+            "They don't bet",
+            "Ellos no apuestan"
+          ]
+        ],
+        "Q": [
+          [
+            "Do I bet?",
+            "¿Yo apuesto?"
+          ],
+          [
+            "Do you bet?",
+            "¿Tú apuestas?"
+          ],
+          [
+            "Does he bet?",
+            "¿Él apuesta?"
+          ],
+          [
+            "Does she bet?",
+            "¿Ella apuesta?"
+          ],
+          [
+            "Does it bet?",
+            "¿Eso apuesta?"
+          ],
+          [
+            "Do we bet?",
+            "¿Nosotros apostamos?"
+          ],
+          [
+            "Do you bet?",
+            "¿Ustedes apuestan?"
+          ],
+          [
+            "Do they bet?",
+            "¿Ellos apuestan?"
+          ]
+        ]
+      },
+      "S": {
+        "A": [
+          [
+            "I",
+            "I bet",
+            "Yo aposté"
+          ],
+          [
+            "YOU_S",
+            "You bet",
+            "Tú apostaste"
+          ],
+          [
+            "HE",
+            "He bet",
+            "Él apostó"
+          ],
+          [
+            "SHE",
+            "She bet",
+            "Ella apostó"
+          ],
+          [
+            "IT",
+            "It bet",
+            "Eso apostó"
+          ],
+          [
+            "WE",
+            "We bet",
+            "Nosotros apostamos"
+          ],
+          [
+            "YOU_P",
+            "You bet",
+            "Ustedes apostaron"
+          ],
+          [
+            "THEY",
+            "They bet",
+            "Ellos apostaron"
+          ]
+        ],
+        "N": [
+          [
+            "I",
+            "I didn't bet",
+            "Yo no aposté"
+          ],
+          [
+            "YOU_S",
+            "You didn't bet",
+            "Tú no apostaste"
+          ],
+          [
+            "HE",
+            "He didn't bet",
+            "Él no apostó"
+          ],
+          [
+            "SHE",
+            "She didn't bet",
+            "Ella no apostó"
+          ],
+          [
+            "IT",
+            "It didn't bet",
+            "Eso no apostó"
+          ],
+          [
+            "WE",
+            "We didn't bet",
+            "Nosotros no apostamos"
+          ],
+          [
+            "YOU_P",
+            "You didn't bet",
+            "Ustedes no apostaron"
+          ],
+          [
+            "THEY",
+            "They didn't bet",
+            "Ellos no apostaron"
+          ]
+        ],
+        "Q": [
+          [
+            "Did I bet?",
+            "¿Yo aposté?"
+          ],
+          [
+            "Did you bet?",
+            "¿Tú apostaste?"
+          ],
+          [
+            "Did he bet?",
+            "¿Él apostó?"
+          ],
+          [
+            "Did she bet?",
+            "¿Ella apostó?"
+          ],
+          [
+            "Did it bet?",
+            "¿Eso apostó?"
+          ],
+          [
+            "Did we bet?",
+            "¿Nosotros apostamos?"
+          ],
+          [
+            "Did you bet?",
+            "¿Ustedes apostaron?"
+          ],
+          [
+            "Did they bet?",
+            "¿Ellos apostaron?"
+          ]
+        ]
+      },
+      "PP": {
+        "A": [
+          [
+            "I",
+            "I have bet",
+            "Yo he apostado"
+          ],
+          [
+            "YOU_S",
+            "You have bet",
+            "Tú has apostado"
+          ],
+          [
+            "HE",
+            "He has bet",
+            "Él ha apostado"
+          ],
+          [
+            "SHE",
+            "She has bet",
+            "Ella ha apostado"
+          ],
+          [
+            "IT",
+            "It has bet",
+            "Eso ha apostado"
+          ],
+          [
+            "WE",
+            "We have bet",
+            "Nosotros hemos apostado"
+          ],
+          [
+            "YOU_P",
+            "You have bet",
+            "Ustedes han apostado"
+          ],
+          [
+            "THEY",
+            "They have bet",
+            "Ellos han apostado"
+          ]
+        ],
+        "N": [
+          [
+            "I",
+            "I haven’t bet",
+            "Yo no he apostado"
+          ],
+          [
+            "YOU_S",
+            "You haven’t bet",
+            "Tú no has apostado"
+          ],
+          [
+            "HE",
+            "He hasn’t bet",
+            "Él no ha apostado"
+          ],
+          [
+            "SHE",
+            "She hasn’t bet",
+            "Ella no ha apostado"
+          ],
+          [
+            "IT",
+            "It hasn’t bet",
+            "Eso no ha apostado"
+          ],
+          [
+            "WE",
+            "We haven’t bet",
+            "Nosotros no hemos apostado"
+          ],
+          [
+            "YOU_P",
+            "You haven’t bet",
+            "Ustedes no han apostado"
+          ],
+          [
+            "THEY",
+            "They haven’t bet",
+            "Ellos no han apostado"
+          ]
+        ],
+        "Q": [
+          [
+            "Have I bet?",
+            "¿He apostado?"
+          ],
+          [
+            "Have you bet?",
+            "¿Has apostado?"
+          ],
+          [
+            "Has he bet?",
+            "¿Ha apostado él?"
+          ],
+          [
+            "Has she bet?",
+            "¿Ha apostado ella?"
+          ],
+          [
+            "Has it bet?",
+            "¿Ha apostado eso?"
+          ],
+          [
+            "Have we bet?",
+            "¿Hemos apostado?"
+          ],
+          [
+            "Have you bet?",
+            "¿Han apostado ustedes?"
+          ],
+          [
+            "Have they bet?",
+            "¿Han apostado ellos?"
+          ]
+        ]
+      }
+    }
+  }
+];
+  </script>
+</body>
+</html>

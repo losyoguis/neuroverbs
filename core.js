@@ -478,6 +478,68 @@ const GROUP_HINTS = {
 let __NY_VERBS_DB__ = null;
 let __NY_VERBS_DB_READY__ = false;
 
+
+// ✅ BD2: correcciones puntuales (prioridad sobre verbs.html)
+let __NY_VERBS_DB2__ = null;
+let __NY_VERBS_DB2_READY__ = false;
+
+async function loadVerbsDbFromVerbs2Html(){
+  try{
+    const res = await fetch("verbs2.html", { cache: "no-store" });
+    if(!res.ok) return { ok:false, count:0 };
+
+    const txt = await res.text();
+    const m = txt.match(/const\s+VERBS_DB2\s*=\s*(\[[\s\S]*?\n\s*\]);/);
+    if(!m) return { ok:false, count:0 };
+
+    // Evaluamos el array JS (misma origin, archivo controlado por nosotros)
+    __NY_VERBS_DB2__ = (new Function("return " + m[1]))();
+    __NY_VERBS_DB2_READY__ = Array.isArray(__NY_VERBS_DB2__) && __NY_VERBS_DB2__.length > 0;
+
+    if(__NY_VERBS_DB2_READY__){
+      __nyNormalizeVerbsDb(__NY_VERBS_DB2__);
+    }
+
+    return { ok: __NY_VERBS_DB2_READY__, count: (__NY_VERBS_DB2__||[]).length };
+  }catch(e){
+    __NY_VERBS_DB2_READY__ = false;
+    return { ok:false, count:0, error: String(e?.message || e) };
+  }
+}
+
+function lookupSpanishLineFromVerbs2Html(tKind, modeKey, p, v){
+  if(!__NY_VERBS_DB2_READY__ || !v || !p) return null;
+
+  const key = __nyVerbKeyFromIndexVerb(v);
+  if(!key) return null;
+
+  const entry = __NY_VERBS_DB2__.find(e => e && e.key === key);
+  if(!entry || !entry.active || !entry.active[tKind]) return null;
+
+  const blk = entry.active[tKind];
+
+  // A/N/Q o affirmative/negative/interrogative
+  const modeAlias = (modeKey === "A") ? "affirmative" : (modeKey === "N") ? "negative" : "interrogative";
+  const block = blk[modeKey] || blk[modeAlias];
+  if(!Array.isArray(block)) return null;
+
+  if(modeKey === "Q"){
+    const idx = __nyPronIndexForQ(p.key);
+    const row = block[idx];
+    if(Array.isArray(row)){
+      if(row.length === 2) return row[1] || null;
+      if(row.length >= 3) return row[2] || null;
+    }
+    return null;
+  }
+
+  // A/N: filas [pronKey, en, es]
+  const pKeyDb = __nyPronKeyToDb(p.key);
+  const found = block.find(r => Array.isArray(r) && __nyPronKeyToDb(r[0]) === pKeyDb);
+  if(found) return found[2] || null;
+
+  return null;
+}
 async function loadVerbsDbFromVerbsHtml(){
   try{
     const res = await fetch("verbs.html", { cache: "no-store" });
@@ -634,10 +696,7 @@ function lookupSpanishLineFromVerbsHtml(tKind, modeKey, p, v){
 }
 
 // Cargamos la DB lo más pronto posible (sin bloquear la app)
-window.addEventListener("DOMContentLoaded", () => { loadVerbsDbFromVerbsHtml(); });
-
-
-
+window.addEventListener("DOMContentLoaded", () => { loadVerbsDbFromVerbsHtml(); loadVerbsDbFromVerbs2Html(); });
 function renderGroupHint(groupId){
   const titulo = document.getElementById("pistaTitulo");
   const dias = document.getElementById("pistaDias");
@@ -2462,6 +2521,21 @@ function buildSpanishActiveLine(tKind, modeKey, p, v, comp){
   const compEs = (useComp && comp && comp.es) ? (" " + comp.es) : "";
   const pronEs = p.es;
 
+  // ✅ Preferir traducción exacta desde verbs2.html (BD2) si existe
+  const __fromDb2 = lookupSpanishLineFromVerbs2Html(tKind, modeKey, p, v);
+  if(__fromDb2){
+    if(!compEs) return __fromDb2;
+    // Insertar complemento respetando signos de pregunta y alternativas " / "
+    return String(__fromDb2).split(" / ").map(part=>{
+      part = String(part||"").trim();
+      if(!part) return part;
+      if(part.endsWith("?")){
+        return (part.slice(0,-1).trim() + compEs + "?").replace(/\s+/g," ").trim();
+      }
+      return (part + compEs).replace(/\s+/g," ").trim();
+    }).join(" / ");
+  }
+
   // ✅ Preferir traducción exacta desde verbs.html (si existe)
   const __fromDb = lookupSpanishLineFromVerbsHtml(tKind, modeKey, p, v);
   if(__fromDb){
@@ -2632,7 +2706,7 @@ function buildSpanishActiveLine(tKind, modeKey, p, v, comp){
   if(modeKey==="N") return `${pronEs} no ${ref}${aux} ${part}${tailTxt}${compEs}`.replace(/\s+/g," ").trim();
 
   // En preguntas de perfecto (para verbos normales) se mantiene el estilo sin sujeto:
-  return `¿${ref}${aux} ${part}${tailTxt}${compEs}?`.replace(/\s+/g," ").trim();
+  return `¿${aux} ${ref}${part}${tailTxt}${compEs}?`.replace(/\s+/g," ").trim();
 }
 
 /* ===========================
