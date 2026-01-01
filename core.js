@@ -634,7 +634,10 @@ function lookupSpanishLineFromVerbsHtml(tKind, modeKey, p, v){
 }
 
 // Cargamos la DB lo más pronto posible (sin bloquear la app)
-window.addEventListener("DOMContentLoaded", () => { ensureActiveDbFromVerbsHtml(); });
+window.addEventListener("DOMContentLoaded", () => { loadVerbsDbFromVerbsHtml(); });
+
+
+
 function renderGroupHint(groupId){
   const titulo = document.getElementById("pistaTitulo");
   const dias = document.getElementById("pistaDias");
@@ -1857,12 +1860,9 @@ function setVoice(mode){
   if(document.getElementById("master").style.display === "block"){
     const v=current[idx];
     if(v){
-      // ✅ Re-render con DB lista para mantener traducciones perfectas en ES
-      ensureActiveDbFromVerbsHtml().then(()=>{
-        generarTablas(v);
-        renderPractice(v);
-        renderReading(v);
-      });
+      generarTablas(v);
+      renderPractice(v);
+      renderReading(v);
     }
   }
 }
@@ -1948,22 +1948,15 @@ function hideMotivation(){
 function conjugarDesdeModal(){
   if(!pendingVerb) return;
 
-  // ✅ Asegurar que VERBS_DB (verbs.html) esté cargada antes de generar traducciones ES
-  const v = pendingVerb;
-  pendingVerb = null;
+  generarTablas(pendingVerb);
+  document.getElementById('master').style.display="block";
 
-  // Cerrar el toast/modal de motivación inmediatamente
+  renderSpelling(pendingVerb);
+  renderPractice(pendingVerb);
+  renderReading(pendingVerb);
+
   hideMotivation();
-
-  // Generar todo cuando la DB esté lista (evita conjugaciones ES por fallback, p.ej. "yo aposto")
-  ensureActiveDbFromVerbsHtml().then(()=>{
-    generarTablas(v);
-    document.getElementById('master').style.display="block";
-
-    renderSpelling(v);
-    renderPractice(v);
-    renderReading(v);
-  });
+  pendingVerb = null;
 }
 
 /* ===========================
@@ -2639,6 +2632,7 @@ function buildSpanishActiveLine(tKind, modeKey, p, v, comp){
   if(modeKey==="N") return `${pronEs} no ${ref}${aux} ${part}${tailTxt}${compEs}`.replace(/\s+/g," ").trim();
 
   // En preguntas de perfecto (para verbos normales) se mantiene el estilo sin sujeto:
+  // ✅ Pregunta: en verbos reflexivos el pronombre va ANTES de "haber": ¿me he sentado?
   return `¿${ref}${aux} ${part}${tailTxt}${compEs}?`.replace(/\s+/g," ").trim();
 }
 
