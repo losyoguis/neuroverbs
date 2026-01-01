@@ -2,67 +2,116 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>verbs2 (BD2 overrides)</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>verbs2.html – BD2 (Overrides)</title>
   <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:24px;line-height:1.35}
-    code{background:#f5f5f5;padding:2px 6px;border-radius:6px}
-    .hint{opacity:.8;margin-top:6px}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,'Helvetica Neue',Arial; padding:16px; line-height:1.35;}
+    code,pre{background:#f6f7f9; padding:8px; border-radius:8px; display:block; overflow:auto;}
+    .hint{opacity:.75; margin-top:8px;}
   </style>
 </head>
 <body>
-  <h1>verbs2.html (BD2 overrides)</h1>
-  <p>Esta base de datos se usa como <b>prioridad</b> para corregir traducciones específicas sin tocar la BD principal (<code>verbs.html</code>).</p>
-  <p class="hint">Actualmente contiene: <b>hold</b> (Presente Simple – Voz activa: A/N/Q).</p>
+  <h1>BD2 – Overrides de traducción (Presente Simple)</h1>
+  <p class="hint">Este archivo existe para corregir traducciones específicas sin tocar la BD principal (<code>verbs.html</code>).
+  La app lo carga automáticamente (si está presente) y le da prioridad.</p>
 
 <script>
-// ✅ BD2 (overrides). Estructura compatible con el loader de core.js
-const VERBS_DB2 = [
+/**
+ * VERBS2_DB: misma estructura que VERBS_DB, pero aquí solo incluimos
+ * los verbos con traducción especial/corregida.
+ *
+ * NOTA:
+ * - Solo incluimos el tiempo P (Presente Simple) en Voz Activa.
+ * - La app prioriza esta BD cuando existe el verbo y el bloque solicitado.
+ */
+const VERBS2_DB = [
   {
-    key: "hold",
-    group: 2,
-    day: 0,
-    forms: { c1: "hold", c2: "held", c3: "held" },
-    meaning: "Sostener",
+    key: "uphold",
+    c1: "UPHOLD",
+    c2: "UPHELD",
+    c3: "UPHELD",
+    es: "Sostener / Defender",
     active: {
-      // tKind = "P" => Presente simple (según core.js)
       P: {
-        // A/N: filas [pronKey, en, es]
         A: [
-          ["I",    "I hold",     "Yo sostengo"],
-          ["You",  "You hold",   "Tú sostienes"],
-          ["He",   "He holds",   "Él sostiene"],
-          ["She",  "She holds",  "Ella sostiene"],
-          ["It",   "It holds",   "Eso sostiene"],
-          ["We",   "We hold",    "Nosotros sostenemos"],
-          ["YouP", "You hold",   "Ustedes sostienen"],
-          ["They", "They hold",  "Ellos sostienen"]
+          ["I",     "I uphold",    "Yo sostengo / defiendo"],
+          ["YOU_S", "You uphold",  "Tú sostienes / defiendes"],
+          ["HE",    "He upholds",  "Él sostiene / defiende"],
+          ["SHE",   "She upholds", "Ella sostiene / defiende"],
+          ["IT",    "It upholds",  "Eso sostiene / defiende"],
+          ["WE",    "We uphold",   "Nosotros sostenemos"],
+          ["YOU_P", "You uphold",  "Ustedes sostienen"],
+          ["THEY",  "They uphold", "Ellos sostienen"]
         ],
         N: [
-          ["I",    "I don't hold",     "Yo no sostengo"],
-          ["You",  "You don't hold",   "Tú no sostienes"],
-          ["He",   "He doesn't hold",  "Él no sostiene"],
-          ["She",  "She doesn't hold", "Ella no sostiene"],
-          ["It",   "It doesn't hold",  "Eso no sostiene"],
-          ["We",   "We don't hold",    "Nosotros no sostenemos"],
-          ["YouP", "You don't hold",   "Ustedes no sostienen"],
-          ["They", "They don't hold",  "Ellos no sostienen"]
+          ["I",     "I don’t uphold",    "Yo no sostengo / defiendo"],
+          ["YOU_S", "You don’t uphold",  "Tú no sostienes"],
+          ["HE",    "He doesn’t uphold", "Él no sostiene"],
+          ["SHE",   "She doesn’t uphold","Ella no sostiene"],
+          ["IT",    "It doesn’t uphold", "Eso no sostiene"],
+          ["WE",    "We don’t uphold",   "Nosotros no sostenemos"],
+          ["YOU_P", "You don’t uphold",  "Ustedes no sostienen"],
+          ["THEY",  "They don’t uphold", "Ellos no sostienen"]
         ],
-        // Q: pares [en, es] en orden I,You,He,She,It,We,YouP,They
         Q: [
-          ["Do I hold?",     "¿Sostengo yo?"],
-          ["Do you hold?",   "¿Sostienes tú?"],
-          ["Does he hold?",  "¿Sostiene él?"],
-          ["Does she hold?", "¿Sostiene ella?"],
-          ["Does it hold?",  "¿Sostiene eso?"],
-          ["Do we hold?",    "¿Sostenemos nosotros?"],
-          ["Do you hold?",   "¿Sostienen ustedes?"],
-          ["Do they hold?",  "¿Sostienen ellos?"]
+          ["Do I uphold?",      "¿Sostengo yo?"],
+          ["Do you uphold?",    "¿Sostienes tú?"],
+          ["Does he uphold?",   "¿Sostiene él?"],
+          ["Does she uphold?",  "¿Sostiene ella?"],
+          ["Does it uphold?",   "¿Sostiene eso?"],
+          ["Do we uphold?",     "¿Sostenemos nosotros?"],
+          ["Do you uphold?",    "¿Sostienen ustedes?"],
+          ["Do they uphold?",   "¿Sostienen ellos?"]
+        ]
+      }
+    }
+  },
+  {
+    key: "withhold",
+    c1: "WITHHOLD",
+    c2: "WITHHELD",
+    c3: "WITHHELD",
+    es: "Retener",
+    active: {
+      P: {
+        A: [
+          ["I",     "I withhold",    "Yo retengo"],
+          ["YOU_S", "You withhold",  "Tú retienes"],
+          ["HE",    "He withholds",  "Él retiene"],
+          ["SHE",   "She withholds", "Ella retiene"],
+          ["IT",    "It withholds",  "Eso retiene"],
+          ["WE",    "We withhold",   "Nosotros retenemos"],
+          ["YOU_P", "You withhold",  "Ustedes retienen"],
+          ["THEY",  "They withhold", "Ellos retienen"]
+        ],
+        N: [
+          ["I",     "I don’t withhold",    "Yo no retengo"],
+          ["YOU_S", "You don’t withhold",  "Tú no retienes"],
+          ["HE",    "He doesn’t withhold", "Él no retiene"],
+          ["SHE",   "She doesn’t withhold","Ella no retiene"],
+          ["IT",    "It doesn’t withhold", "Eso no retiene"],
+          ["WE",    "We don’t withhold",   "Nosotros no retenemos"],
+          ["YOU_P", "You don’t withhold",  "Ustedes no retienen"],
+          ["THEY",  "They don’t withhold", "Ellos no retienen"]
+        ],
+        Q: [
+          ["Do I withhold?",      "¿Yo retengo?"],
+          ["Do you withhold?",    "¿Tú retienes?"],
+          ["Does he withhold?",   "¿Él retiene?"],
+          ["Does she withhold?",  "¿Ella retiene?"],
+          ["Does it withhold?",   "¿Eso retiene?"],
+          ["Do we withhold?",     "¿Nosotros retenemos?"],
+          ["Do you withhold?",    "¿Ustedes retienen?"],
+          ["Do they withhold?",   "¿Ellos retienen?"]
         ]
       }
     }
   }
 ];
 </script>
+
+<h2>Vista rápida</h2>
+<pre><code>VERBS2_DB contiene: uphold, withhold (solo Presente Simple VOZ ACTIVA)</code></pre>
+
 </body>
 </html>
