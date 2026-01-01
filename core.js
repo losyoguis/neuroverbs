@@ -2632,6 +2632,7 @@ function buildSpanishActiveLine(tKind, modeKey, p, v, comp){
   if(modeKey==="N") return `${pronEs} no ${ref}${aux} ${part}${tailTxt}${compEs}`.replace(/\s+/g," ").trim();
 
   // En preguntas de perfecto (para verbos normales) se mantiene el estilo sin sujeto:
+  // ✅ Pregunta: en verbos reflexivos el pronombre va ANTES de "haber": ¿me he sentado?
   return `¿${ref}${aux} ${part}${tailTxt}${compEs}?`.replace(/\s+/g," ").trim();
 }
 
