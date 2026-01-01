@@ -478,6 +478,10 @@ const GROUP_HINTS = {
 let __NY_VERBS_DB__ = null;
 let __NY_VERBS_DB_READY__ = false;
 
+// ✅ BD2 (overrides) para verbos problemáticos (traducciones ES exactas)
+let __NY_VERBS_DB2__ = null;
+let __NY_VERBS_DB2_READY__ = false;
+
 async function loadVerbsDbFromVerbsHtml(){
   try{
     const res = await fetch("verbs.html", { cache: "no-store" });
@@ -598,6 +602,40 @@ function __nyPronIndexForQ(pKey){
   return 0;
 }
 
+
+function lookupSpanishLineFromVerbs2Html(tKind, modeKey, p, v){
+  if(!__NY_VERBS_DB2_READY__ || !v || !p) return null;
+
+  const key = __nyVerbKeyFromIndexVerb(v);
+  if(!key) return null;
+
+  const entry = __NY_VERBS_DB2__.find(e => e && e.key === key);
+  if(!entry || !entry.active || !entry.active[tKind]) return null;
+
+  const blk = entry.active[tKind];
+
+  // A/N/Q o affirmative/negative/interrogative
+  const modeAlias = (modeKey === "A") ? "affirmative" : (modeKey === "N") ? "negative" : "interrogative";
+  const block = blk[modeKey] || blk[modeAlias];
+  if(!Array.isArray(block)) return null;
+
+  if(modeKey === "Q"){
+    const idx = __nyPronIndexForQ(p.key);
+    const row = block[idx];
+    if(Array.isArray(row)){
+      if(row.length === 2) return row[1] || null;
+      if(row.length >= 3) return row[2] || null;
+    }
+    return null;
+  }
+
+  const pKeyDb = __nyPronKeyToDb(p.key);
+  const found = block.find(r => Array.isArray(r) && __nyPronKeyToDb(r[0]) === pKeyDb);
+  if(found) return found[2] || null;
+
+  return null;
+}
+
 function lookupSpanishLineFromVerbsHtml(tKind, modeKey, p, v){
   if(!__NY_VERBS_DB_READY__ || !v || !p) return null;
 
@@ -633,321 +671,31 @@ function lookupSpanishLineFromVerbsHtml(tKind, modeKey, p, v){
   return null;
 }
 
+// Cargamos la DB lo más pronto posible (sin bloquear la app)
 
-/* ===========================
-   ✅ BD2 Overrides (verbs2.html) — Traducciones ES exactas
-   Solo afecta líneas ES (A/N/Q) cuando el tiempo es Presente Simple (tKind="pres")
-   y el verbo está en este mapa. El resto de la app queda igual.
-=========================== */
-
-// Overrides internos (fallback) — si no carga verbs2.html, igual funciona
-let __NY_SPANISH_OVERRIDES__ = {
-  "bet": {
-    "pres": {
-      "A": {
-        "I": "Yo apuesto",
-        "You": "Tú apuestas",
-        "He": "Él apuesta",
-        "She": "Ella apuesta",
-        "It": "Eso apuesta",
-        "We": "Nosotros apostamos",
-        "YouP": "Ustedes apuestan",
-        "They": "Ellos apuestan"
-      },
-      "N": {
-        "I": "Yo no apuesto",
-        "You": "Tú no apuestas",
-        "He": "Él no apuesta",
-        "She": "Ella no apuesta",
-        "It": "Eso no apuesta",
-        "We": "Nosotros no apostamos",
-        "YouP": "Ustedes no apuestan",
-        "They": "Ellos no apuestan"
-      },
-      "Q": {
-        "I": "¿Yo apuesto?",
-        "You": "¿Tú apuestas?",
-        "He": "¿Él apuesta?",
-        "She": "¿Ella apuesta?",
-        "It": "¿Eso apuesta?",
-        "We": "¿Nosotros apostamos?",
-        "YouP": "¿Ustedes apuestan?",
-        "They": "¿Ellos apuestan?"
-      }
-    }
-  },
-  "burst": {
-    "pres": {
-      "A": {
-        "I": "Yo reviento / exploto",
-        "You": "Tú revientas",
-        "He": "Él revienta",
-        "She": "Ella revienta",
-        "It": "Eso revienta",
-        "We": "Nosotros reventamos",
-        "YouP": "Ustedes revientan",
-        "They": "Ellos revientan"
-      },
-      "N": {
-        "I": "Yo no reviento",
-        "You": "Tú no revientas",
-        "He": "Él no revienta",
-        "She": "Ella no revienta",
-        "It": "Eso no revienta",
-        "We": "Nosotros no reventamos",
-        "YouP": "Ustedes no revientan",
-        "They": "Ellos no revientan"
-      },
-      "Q": {
-        "I": "¿Reviento yo?",
-        "You": "¿Revientas tú?",
-        "He": "¿Revienta él?",
-        "She": "¿Revienta ella?",
-        "It": "¿Revienta eso?",
-        "We": "¿Reventamos nosotros?",
-        "YouP": "¿Revientan ustedes?",
-        "They": "¿Revientan ellos?"
-      }
-    }
-  },
-  "forecast": {
-    "pres": {
-      "A": {
-        "I": "Yo pronostico",
-        "You": "Tú pronosticas",
-        "He": "Él pronostica",
-        "She": "Ella pronostica",
-        "It": "Eso pronostica",
-        "We": "Nosotros pronosticamos",
-        "YouP": "Ustedes pronostican",
-        "They": "Ellos pronostican"
-      },
-      "N": {
-        "I": "Yo no pronostico",
-        "You": "Tú no pronosticas",
-        "He": "Él no pronostica",
-        "She": "Ella no pronostica",
-        "It": "Eso no pronostica",
-        "We": "Nosotros no pronosticamos",
-        "YouP": "Ustedes no pronostican",
-        "They": "Ellos no pronostican"
-      },
-      "Q": {
-        "I": "¿Yo pronostico?",
-        "You": "¿Tú pronosticas?",
-        "He": "¿Él pronostica?",
-        "She": "¿Ella pronostica?",
-        "It": "¿Eso pronostica?",
-        "We": "¿Nosotros pronosticamos?",
-        "YouP": "¿Ustedes pronostican?",
-        "They": "¿Ellos pronostican?"
-      }
-    }
-  },
-  "spread": {
-    "pres": {
-      "A": {
-        "I": "Yo extiendo",
-        "You": "Tú extiendes",
-        "He": "Él extiende",
-        "She": "Ella extiende",
-        "It": "Eso extiende",
-        "We": "Nosotros extendemos",
-        "YouP": "Ustedes extienden",
-        "They": "Ellos extienden"
-      },
-      "N": {
-        "I": "Yo no extiendo",
-        "You": "Tú no extiendes",
-        "He": "Él no extiende",
-        "She": "Ella no extiende",
-        "It": "Eso no extiende",
-        "We": "Nosotros no extendemos",
-        "YouP": "Ustedes no extienden",
-        "They": "Ellos no extienden"
-      },
-      "Q": {
-        "I": "¿Extiendo yo?",
-        "You": "¿Extiendes tú?",
-        "He": "¿Extiende él?",
-        "She": "¿Extiende ella?",
-        "It": "¿Extiende eso?",
-        "We": "¿Extendemos nosotros?",
-        "YouP": "¿Extienden ustedes?",
-        "They": "¿Extienden ellos?"
-      }
-    }
-  },
-  "overstand": {
-    "pres": {
-      "A": {
-        "I": "Yo sobresalgo / comprendo",
-        "You": "Tú sobresales / comprendes",
-        "He": "Él sobresale / comprende",
-        "She": "Ella sobresale / comprende",
-        "It": "Eso sobresale / comprende",
-        "We": "Nosotros sobresalimos",
-        "YouP": "Ustedes sobresalen",
-        "They": "Ellos sobresalen"
-      },
-      "N": {
-        "I": "Yo no sobresalgo",
-        "You": "Tú no sobresales",
-        "He": "Él no sobresale",
-        "She": "Ella no sobresale",
-        "It": "Eso no sobresale",
-        "We": "Nosotros no sobresalimos",
-        "YouP": "Ustedes no sobresalen",
-        "They": "Ellos no sobresalen"
-      },
-      "Q": {
-        "I": "¿Yo sobresalgo?",
-        "You": "¿Tú sobresales?",
-        "He": "¿Él sobresale?",
-        "She": "¿Ella sobresale?",
-        "It": "¿Eso sobresale?",
-        "We": "¿Nosotros sobresalimos?",
-        "YouP": "¿Ustedes sobresalen?",
-        "They": "¿Ellos sobresalen?"
-      }
-    }
-  },
-  "grind": {
-    "pres": {
-      "A": {
-        "I": "Yo muelo",
-        "You": "Tú mueles",
-        "He": "Él muele",
-        "She": "Ella muele",
-        "It": "Eso muele",
-        "We": "Nosotros molemos",
-        "YouP": "Ustedes muelen",
-        "They": "Ellos muelen"
-      },
-      "N": {
-        "I": "Yo no muelo",
-        "You": "Tú no mueles",
-        "He": "Él no muele",
-        "She": "Ella no muele",
-        "It": "Eso no muele",
-        "We": "Nosotros no molemos",
-        "YouP": "Ustedes no muelen",
-        "They": "Ellos no muelen"
-      },
-      "Q": {
-        "I": "¿Yo muelo?",
-        "You": "¿Tú mueles?",
-        "He": "¿Él muele?",
-        "She": "¿Ella muele?",
-        "It": "¿Eso muele?",
-        "We": "¿Nosotros molemos?",
-        "YouP": "¿Ustedes muelen?",
-        "They": "¿Ellos muelen?"
-      }
-    }
-  }  ,
-  "hang": {
-    "pres": {
-      "A": {
-        "I": "Yo cuelgo",
-        "You": "Tú cuelgas",
-        "He": "Él cuelga",
-        "She": "Ella cuelga",
-        "It": "Eso cuelga",
-        "We": "Nosotros colgamos",
-        "YouP": "Ustedes cuelgan",
-        "They": "Ellos cuelgan"
-      },
-      "N": {
-        "I": "Yo no cuelgo",
-        "You": "Tú no cuelgas",
-        "He": "Él no cuelga",
-        "She": "Ella no cuelga",
-        "It": "Eso no cuelga",
-        "We": "Nosotros no colgamos",
-        "YouP": "Ustedes no cuelgan",
-        "They": "Ellos no cuelgan"
-      },
-      "Q": {
-        "I": "¿Cuelgo yo?",
-        "You": "¿Cuelgas tú?",
-        "He": "¿Cuelga él?",
-        "She": "¿Cuelga ella?",
-        "It": "¿Cuelga eso?",
-        "We": "¿Colgamos nosotros?",
-        "YouP": "¿Cuelgan ustedes?",
-        "They": "¿Cuelgan ellos?"
-      }
-    }
-  }
-};
-
-function __nyVerbKeyFromIndexVerbLoose(v){
-  return String(v?.key || v?.c1 || v?.base || v?.inf || v?.infinitive || "").trim().toLowerCase();
-}
-
-function __nyNormTKind(tKind){
-  const k = String(tKind||"").trim();
-  // En esta app: P=Presente, S=Pasado, PP=Presente Perfecto
-  if(k === "P" || /^pres/i.test(k)) return "P";
-  if(k === "S" || /^pas/i.test(k)) return "S";
-  if(k === "PP" || /^pp$/i.test(k) || /^perf/i.test(k)) return "PP";
-  return k;
-}
-
-function lookupSpanishLineOverride(tKind, modeKey, p, v){
-  try{
-    const kind = __nyNormTKind(tKind);
-    // Solo aplicamos overrides en Presente Simple
-    if(kind !== "P") return null;
-    const key = __nyVerbKeyFromIndexVerbLoose(v);
-    if(!key) return null;
-
-    const verbOv = __NY_SPANISH_OVERRIDES__?.[key];
-    if(!verbOv) return null;
-
-    // Compat: aceptamos estructuras con "P" o con "pres"
-    const bucket = (verbOv["P"] || verbOv["pres"] || verbOv["present"] || verbOv["PRES"]);
-    const ov = bucket?.[modeKey];
-    if(!ov) return null;
-
-    const line = ov?.[p?.key];
-    return line ? String(line) : null;
-  }catch(_e){
-    return null;
-  }
-}
-
-// Carga (opcional) overrides externos desde verbs2.html
-let __verbs2OverridesPromise = null;
-async function loadSpanishOverridesFromVerbs2Html(){
+async function loadVerbsDbFromVerbs2Html(){
   try{
     const res = await fetch("verbs2.html", { cache: "no-store" });
-    if(!res.ok) return { ok:false };
+    if(!res.ok) return { ok:false, count:0 };
+
     const txt = await res.text();
-    const m = txt.match(/const\s+VERBS2_OVERRIDES\s*=\s*({[\s\S]*?});/);
-    if(!m) return { ok:false };
-    const ext = (new Function("return " + m[1]))();
-    if(ext && typeof ext === "object"){
-      // merge shallow por verbo
-      __NY_SPANISH_OVERRIDES__ = Object.assign({}, __NY_SPANISH_OVERRIDES__ || {}, ext);
-      return { ok:true };
+    const m = txt.match(/const\s+VERBS_DB2\s*=\s*(\[[\s\S]*?\n\s*\]);/);
+    if(!m) return { ok:false, count:0 };
+
+    __NY_VERBS_DB2__ = (new Function("return " + m[1]))();
+    __NY_VERBS_DB2_READY__ = Array.isArray(__NY_VERBS_DB2__) && __NY_VERBS_DB2__.length > 0;
+
+    if(__NY_VERBS_DB2_READY__){
+      __nyNormalizeVerbsDb(__NY_VERBS_DB2__);
     }
-    return { ok:false };
+    return { ok:__NY_VERBS_DB2_READY__, count:(__NY_VERBS_DB2__||[]).length };
   }catch(e){
-    return { ok:false, error: String(e?.message || e) };
+    return { ok:false, count:0 };
   }
 }
 
-async function ensureOverridesFromVerbs2(){
-  if(__verbs2OverridesPromise) return __verbs2OverridesPromise;
-  __verbs2OverridesPromise = loadSpanishOverridesFromVerbs2Html();
-  return __verbs2OverridesPromise;
-}
 
-
-// Cargamos la DB lo más pronto posible (sin bloquear la app)
-window.addEventListener("DOMContentLoaded", () => { loadVerbsDbFromVerbsHtml(); ensureOverridesFromVerbs2(); });
+window.addEventListener("DOMContentLoaded", () => { loadVerbsDbFromVerbsHtml(); loadVerbsDbFromVerbs2Html(); });
 
 
 
@@ -2775,17 +2523,19 @@ function buildSpanishActiveLine(tKind, modeKey, p, v, comp){
   const compEs = (useComp && comp && comp.es) ? (" " + comp.es) : "";
   const pronEs = p.es;
 
-  // ✅ Overrides exactos (verbs2.html) para Presente Simple
-  const __ov = lookupSpanishLineOverride(tKind, modeKey, p, v);
-  if(__ov){
-    if(!compEs) return __ov;
-    return String(__ov).split(" / ").map(part=>{
+  // ✅ Preferir traducción exacta desde BD2 (verbs2.html) (si existe)
+  const __fromDb2 = lookupSpanishLineFromVerbs2Html(tKind, modeKey, p, v);
+  if(__fromDb2){
+    if(!compEs) return __fromDb2;
+    // Insertar complemento respetando signos de pregunta y alternativas " / "
+    return String(__fromDb2).split(" / ").map(part=>{
       part = String(part||"").trim();
       if(!part) return part;
       if(part.endsWith("?")){
-        return part.slice(0,-1) + compEs + "?";
+        const body = part.slice(0,-1).trim();
+        return (body + compEs + "?");
       }
-      return part + compEs;
+      return (part + compEs);
     }).join(" / ");
   }
 
