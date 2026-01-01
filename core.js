@@ -845,6 +845,40 @@ let __NY_SPANISH_OVERRIDES__ = {
         "They": "¿Ellos muelen?"
       }
     }
+  }  ,
+  "hang": {
+    "pres": {
+      "A": {
+        "I": "Yo cuelgo",
+        "You": "Tú cuelgas",
+        "He": "Él cuelga",
+        "She": "Ella cuelga",
+        "It": "Eso cuelga",
+        "We": "Nosotros colgamos",
+        "YouP": "Ustedes cuelgan",
+        "They": "Ellos cuelgan"
+      },
+      "N": {
+        "I": "Yo no cuelgo",
+        "You": "Tú no cuelgas",
+        "He": "Él no cuelga",
+        "She": "Ella no cuelga",
+        "It": "Eso no cuelga",
+        "We": "Nosotros no colgamos",
+        "YouP": "Ustedes no cuelgan",
+        "They": "Ellos no cuelgan"
+      },
+      "Q": {
+        "I": "¿Cuelgo yo?",
+        "You": "¿Cuelgas tú?",
+        "He": "¿Cuelga él?",
+        "She": "¿Cuelga ella?",
+        "It": "¿Cuelga eso?",
+        "We": "¿Colgamos nosotros?",
+        "YouP": "¿Cuelgan ustedes?",
+        "They": "¿Cuelgan ellos?"
+      }
+    }
   }
 };
 
