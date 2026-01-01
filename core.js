@@ -852,13 +852,31 @@ function __nyVerbKeyFromIndexVerbLoose(v){
   return String(v?.key || v?.c1 || v?.base || v?.inf || v?.infinitive || "").trim().toLowerCase();
 }
 
+function __nyNormTKind(tKind){
+  const k = String(tKind||"").trim();
+  // En esta app: P=Presente, S=Pasado, PP=Presente Perfecto
+  if(k === "P" || /^pres/i.test(k)) return "P";
+  if(k === "S" || /^pas/i.test(k)) return "S";
+  if(k === "PP" || /^pp$/i.test(k) || /^perf/i.test(k)) return "PP";
+  return k;
+}
+
 function lookupSpanishLineOverride(tKind, modeKey, p, v){
   try{
-    if(tKind !== "pres") return null;
+    const kind = __nyNormTKind(tKind);
+    // Solo aplicamos overrides en Presente Simple
+    if(kind !== "P") return null;
     const key = __nyVerbKeyFromIndexVerbLoose(v);
     if(!key) return null;
-    const ov = __NY_SPANISH_OVERRIDES__?.[key]?.[tKind]?.[modeKey];
+
+    const verbOv = __NY_SPANISH_OVERRIDES__?.[key];
+    if(!verbOv) return null;
+
+    // Compat: aceptamos estructuras con "P" o con "pres"
+    const bucket = (verbOv["P"] || verbOv["pres"] || verbOv["present"] || verbOv["PRES"]);
+    const ov = bucket?.[modeKey];
     if(!ov) return null;
+
     const line = ov?.[p?.key];
     return line ? String(line) : null;
   }catch(_e){
