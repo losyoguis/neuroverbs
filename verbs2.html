@@ -3,222 +3,441 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>VERBS2 – Overrides</title>
-  <link rel="stylesheet" href="ui.css" />
+  <title>VERBS2 — Overrides ES (NeuroVerbs)</title>
   <style>
-    body{padding:16px}
-    .card{max-width:980px;margin:0 auto;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:16px}
-    code{white-space:pre-wrap}
+    body{font-family:system-ui,Arial,sans-serif;margin:24px;line-height:1.35}
+    code,pre{background:#f6f6f6;padding:2px 6px;border-radius:6px}
+    .box{background:#f6f6f6;border:1px solid #ddd;border-radius:12px;padding:16px;overflow:auto}
+    a{color:#0b5fff}
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1 style="margin:0 0 8px">VERBS2 (Overrides)</h1>
-    <p style="margin:0 0 12px">Esta base de datos contiene <b>solo correcciones puntuales</b> para traducciones/conjugaciones. La app la consulta con <b>prioridad</b> sobre <code>verbs.html</code>.</p>
-    <p style="margin:0 0 12px"><a href="index.html">← Volver a la app</a> · <a href="verbs.html">Abrir BD1 (verbs.html)</a></p>
+  <h1>VERBS2 — Overrides ES</h1>
+  <p>Esta base de datos contiene <b>solo overrides</b> de traducción al español para <b>Presente Simple (VOZ ACTIVA)</b> en Afirmativa/Negativa/Interrogativa.</p>
 
-    <h2 style="margin:12px 0 8px">Contenido (BD2)</h2>
-    <code>BET · BURST · FORECAST · SPREAD (Present Simple ES A/N/Q)</code>
-  </div>
+  <p>
+    <a href="index.html">↩ Volver a la app</a> ·
+    <a href="verbs.html">BD principal (verbs.html)</a>
+  </p>
 
-<script>
-const VERBS_DB2 = [
-  {
-    key: "bet",
-    c1: "BET", c2: "BET", c3: "BET",
-    es: "Apostar",
-    active: {
-      P: {
-        A: [
-          ["I","I bet","Yo apuesto"],
-          ["YOU_S","You bet","Tú apuestas"],
-          ["HE","He bets","Él apuesta"],
-          ["SHE","She bets","Ella apuesta"],
-          ["IT","It bets","Eso apuesta"],
-          ["WE","We bet","Nosotros apostamos"],
-          ["YOU_P","You bet","Ustedes apuestan"],
-          ["THEY","They bet","Ellos apuestan"]
-        ],
-        N: [
-          ["I","I don't bet","Yo no apuesto"],
-          ["YOU_S","You don't bet","Tú no apuestas"],
-          ["HE","He doesn't bet","Él no apuesta"],
-          ["SHE","She doesn't bet","Ella no apuesta"],
-          ["IT","It doesn't bet","Eso no apuesta"],
-          ["WE","We don't bet","Nosotros no apostamos"],
-          ["YOU_P","You don't bet","Ustedes no apuestan"],
-          ["THEY","They don't bet","Ellos no apuestan"]
-        ],
-        Q: [
-          ["Do I bet?","¿Yo apuesto?"],
-          ["Do you bet?","¿Tú apuestas?"],
-          ["Does he bet?","¿Él apuesta?"],
-          ["Does she bet?","¿Ella apuesta?"],
-          ["Does it bet?","¿Eso apuesta?"],
-          ["Do we bet?","¿Nosotros apostamos?"],
-          ["Do you bet?","¿Ustedes apuestan?"],
-          ["Do they bet?","¿Ellos apuestan?"]
-        ]
+  <h2>Objeto cargado por core.js</h2>
+  <div class="box">
+    <pre><code>const VERBS2_OVERRIDES = {
+  "bet": {
+    "pres": {
+      "A": {
+        "I": "Yo apuesto",
+        "You": "Tú apuestas",
+        "He": "Él apuesta",
+        "She": "Ella apuesta",
+        "It": "Eso apuesta",
+        "We": "Nosotros apostamos",
+        "YouP": "Ustedes apuestan",
+        "They": "Ellos apuestan"
+      },
+      "N": {
+        "I": "Yo no apuesto",
+        "You": "Tú no apuestas",
+        "He": "Él no apuesta",
+        "She": "Ella no apuesta",
+        "It": "Eso no apuesta",
+        "We": "Nosotros no apostamos",
+        "YouP": "Ustedes no apuestan",
+        "They": "Ellos no apuestan"
+      },
+      "Q": {
+        "I": "¿Yo apuesto?",
+        "You": "¿Tú apuestas?",
+        "He": "¿Él apuesta?",
+        "She": "¿Ella apuesta?",
+        "It": "¿Eso apuesta?",
+        "We": "¿Nosotros apostamos?",
+        "YouP": "¿Ustedes apuestan?",
+        "They": "¿Ellos apuestan?"
       }
     }
   },
-  {
-    key: "burst",
-    c1: "BURST", c2: "BURST", c3: "BURST",
-    es: "Reventar / Explotar",
-    active: {
-      P: {
-        A: [
-          ["I","I burst","Yo reviento / exploto"],
-          ["YOU_S","You burst","Tú revientas"],
-          ["HE","He bursts","Él revienta"],
-          ["SHE","She bursts","Ella revienta"],
-          ["IT","It bursts","Eso revienta"],
-          ["WE","We burst","Nosotros reventamos"],
-          ["YOU_P","You burst","Ustedes revientan"],
-          ["THEY","They burst","Ellos revientan"]
-        ],
-        N: [
-          ["I","I don't burst","Yo no reviento"],
-          ["YOU_S","You don't burst","Tú no revientas"],
-          ["HE","He doesn't burst","Él no revienta"],
-          ["SHE","She doesn't burst","Ella no revienta"],
-          ["IT","It doesn't burst","Eso no revienta"],
-          ["WE","We don't burst","Nosotros no reventamos"],
-          ["YOU_P","You don't burst","Ustedes no revientan"],
-          ["THEY","They don't burst","Ellos no revientan"]
-        ],
-        Q: [
-          ["Do I burst?","¿Reviento yo?"],
-          ["Do you burst?","¿Revientas tú?"],
-          ["Does he burst?","¿Revienta él?"],
-          ["Does she burst?","¿Revienta ella?"],
-          ["Does it burst?","¿Revienta eso?"],
-          ["Do we burst?","¿Reventamos nosotros?"],
-          ["Do you burst?","¿Revientan ustedes?"],
-          ["Do they burst?","¿Revientan ellos?"]
-        ]
+  "burst": {
+    "pres": {
+      "A": {
+        "I": "Yo reviento / exploto",
+        "You": "Tú revientas",
+        "He": "Él revienta",
+        "She": "Ella revienta",
+        "It": "Eso revienta",
+        "We": "Nosotros reventamos",
+        "YouP": "Ustedes revientan",
+        "They": "Ellos revientan"
+      },
+      "N": {
+        "I": "Yo no reviento",
+        "You": "Tú no revientas",
+        "He": "Él no revienta",
+        "She": "Ella no revienta",
+        "It": "Eso no revienta",
+        "We": "Nosotros no reventamos",
+        "YouP": "Ustedes no revientan",
+        "They": "Ellos no revientan"
+      },
+      "Q": {
+        "I": "¿Reviento yo?",
+        "You": "¿Revientas tú?",
+        "He": "¿Revienta él?",
+        "She": "¿Revienta ella?",
+        "It": "¿Revienta eso?",
+        "We": "¿Reventamos nosotros?",
+        "YouP": "¿Revientan ustedes?",
+        "They": "¿Revientan ellos?"
       }
     }
   },
-  {
-    key: "forecast",
-    c1: "FORECAST", c2: "FORECAST", c3: "FORECAST",
-    es: "Pronosticar",
-    active: {
-      P: {
-        A: [
-          ["I","I forecast","Yo pronostico"],
-          ["YOU_S","You forecast","Tú pronosticas"],
-          ["HE","He forecasts","Él pronostica"],
-          ["SHE","She forecasts","Ella pronostica"],
-          ["IT","It forecasts","Eso pronostica"],
-          ["WE","We forecast","Nosotros pronosticamos"],
-          ["YOU_P","You forecast","Ustedes pronostican"],
-          ["THEY","They forecast","Ellos pronostican"]
-        ],
-        N: [
-          ["I","I don't forecast","Yo no pronostico"],
-          ["YOU_S","You don't forecast","Tú no pronosticas"],
-          ["HE","He doesn't forecast","Él no pronostica"],
-          ["SHE","She doesn't forecast","Ella no pronostica"],
-          ["IT","It doesn't forecast","Eso no pronostica"],
-          ["WE","We don't forecast","Nosotros no pronosticamos"],
-          ["YOU_P","You don't forecast","Ustedes no pronostican"],
-          ["THEY","They don't forecast","Ellos no pronostican"]
-        ],
-        Q: [
-          ["Do I forecast?","¿Yo pronostico?"],
-          ["Do you forecast?","¿Tú pronosticas?"],
-          ["Does he forecast?","¿Él pronostica?"],
-          ["Does she forecast?","¿Ella pronostica?"],
-          ["Does it forecast?","¿Eso pronostica?"],
-          ["Do we forecast?","¿Nosotros pronosticamos?"],
-          ["Do you forecast?","¿Ustedes pronostican?"],
-          ["Do they forecast?","¿Ellos pronostican?"]
-        ]
+  "forecast": {
+    "pres": {
+      "A": {
+        "I": "Yo pronostico",
+        "You": "Tú pronosticas",
+        "He": "Él pronostica",
+        "She": "Ella pronostica",
+        "It": "Eso pronostica",
+        "We": "Nosotros pronosticamos",
+        "YouP": "Ustedes pronostican",
+        "They": "Ellos pronostican"
+      },
+      "N": {
+        "I": "Yo no pronostico",
+        "You": "Tú no pronosticas",
+        "He": "Él no pronostica",
+        "She": "Ella no pronostica",
+        "It": "Eso no pronostica",
+        "We": "Nosotros no pronosticamos",
+        "YouP": "Ustedes no pronostican",
+        "They": "Ellos no pronostican"
+      },
+      "Q": {
+        "I": "¿Yo pronostico?",
+        "You": "¿Tú pronosticas?",
+        "He": "¿Él pronostica?",
+        "She": "¿Ella pronostica?",
+        "It": "¿Eso pronostica?",
+        "We": "¿Nosotros pronosticamos?",
+        "YouP": "¿Ustedes pronostican?",
+        "They": "¿Ellos pronostican?"
       }
     }
   },
-  {
-    key: "spread",
-    c1: "SPREAD", c2: "SPREAD", c3: "SPREAD",
-    es: "Extender",
-    active: {
-      P: {
-        A: [
-          ["I","I spread","Yo extiendo"],
-          ["YOU_S","You spread","Tú extiendes"],
-          ["HE","He spreads","Él extiende"],
-          ["SHE","She spreads","Ella extiende"],
-          ["IT","It spreads","Eso extiende"],
-          ["WE","We spread","Nosotros extendemos"],
-          ["YOU_P","You spread","Ustedes extienden"],
-          ["THEY","They spread","Ellos extienden"]
-        ],
-        N: [
-          ["I","I don't spread","Yo no extiendo"],
-          ["YOU_S","You don't spread","Tú no extiendes"],
-          ["HE","He doesn't spread","Él no extiende"],
-          ["SHE","She doesn't spread","Ella no extiende"],
-          ["IT","It doesn't spread","Eso no extiende"],
-          ["WE","We don't spread","Nosotros no extendemos"],
-          ["YOU_P","You don't spread","Ustedes no extienden"],
-          ["THEY","They don't spread","Ellos no extienden"]
-        ],
-        Q: [
-          ["Do I spread?","¿Extiendo yo?"],
-          ["Do you spread?","¿Extiendes tú?"],
-          ["Does he spread?","¿Extiende él?"],
-          ["Does she spread?","¿Extiende ella?"],
-          ["Does it spread?","¿Extiende eso?"],
-          ["Do we spread?","¿Extendemos nosotros?"],
-          ["Do you spread?","¿Extienden ustedes?"],
-          ["Do they spread?","¿Extienden ellos?"]
-        ]
+  "spread": {
+    "pres": {
+      "A": {
+        "I": "Yo extiendo",
+        "You": "Tú extiendes",
+        "He": "Él extiende",
+        "She": "Ella extiende",
+        "It": "Eso extiende",
+        "We": "Nosotros extendemos",
+        "YouP": "Ustedes extienden",
+        "They": "Ellos extienden"
+      },
+      "N": {
+        "I": "Yo no extiendo",
+        "You": "Tú no extiendes",
+        "He": "Él no extiende",
+        "She": "Ella no extiende",
+        "It": "Eso no extiende",
+        "We": "Nosotros no extendemos",
+        "YouP": "Ustedes no extienden",
+        "They": "Ellos no extienden"
+      },
+      "Q": {
+        "I": "¿Extiendo yo?",
+        "You": "¿Extiendes tú?",
+        "He": "¿Extiende él?",
+        "She": "¿Extiende ella?",
+        "It": "¿Extiende eso?",
+        "We": "¿Extendemos nosotros?",
+        "YouP": "¿Extienden ustedes?",
+        "They": "¿Extienden ellos?"
       }
     }
   },
-  {
-    key: "overstand",
-    c1: "OVERSTAND", c2: "OVERSTOOD", c3: "OVERSTOOD",
-    es: "Sobresalir / Comprender",
-    active: {
-      P: {
-        A: [
-          ["I","I overstand","Yo sobresalgo / comprendo"],
-          ["YOU_S","You overstand","Tú sobresales / comprendes"],
-          ["HE","He overstands","Él sobresale / comprende"],
-          ["SHE","She overstands","Ella sobresale / comprende"],
-          ["IT","It overstands","Eso sobresale / comprende"],
-          ["WE","We overstand","Nosotros sobresalimos"],
-          ["YOU_P","You overstand","Ustedes sobresalen"],
-          ["THEY","They overstand","Ellos sobresalen"]
-        ],
-        N: [
-          ["I","I don't overstand","Yo no sobresalgo"],
-          ["YOU_S","You don't overstand","Tú no sobresales"],
-          ["HE","He doesn't overstand","Él no sobresale"],
-          ["SHE","She doesn't overstand","Ella no sobresale"],
-          ["IT","It doesn't overstand","Eso no sobresale"],
-          ["WE","We don't overstand","Nosotros no sobresalimos"],
-          ["YOU_P","You don't overstand","Ustedes no sobresalen"],
-          ["THEY","They don't overstand","Ellos no sobresalen"]
-        ],
-        Q: [
-          ["I","Do I overstand?","¿Yo sobresalgo?"],
-          ["YOU_S","Do you overstand?","¿Tú sobresales?"],
-          ["HE","Does he overstand?","¿Él sobresale?"],
-          ["SHE","Does she overstand?","¿Ella sobresale?"],
-          ["IT","Does it overstand?","¿Eso sobresale?"],
-          ["WE","Do we overstand?","¿Nosotros sobresalimos?"],
-          ["YOU_P","Do you overstand?","¿Ustedes sobresalen?"],
-          ["THEY","Do they overstand?","¿Ellos sobresalen?"]
-        ]
+  "overstand": {
+    "pres": {
+      "A": {
+        "I": "Yo sobresalgo / comprendo",
+        "You": "Tú sobresales / comprendes",
+        "He": "Él sobresale / comprende",
+        "She": "Ella sobresale / comprende",
+        "It": "Eso sobresale / comprende",
+        "We": "Nosotros sobresalimos",
+        "YouP": "Ustedes sobresalen",
+        "They": "Ellos sobresalen"
+      },
+      "N": {
+        "I": "Yo no sobresalgo",
+        "You": "Tú no sobresales",
+        "He": "Él no sobresale",
+        "She": "Ella no sobresale",
+        "It": "Eso no sobresale",
+        "We": "Nosotros no sobresalimos",
+        "YouP": "Ustedes no sobresalen",
+        "They": "Ellos no sobresalen"
+      },
+      "Q": {
+        "I": "¿Yo sobresalgo?",
+        "You": "¿Tú sobresales?",
+        "He": "¿Él sobresale?",
+        "She": "¿Ella sobresale?",
+        "It": "¿Eso sobresale?",
+        "We": "¿Nosotros sobresalimos?",
+        "YouP": "¿Ustedes sobresalen?",
+        "They": "¿Ellos sobresalen?"
+      }
+    }
+  },
+  "grind": {
+    "pres": {
+      "A": {
+        "I": "Yo muelo",
+        "You": "Tú mueles",
+        "He": "Él muele",
+        "She": "Ella muele",
+        "It": "Eso muele",
+        "We": "Nosotros molemos",
+        "YouP": "Ustedes muelen",
+        "They": "Ellos muelen"
+      },
+      "N": {
+        "I": "Yo no muelo",
+        "You": "Tú no mueles",
+        "He": "Él no muele",
+        "She": "Ella no muele",
+        "It": "Eso no muele",
+        "We": "Nosotros no molemos",
+        "YouP": "Ustedes no muelen",
+        "They": "Ellos no muelen"
+      },
+      "Q": {
+        "I": "¿Yo muelo?",
+        "You": "¿Tú mueles?",
+        "He": "¿Él muele?",
+        "She": "¿Ella muele?",
+        "It": "¿Eso muele?",
+        "We": "¿Nosotros molemos?",
+        "YouP": "¿Ustedes muelen?",
+        "They": "¿Ellos muelen?"
       }
     }
   }
-];
-</script>
+};</code></pre>
+  </div>
+
+  <script>
+  // ⚠️ core.js hace fetch a este archivo y extrae este objeto con regex.
+  const VERBS2_OVERRIDES = {
+  "bet": {
+    "pres": {
+      "A": {
+        "I": "Yo apuesto",
+        "You": "Tú apuestas",
+        "He": "Él apuesta",
+        "She": "Ella apuesta",
+        "It": "Eso apuesta",
+        "We": "Nosotros apostamos",
+        "YouP": "Ustedes apuestan",
+        "They": "Ellos apuestan"
+      },
+      "N": {
+        "I": "Yo no apuesto",
+        "You": "Tú no apuestas",
+        "He": "Él no apuesta",
+        "She": "Ella no apuesta",
+        "It": "Eso no apuesta",
+        "We": "Nosotros no apostamos",
+        "YouP": "Ustedes no apuestan",
+        "They": "Ellos no apuestan"
+      },
+      "Q": {
+        "I": "¿Yo apuesto?",
+        "You": "¿Tú apuestas?",
+        "He": "¿Él apuesta?",
+        "She": "¿Ella apuesta?",
+        "It": "¿Eso apuesta?",
+        "We": "¿Nosotros apostamos?",
+        "YouP": "¿Ustedes apuestan?",
+        "They": "¿Ellos apuestan?"
+      }
+    }
+  },
+  "burst": {
+    "pres": {
+      "A": {
+        "I": "Yo reviento / exploto",
+        "You": "Tú revientas",
+        "He": "Él revienta",
+        "She": "Ella revienta",
+        "It": "Eso revienta",
+        "We": "Nosotros reventamos",
+        "YouP": "Ustedes revientan",
+        "They": "Ellos revientan"
+      },
+      "N": {
+        "I": "Yo no reviento",
+        "You": "Tú no revientas",
+        "He": "Él no revienta",
+        "She": "Ella no revienta",
+        "It": "Eso no revienta",
+        "We": "Nosotros no reventamos",
+        "YouP": "Ustedes no revientan",
+        "They": "Ellos no revientan"
+      },
+      "Q": {
+        "I": "¿Reviento yo?",
+        "You": "¿Revientas tú?",
+        "He": "¿Revienta él?",
+        "She": "¿Revienta ella?",
+        "It": "¿Revienta eso?",
+        "We": "¿Reventamos nosotros?",
+        "YouP": "¿Revientan ustedes?",
+        "They": "¿Revientan ellos?"
+      }
+    }
+  },
+  "forecast": {
+    "pres": {
+      "A": {
+        "I": "Yo pronostico",
+        "You": "Tú pronosticas",
+        "He": "Él pronostica",
+        "She": "Ella pronostica",
+        "It": "Eso pronostica",
+        "We": "Nosotros pronosticamos",
+        "YouP": "Ustedes pronostican",
+        "They": "Ellos pronostican"
+      },
+      "N": {
+        "I": "Yo no pronostico",
+        "You": "Tú no pronosticas",
+        "He": "Él no pronostica",
+        "She": "Ella no pronostica",
+        "It": "Eso no pronostica",
+        "We": "Nosotros no pronosticamos",
+        "YouP": "Ustedes no pronostican",
+        "They": "Ellos no pronostican"
+      },
+      "Q": {
+        "I": "¿Yo pronostico?",
+        "You": "¿Tú pronosticas?",
+        "He": "¿Él pronostica?",
+        "She": "¿Ella pronostica?",
+        "It": "¿Eso pronostica?",
+        "We": "¿Nosotros pronosticamos?",
+        "YouP": "¿Ustedes pronostican?",
+        "They": "¿Ellos pronostican?"
+      }
+    }
+  },
+  "spread": {
+    "pres": {
+      "A": {
+        "I": "Yo extiendo",
+        "You": "Tú extiendes",
+        "He": "Él extiende",
+        "She": "Ella extiende",
+        "It": "Eso extiende",
+        "We": "Nosotros extendemos",
+        "YouP": "Ustedes extienden",
+        "They": "Ellos extienden"
+      },
+      "N": {
+        "I": "Yo no extiendo",
+        "You": "Tú no extiendes",
+        "He": "Él no extiende",
+        "She": "Ella no extiende",
+        "It": "Eso no extiende",
+        "We": "Nosotros no extendemos",
+        "YouP": "Ustedes no extienden",
+        "They": "Ellos no extienden"
+      },
+      "Q": {
+        "I": "¿Extiendo yo?",
+        "You": "¿Extiendes tú?",
+        "He": "¿Extiende él?",
+        "She": "¿Extiende ella?",
+        "It": "¿Extiende eso?",
+        "We": "¿Extendemos nosotros?",
+        "YouP": "¿Extienden ustedes?",
+        "They": "¿Extienden ellos?"
+      }
+    }
+  },
+  "overstand": {
+    "pres": {
+      "A": {
+        "I": "Yo sobresalgo / comprendo",
+        "You": "Tú sobresales / comprendes",
+        "He": "Él sobresale / comprende",
+        "She": "Ella sobresale / comprende",
+        "It": "Eso sobresale / comprende",
+        "We": "Nosotros sobresalimos",
+        "YouP": "Ustedes sobresalen",
+        "They": "Ellos sobresalen"
+      },
+      "N": {
+        "I": "Yo no sobresalgo",
+        "You": "Tú no sobresales",
+        "He": "Él no sobresale",
+        "She": "Ella no sobresale",
+        "It": "Eso no sobresale",
+        "We": "Nosotros no sobresalimos",
+        "YouP": "Ustedes no sobresalen",
+        "They": "Ellos no sobresalen"
+      },
+      "Q": {
+        "I": "¿Yo sobresalgo?",
+        "You": "¿Tú sobresales?",
+        "He": "¿Él sobresale?",
+        "She": "¿Ella sobresale?",
+        "It": "¿Eso sobresale?",
+        "We": "¿Nosotros sobresalimos?",
+        "YouP": "¿Ustedes sobresalen?",
+        "They": "¿Ellos sobresalen?"
+      }
+    }
+  },
+  "grind": {
+    "pres": {
+      "A": {
+        "I": "Yo muelo",
+        "You": "Tú mueles",
+        "He": "Él muele",
+        "She": "Ella muele",
+        "It": "Eso muele",
+        "We": "Nosotros molemos",
+        "YouP": "Ustedes muelen",
+        "They": "Ellos muelen"
+      },
+      "N": {
+        "I": "Yo no muelo",
+        "You": "Tú no mueles",
+        "He": "Él no muele",
+        "She": "Ella no muele",
+        "It": "Eso no muele",
+        "We": "Nosotros no molemos",
+        "YouP": "Ustedes no muelen",
+        "They": "Ellos no muelen"
+      },
+      "Q": {
+        "I": "¿Yo muelo?",
+        "You": "¿Tú mueles?",
+        "He": "¿Él muele?",
+        "She": "¿Ella muele?",
+        "It": "¿Eso muele?",
+        "We": "¿Nosotros molemos?",
+        "YouP": "¿Ustedes muelen?",
+        "They": "¿Ellos muelen?"
+      }
+    }
+  }
+};
+  </script>
 </body>
 </html>
