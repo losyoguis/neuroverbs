@@ -82,6 +82,13 @@
 <button class="roundbtn ebook" data-help="Abre el e-book (Canva) dentro de la app." onclick="abrirEbook()" title="Abre el e-book (Canva) dentro de la app." type="button">E-BOOK 📚</button>
 </div>
 
+
+<!-- ✅ FILA 1.5: BASES DE DATOS (BD1/BD2) -->
+<div class="roundrow">
+  <button class="roundbtn" type="button" onclick="window.open('verbs.html','_blank')" data-help="Abre la Base de Datos principal (verbs.html) para consultar conjugaciones.">BD1 VERBS 📘</button>
+  <button class="roundbtn" type="button" onclick="window.open('verbs2.html','_blank')" data-help="Abre la Base de Datos 2 (verbs2.html) con correcciones especiales. La app la usa con prioridad.">BD2 OVERRIDES 🧩</button>
+</div>
+
 <!-- ✅ FILA 2: ROUND 1 + ROUND 2 + VOZ ACTIVA + VOZ PASIVA -->
 <div class="roundrow">
 <button class="roundbtn active" data-help="Round 1: Pronombre + Verbo (sin complemento). Cambia el modo de práctica." id="btnRound1" onclick="setRound(1)" title="Round 1: Pronombre + Verbo (sin complemento)." type="button">Round 1</button>
@@ -196,9 +203,6 @@
 <p class="lbNote" id="lbStatus">Inicia sesión para ver el ranking.</p>
 <div class="lbList" id="leaderboardList"></div>
 </div>
-
-<button class="roundbtn web" data-help="📚 Abrir la Base de Datos (verbs.html) en una pestaña nueva." type="button" onclick="window.open('verbs.html','_blank')">Verbs DB 📚</button>
-<button class="roundbtn web" data-help="🧩 Abrir la BD2 de correcciones (verbs2.html) en una pestaña nueva." type="button" onclick="window.open('verbs2.html','_blank')">Verbs2 DB 🧩</button>
 <button class="roundbtn web" data-help="🌐 Abrir el SmartEbook / Neuroaprendizaje del Inglés (Google Sites)." onclick="abrirWeb()" title="Abre el sitio web SmartEbook (Google Sites) en una pestaña nueva." type="button">Neuroaprendizaje del Inglés 🌐</button>
 </footer>
 </div>
@@ -332,6 +336,6 @@
 
 
 <!-- XP sync watcher removed: XP is synced only from exercise actions + server fetch to avoid double-counting -->
-<script src="core.js?v=20260101"></script></body>
+<script src="core.js"></script></body>
 
 </html>
