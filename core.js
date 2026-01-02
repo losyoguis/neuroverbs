@@ -1,4 +1,69 @@
 
+//
+
+// ------------------------------------------------------------
+// VERBS3: overrides / corrections for Group 3 (and beyond)
+// ------------------------------------------------------------
+
+async function loadVerbsDbFromVerbs3Html() {
+  if (typeof __NY_VERBS3_DB_READY__ !== "undefined" && __NY_VERBS3_DB_READY__) return __NY_VERBS3_DB__;
+  try {
+    const url = "verbs3.html";
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) throw new Error("No se pudo cargar verbs3.html");
+    const txt = await res.text();
+
+    const m = txt.match(/NY_VERBS3_DB_START([\s\S]*?)NY_VERBS3_DB_END/);
+    if (!m) throw new Error("No se encontró el bloque NY_VERBS3_DB_START/END en verbs3.html");
+
+    const jsonStr = (m[1] || "").trim();
+    __NY_VERBS3_DB__ = JSON.parse(jsonStr);
+    __NY_VERBS3_DB_READY__ = true;
+    return __NY_VERBS3_DB__;
+  } catch (e) {
+    console.warn("[verbs3] fallo al cargar DB:", e);
+    __NY_VERBS3_DB__ = [];
+    __NY_VERBS3_DB_READY__ = false;
+    return __NY_VERBS3_DB__;
+  }
+}
+
+/**
+ * Busca overrides (en/es) en verbs3 (y luego verbs2), usando el esquema:
+ *   entry[mode][tense][mood] = [[pronKeyDb, en, es], ...]
+ */
+function __nyLookupOverrideLine(verbKey, tenseKey, moodKey, pronKeyDb, modeKey) {
+  const key = String(verbKey || "").toLowerCase().trim();
+  const t = String(tenseKey || "").trim(); // "P" | "S" | "PP"
+  const m = String(moodKey || "").trim();  // "A" | "N" | "Q"
+  const p = String(pronKeyDb || "").trim();
+  const mode = (modeKey === "passive") ? "passive" : "active";
+
+  const findIn = (dbArr) => {
+    if (!Array.isArray(dbArr)) return null;
+    const entry = dbArr.find(x => String(x?.key || "").toLowerCase().trim() === key);
+    if (!entry) return null;
+    const block = entry?.[mode]?.[t]?.[m];
+    if (!Array.isArray(block)) return null;
+    const row = block.find(r => Array.isArray(r) && String(r[0]).trim() === p);
+    if (!row) return null;
+    return { en: row[1] || null, es: row[2] || null };
+  };
+
+  // 1) verbs3 tiene prioridad
+  if (typeof __NY_VERBS3_DB_READY__ !== "undefined" && __NY_VERBS3_DB_READY__) {
+    const hit = findIn(__NY_VERBS3_DB__);
+    if (hit) return hit;
+  }
+
+  // 2) fallback: verbs2
+  if (typeof __NY_VERBS2_DB_READY__ !== "undefined" && __NY_VERBS2_DB_READY__) {
+    const hit = findIn(__NY_VERBS2_DB__);
+    if (hit) return hit;
+  }
+
+  return null;
+}
 // =========================
 // Google Auth (GSI) + Sheets (Apps Script WebApp)
 // =========================
@@ -539,8 +604,8 @@ async function loadVerbsDbFromVerbs2Html() {
     if (__verbsHtmlSyncPromise) return __verbsHtmlSyncPromise;
     __verbsHtmlSyncPromise = (async () => {
       const res = await loadVerbsDbFromVerbsHtml();
-  loadVerbsDbFromVerbs2Html();
-
+      loadVerbsDbFromVerbs2Html();
+      loadVerbsDbFromVerbs3Html();
       const rawDb = window.__NY_VERBS_DB__ || [];
       if (res?.ok && window.__NY_VERBS_DB_READY__ && Array.isArray(rawDb) && rawDb.length) {
         const toNum = (x) => {
@@ -663,8 +728,11 @@ function lookupSpanishLineFromVerbsHtml(tKind, modeKey, p, v){
 }
 
 // Cargamos la DB lo más pronto posible (sin bloquear la app)
-window.addEventListener("DOMContentLoaded", () => { loadVerbsDbFromVerbsHtml();
-  loadVerbsDbFromVerbs2Html(); });
+window.addEventListener("DOMContentLoaded", () => {
+  loadVerbsDbFromVerbsHtml();
+  loadVerbsDbFromVerbs2Html();
+  loadVerbsDbFromVerbs3Html();
+});
 
 
 
@@ -1522,90 +1590,31 @@ function highlightPhrase(line, phrase, cls){
   const re = new RegExp(`(^|\\s)(${escapeRegExp(ph)})(?=\\s|[?.!,]|$)`, "i");
   return String(line||"").replace(re, (m, g1, g2)=>`${g1}<span class="${cls}">${g2}</span>`);
 }
-function colorizeConjugation(enLine, tKind, moodKey, p, v, modeUsed){
-  let s = String(enLine||"");
+function colorizeConjugation(enLine, tKind, moodKey, p, v, modeKey) {
+  // Safety: must always return a string (HTML)
+  const s = (typeof enLine === "string") ? enLine : String(enLine ?? "");
 
-  // PASIVA: siempre V3 (C3)
-  if(modeUsed==="passive"){
-    return highlightPhrase(s, v.c3, "v-c3");
+  // Pick what to highlight based on tense and voice
+  const isPassive = (modeKey === "passive");
+  let target = "";
+
+  if (isPassive) {
+    // passive main verb is past participle
+    target = v?.c3 || "";
+  } else {
+    target =
+      (tKind === "P") ? (v?.c1 || "") :
+      (tKind === "S") ? (v?.c2 || "") :
+      (v?.c3 || "");
   }
 
-  // ACTIVA (incluye el caso en que la pasiva no aplica y se fuerza activa)
-  const isBe = isBeVerb(v);
+  const cls =
+    (tKind === "P") ? "v-c1" :
+    (tKind === "S") ? "v-c2" :
+    "v-c3";
 
-  if(isBe){
-    // BE: am/is/are — was/were — been
-    if(tKind==="P"){
-      const k = p.key || p;
-
-  // 1) Primero: overrides (verbs2.html)
-  if (__NY_VERBS2_DB_READY__ && Array.isArray(__NY_VERBS2_DB__) && __NY_VERBS2_DB__.length) {
-    const e2 = __NY_VERBS2_DB__.find(x => (x?.key || x?.c1 || '').toLowerCase() === k);
-    if (e2 && e2.active && e2.active[tKind] && e2.active[tKind][modeKey]) {
-      const block2 = e2.active[tKind][modeKey];
-      if (Array.isArray(block2)) {
-        if (modeKey === 'Q') {
-          const row2 = block2[pronIndex];
-          if (row2) return (row2.length === 2 ? row2[1] : row2[2] || '');
-        } else {
-          const dbPronKey2 = __nyPronKeyToDb(pronKey);
-          const row2 = block2.find(r => r && r[0] === dbPronKey2);
-          if (row2) return row2[2] || '';
-        }
-      }
-    }
-  }
-
-  // 2) Si no hay override, usar verbs.html
-      const form = (k==="I") ? "am" : (k==="He"||k==="She"||k==="It") ? "is" : "are";
-      const target = (moodKey==="Q") ? capFirst(form) : form;
-      return highlightPhrase(s, target, "v-c1");
-    }
-    if(tKind==="S"){
-      const k = p.key || p;
-      const basePast = (k==="YouP"||k==="You"||k==="We"||k==="They") ? "were" : "was";
-      if(moodKey==="N"){
-        const neg = (basePast==="was") ? "wasn't" : "weren't";
-        return highlightPhrase(s, neg, "v-c2");
-      }
-      const target = (moodKey==="Q") ? capFirst(basePast) : basePast;
-      return highlightPhrase(s, target, "v-c2");
-    }
-    // PP
-    return highlightPhrase(s, "been", "v-c3");
-  }
-
-  // Verbos normales: C1 / C2 / C3 según tiempo y modo
-  if(tKind==="P"){
-    if(moodKey==="A"){
-      const base = String(v.c1||"").trim();
-      const verbForm = isThirdSing(p) ? thirdPersonS(base) : base;
-      return highlightPhrase(s, verbForm, "v-c1");
-    }
-    return highlightPhrase(s, v.c1, "v-c1"); // N y Q usan base
-  }
-
-  if(tKind==="S"){
-    if(moodKey==="A"){
-      return highlightPhrase(s, v.c2, "v-c2");
-    }
-    return highlightPhrase(s, v.c1, "v-c1"); // N y Q usan base
-  }
-
-  // PP
-  return highlightPhrase(s, v.c3, "v-c3");
-}
-
-function makePresent(p, v){
-  if(isBeVerb(v)){
-    const k = p.key || p; // allow p object
-    if(k==="I") return "I am";
-    if(k==="He"||k==="She"||k==="It") return `${subjCap(p)} is`;
-    return `${subjCap(p)} are`;
-  }
-  const base = v.c1;
-  const verbForm = isThirdSing(p) ? thirdPersonS(base) : base;
-  return `${subjCap(p)} ${verbForm}`;
+  if (!target) return s;
+  return highlightPhrase(s, target, cls);
 }
 function makePresentNeg(p, v){
   if(isBeVerb(v)){
