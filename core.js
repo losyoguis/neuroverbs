@@ -484,14 +484,22 @@ async function loadVerbsDbFromVerbsHtml(){
     if(!res.ok) return { ok:false, count:0 };
 
     const txt = await res.text();
-    // 1) Preferimos marcadores para que NO se rompa al formatear verbs.html
-    let m = txt.match(/\/\/\s*<VERBS_DB_START>\s*\n?\s*const\s+VERBS_DB\s*=\s*(\[[\s\S]*?\]);\s*\n?\s*\/\/\s*<VERBS_DB_END>/);
-    // 2) Fallback (compatibilidad con versiones antiguas)
-    if(!m) m = txt.match(/const\s+VERBS_DB\s*=\s*(\[[\s\S]*?\n\s*\]);/);
-    if(!m) return { ok:false, count:0 };
+    // Preferimos extraer la DB usando marcadores (más robusto). Fallback a regex antigua.
+        let arrTxt = "";
+        const hasMarkers = txt.includes("//<VERBS_DB_START>") && txt.includes("//<VERBS_DB_END>");
+        if(hasMarkers){
+          const chunk = txt.split("//<VERBS_DB_START>")[1].split("//<VERBS_DB_END>")[0];
+          const mm = chunk.match(/const\s+VERBS_DB\s*=\s*(\[[\s\S]*?\n\s*\];)/);
+          if(mm) arrTxt = mm[1];
+        }
+        if(!arrTxt){
+          const m = txt.match(/const\s+VERBS_DB\s*=\s*(\[[\s\S]*?\n\s*\];)/);
+          if(m) arrTxt = m[1];
+        }
+        if(!arrTxt) return { ok:false, count:0 };
 
-    // Evaluamos el array JS (misma origin, archivo controlado por nosotros)
-    __NY_VERBS_DB__ = (new Function("return " + m[1]))();
+        // Evaluamos el array JS (misma origin, archivo controlado por nosotros)
+        __NY_VERBS_DB__ = (new Function("return " + arrTxt))();
     __NY_VERBS_DB_READY__ = Array.isArray(__NY_VERBS_DB__) && __NY_VERBS_DB__.length > 0;
 
     if(__NY_VERBS_DB_READY__){
@@ -1820,45 +1828,58 @@ function passivePPQ(v, agentP){
 
 /* Español: equivalencia elegante en pasiva con "SE" (evita concordancia de participio) */
 function esSePassive(verbKey, tenseKind, moodKey, objES){
-  const obj = (objES || "").trim();
-  const v = (__NY_VERBS_DB_READY__ && Array.isArray(__NY_VERBS_DB__)) ? __NY_VERBS_DB__.find(x => x && x.key === verbKey) : null;
-  const forms = v?.__esForms || (v ? __nyDeriveEsForms(v) : null);
+  const obj = (objES || "").replace(/\s+/g," ").trim();
 
   const looksPlural = (s) => {
     const t = (s || "").trim().toLowerCase();
     return t.startsWith("los ") || t.startsWith("las ") || t.startsWith("unos ") || t.startsWith("unas ");
   };
+  const pluralObj = looksPlural(obj);
 
-  const pick = (sing, plur) => looksPlural(obj) ? (plur || sing) : sing;
+  // Buscar el verbo en VERBS_DB (verbs.html) para obtener conjugación ES real
+  const entry = (__NY_VERBS_DB_READY__ && Array.isArray(__NY_VERBS_DB__))
+    ? __NY_VERBS_DB__.find(x => x && x.key === verbKey)
+    : null;
 
-  // Fallback genérico si no hay formas específicas
-  const fallback = () => {
-    const o = { c1: objVerbEs("c1"), c2: objVerbEs("c2"), c3: objVerbEs("c3") };
-    return esSePassiveLegacy(tenseKind, moodKey, objES);
+  const stripSubjectEs = (s) => {
+    s = String(s||"").replace(/\s+/g," ").trim();
+    const prefixes = ["Yo","Tú","Él","Ella","Eso","Nosotros","Nosotras","Ustedes","Ellos","Ellas"];
+    for(const p of prefixes){
+      if(s.toLowerCase().startsWith((p+" ").toLowerCase())){
+        return s.slice(p.length+1).trim();
+      }
+    }
+    return s.replace(/^(yo|tú|él|ella|eso|nosotros|nosotras|ustedes|ellos|ellas)\s+/i,"").trim();
   };
 
-  if(!forms) return fallback();
+  const pickEsVerbPhrase = (tKind, isPlural) => {
+    const block = entry && entry.active && entry.active[tKind];
+    const rows = block && block.A;
+    if(!Array.isArray(rows)) return "";
+    const want = isPlural ? "THEY" : "IT";
+    const row = rows.find(r => r && r[0] === want) || rows.find(r => r && r[0] === "IT") || rows.find(r => r && r[0] === "THEY");
+    const esLine = row && row[2] ? row[2] : "";
+    return stripSubjectEs(esLine);
+  };
 
   let core = "";
-  if(tenseKind === "P"){
-    core = pick(forms.pres3sg, forms.pres3pl);
-  }else if(tenseKind === "S"){
-    core = pick(forms.past3sg, forms.past3pl);
-  }else if(tenseKind === "PP"){
-    const aux = looksPlural(obj) ? "han" : "ha";
-    core = (forms.pp ? `${aux} ${forms.pp}` : "");
+  if(entry){
+    if(tenseKind==="P") core = pickEsVerbPhrase("P", pluralObj);
+    else if(tenseKind==="S") core = pickEsVerbPhrase("S", pluralObj);
+    else core = pickEsVerbPhrase("PP", pluralObj);
   }
 
-  if(!core) return fallback();
+  // Fallback genérico (solo si no hay data en VERBS_DB)
+  if(!core){
+    if(tenseKind==="P") core = objVerbEs("present");
+    else if(tenseKind==="S") core = objVerbEs("past");
+    else core = objVerbEs("pp");
+  }
 
-  if(moodKey === "A"){
-    return `Se ${core} ${obj}.`;
-  }
-  if(moodKey === "N"){
-    return `No se ${core} ${obj}.`;
-  }
-  // Q
-  return `¿Se ${core} ${obj}?`;
+  const tailObj = obj ? (" " + obj) : "";
+  if(moodKey==="A") return `Se ${core}${tailObj}.`;
+  if(moodKey==="N") return `No se ${core}${tailObj}.`;
+  return `¿Se ${core}${tailObj}?`;
 }
 
 function esSePassiveLegacy(tenseKind, moodKey, objES){
@@ -3231,15 +3252,11 @@ function checkPractice(qid){
    =========================== */
 let readingStoryTranslationVisible = false;
 
-// 🎧 Velocidad de audio para STORY (se guarda en localStorage)
-let readingRate = (() => {
-  try{
-    const raw = localStorage.getItem("ny_reading_rate");
-    const v = parseFloat(raw);
-    if(Number.isFinite(v)) return Math.min(1.15, Math.max(0.60, v));
-  }catch(e){}
-  return 0.85; // beginner-friendly default
-})();
+let readingRate = 0.85;
+try{
+  const rr = parseFloat(localStorage.getItem("ny_reading_rate") || "");
+  if(Number.isFinite(rr)) readingRate = rr;
+}catch(e){}
 
 function updateReadingRateLabel(){
   const el = document.getElementById("readingRateLabel");
@@ -3253,7 +3270,6 @@ function setReadingRate(next){
   try{ localStorage.setItem("ny_reading_rate", String(readingRate)); }catch(e){}
   updateReadingRateLabel();
 }
-
 function incReadingRate(){ setReadingRate((readingRate||0.85) + 0.05); }
 function decReadingRate(){ setReadingRate((readingRate||0.85) - 0.05); }
 
@@ -3562,7 +3578,7 @@ function speakReadingStory(){
     u.lang = (voice && voice.lang) ? voice.lang : "en-US";
     // ✅ Beginner-friendly speed (slower, clearer)
     // Keep punctuation intact so the browser can pause naturally.
-    u.rate = (readingRate || 0.85); // controlled by UI
+    u.rate = (typeof readingRate !== "undefined" ? (readingRate||0.85) : 0.85);
     u.pitch = 1;
 
     _readingStoryUtterance = u;
@@ -3646,9 +3662,10 @@ function renderReading(v){
   let es = [];
   let meta = [];
 
-  // ✅ En READING mostramos español tanto en voz activa como pasiva.
+  // 🔎 Control: en "READING" de VOZ PASIVA (cuando aplica), ocultamos traducción al español.
   const isPassiveReading = (voiceMode==="passive" && passiveOk);
   const showReadingSpanish = true;
+  // (Ya no ocultamos español en pasiva)
 
 
   if(voiceMode==="passive" && passiveOk){
@@ -3674,22 +3691,19 @@ function renderReading(v){
       `${capFirst(have)} ${sEN.toLowerCase()} been ${v.c3} ${byMe} this week?`
     ];
 
-    
-// ✅ Español pasivo perfecto (SE + formas derivadas desde VERBS_DB)
-const objES = subjPas.es;
-es = [
-  ensurePeriodEs(addTailEs(esSePassive(v.key, "P",  "A", objES), "hoy")),
-  ensurePeriodEs(addTailEs(esSePassive(v.key, "P",  "N", objES), "hoy")),
-  addTailEs(esSePassive(v.key, "P",  "Q", objES), "hoy"),
+    es = [
+      addTailEs(esSePassive(v.key,"P","A", subjPas.es), "hoy"),
+      addTailEs(esSePassive(v.key,"P","N", subjPas.es), "hoy"),
+      addTailEs(esSePassive(v.key,"P","Q", subjPas.es), "hoy"),
 
-  ensurePeriodEs(addTailEs(esSePassive(v.key, "S",  "A", objES), "ayer")),
-  ensurePeriodEs(addTailEs(esSePassive(v.key, "S",  "N", objES), "ayer")),
-  addTailEs(esSePassive(v.key, "S",  "Q", objES), "ayer"),
+      addTailEs(esSePassive(v.key,"S","A", subjPas.es), "ayer"),
+      addTailEs(esSePassive(v.key,"S","N", subjPas.es), "ayer"),
+      addTailEs(esSePassive(v.key,"S","Q", subjPas.es), "ayer"),
 
-  ensurePeriodEs(addTailEs(esSePassive(v.key, "PP", "A", objES), "esta semana")),
-  ensurePeriodEs(addTailEs(esSePassive(v.key, "PP", "N", objES), "esta semana")),
-  addTailEs(esSePassive(v.key, "PP", "Q", objES), "esta semana")
-].map(x=>ensurePeriodEs(String(x||"")).replace(/\s+/g," ").trim());
+      addTailEs(esSePassive(v.key,"PP","A", subjPas.es), "esta semana"),
+      addTailEs(esSePassive(v.key,"PP","N", subjPas.es), "esta semana"),
+      addTailEs(esSePassive(v.key,"PP","Q", subjPas.es), "esta semana")
+    ].map(x=>x.replace(/\s+/g," ").trim());
 
     // meta (tKind/mood) para colorear C3 en pasiva
     meta = [
@@ -3819,7 +3833,18 @@ es = [
       <div class="card" style="margin-top:16px;">
         <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
           <div style="font-weight:950; color:#0f172a;">📚 STORY (${storyLabel})</div>
-          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">${showReadingSpanish ? '<button class="roundbtn" id="btnReadingTranslate" type="button" onclick="toggleReadingStoryTranslation()" style="text-transform:none;">' + translateBtnText + '</button>' : ""}<span style="display:inline-flex; align-items:center; gap:6px; padding:2px 6px; border:1px solid #e2e8f0; border-radius:999px; background:#fff;"><button class="roundbtn" id="btnReadingRateDown" type="button" onclick="decReadingRate()" title="Bajar velocidad" style="text-transform:none;">➖</button><span id="readingRateLabel" style="font-weight:950; color:#334155; min-width:56px; text-align:center;">${(readingRate||0.85).toFixed(2)}x</span><button class="roundbtn" id="btnReadingRateUp" type="button" onclick="incReadingRate()" title="Subir velocidad" style="text-transform:none;">➕</button></span><button class="roundbtn" id="btnReadingAudio" type="button" onclick="speakReadingStory()" style="text-transform:none;">🔊 Play Audio</button><button class="roundbtn" id="btnReadingAudioStop" type="button" disabled onclick="stopReadingStory()" style="text-transform:none;">⏹ Stop</button></div>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            ${showReadingSpanish ? `<button class="roundbtn" id="btnReadingTranslate" type="button" onclick="toggleReadingStoryTranslation()" style="text-transform:none;">🌎 Translate</button>` : ``}
+
+            <div id="readingRateBox" style="display:flex; gap:6px; align-items:center; background:#f1f5f9; border:1px solid #e2e8f0; padding:6px 10px; border-radius:999px;">
+              <button class="roundbtn" type="button" onclick="decReadingRate()" aria-label="Bajar velocidad">➖</button>
+              <span id="readingRateLabel" style="font-weight:950; color:#0f172a; min-width:56px; text-align:center;">${(readingRate||0.85).toFixed(2)}x</span>
+              <button class="roundbtn" type="button" onclick="incReadingRate()" aria-label="Subir velocidad">➕</button>
+            </div>
+
+            <button class="roundbtn" id="btnReadingAudio" type="button" onclick="speakReadingStory()" style="text-transform:none;">🔊 Play</button>
+            <button class="roundbtn" id="btnReadingAudioStop" type="button" onclick="stopReadingStory()" style="text-transform:none;">⏹ Stop</button>
+          </div>
         </div>
 
         <div id="readingStoryEnglish" style="margin-top:10px; color:#0f172a; line-height:1.6; font-weight:850;">
@@ -3842,8 +3867,8 @@ es = [
   `;
 
   document.getElementById("readingArea").innerHTML = html;
-  updateReadingRateLabel();
   bindListenButtons();
+  try{ updateReadingRateLabel(); }catch(e){}
   const rn = document.getElementById("readingNav");
   if(rn) rn.style.display = "flex";
   const rnf = document.getElementById("readingNavFooter");
@@ -4604,4 +4629,3 @@ let activeEl = null;
       hide();
     }, {passive:true});
   })(); });
-
