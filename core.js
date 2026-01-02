@@ -6108,44 +6108,97 @@ function isBeVerb(v){ return String(v.c1||"").toLowerCase().trim()==="be"; }
 function escapeRegExp(s){
   return String(s||"").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
-function highlightPhrase(line, phrase, cls){
-  const ph = String(phrase||"").trim();
-  if(!ph) return line;
-  const re = new RegExp(`(^|\\s)(${escapeRegExp(ph)})(?=\\s|[?.!,]|$)`, "i");
-  return String(line||"").replace(re, (m, g1, g2)=>`${g1}<span class="${cls}">${g2}</span>`);
-}
-function colorizeConjugation(enLine, tKind, moodKey, p, v, modeUsed){
-  // Resalta la forma verbal (C1/C2/C3) dentro de la línea en inglés.
-  let s = String(enLine || "");
 
-  // ✅ Pasiva: be + C3
+// Split verb variants like "got / gotten" into an array of forms to highlight.
+function splitVariants(vform){
+  const s = String(vform || "").trim();
+  if(!s) return [];
+  // Normalize separators: allow '/', '|', commas
+  const parts = s.split(/\s*(?:\/|\||,)\s*/).map(x => x.trim()).filter(Boolean);
+  // Unique (case-insensitive) while preserving order
+  const seen = new Set();
+  const out = [];
+  for(const part of parts){
+    const key = part.toLowerCase();
+    if(seen.has(key)) continue;
+    seen.add(key);
+    out.push(part);
+  }
+  return out;
+}
+function wrapWithExp(text, cls){
+  const exp = (cls==="v-c1") ? "C1" : (cls==="v-c2") ? "C2" : (cls==="v-c3") ? "C3" : "";
+  if(!exp) return `<span class="${cls}">${text}</span>`;
+  return `<span class="${cls}">${text}<sup class="v-exp">${exp}</sup></span>`;
+}
+
+function highlightPhrase(line, ph, cls){
+  if(!line || !ph) return line || "";
+  const escaped = escapeRegExp(ph);
+  // Token-boundary highlight: start OR a non-word char before, and non-word OR end after.
+  const re = new RegExp(`(^|[^\\w])(${escaped})(?=[^\\w]|$)`, "gi");
+  return String(line).replace(re, (m, g1, g2) => `${g1}${wrapWithExp(g2, cls)}`);
+}
+
+function highlightVariants(line, variants, cls){
+  let out = String(line||"");
+  const list = (Array.isArray(variants) ? variants : [])
+    .map(s => String(s||"").trim())
+    .filter(Boolean);
+
+  // Longer first to prevent partial matches (e.g., got vs gotten)
+  list.sort((a,b)=>b.length-a.length);
+
+  for(const ph of list){
+    out = highlightPhrase(out, ph, cls);
+  }
+  return out;
+}
+
+function colorizeConjugation(enLine, tKind, moodKey, p, v, modeUsed){
+  const s = String(enLine||"");
+
+  // ✅ Pasiva: resaltamos el C3 (V3) porque la pasiva siempre usa el participio
   if(modeUsed === "passive"){
-    return highlightPhrase(s, (v && v.c3) ? v.c3 : "", "v-c3");
+    return highlightVariants(s, splitVariants(v && v.c3), "v-c3");
   }
 
-  // ✅ BE es especial (am/is/are — was/were — been)
+  // ✅ BE especial (am/is/are | was/were | been)
   if(isBeVerb(v)){
-    const k = (p && (p.key || p)) ? String(p.key || p) : "";
-
+    const k = String((p && (p.key || p)) || "");
     if(tKind === "P"){
       const form = (k==="I") ? "am" : (k==="He" || k==="She" || k==="It") ? "is" : "are";
-      const target = (moodKey==="Q") ? (form.charAt(0).toUpperCase() + form.slice(1)) : form;
-      return highlightPhrase(s, target, "v-c1");
+      return highlightPhrase(s, form, "v-c1");
     }
-
     if(tKind === "S"){
-      const form = (k==="You" || k==="YouP" || k==="We" || k==="They") ? "were" : "was";
-      const target = (moodKey==="Q") ? (form.charAt(0).toUpperCase() + form.slice(1)) : form;
+      const plural = (k==="You" || k==="YouP" || k==="We" || k==="They");
+      const form = plural ? "were" : "was";
+      const neg  = plural ? "weren't" : "wasn't";
+      const target = (moodKey==="N") ? neg : form;
       return highlightPhrase(s, target, "v-c2");
     }
-
     return highlightPhrase(s, "been", "v-c3");
   }
 
   // ✅ Verbos normales
-  if(tKind === "P")  return highlightPhrase(s, (v && v.c1) ? v.c1 : "", "v-c1");
-  if(tKind === "S")  return highlightPhrase(s, (v && v.c2) ? v.c2 : "", "v-c2");
-  return highlightPhrase(s, (v && v.c3) ? v.c3 : "", "v-c3");
+  if(tKind === "P"){
+    const base = (v && v.c1) ? v.c1 : "";
+    const form = (moodKey === "A" && isThirdSing(p)) ? thirdPersonS(base) : base;
+    return highlightPhrase(s, form, "v-c1");
+  }
+
+  if(tKind === "S"){
+    // ✅ Pasado simple (VOZ ACTIVA):
+    // - Afirmativa: usa C2 (pasado)     → I **stood**
+    // - Negativa / Interrogativa: usa C1 (con DID) → I didn't **stand** / Did I **stand**?
+    const isAff = (moodKey === "A");
+    const target = isAff ? (v && v.c2 ? v.c2 : "") : (v && v.c1 ? v.c1 : "");
+    const cls    = isAff ? "v-c2" : "v-c1";
+    return highlightVariants(s, splitVariants(target), cls);
+  }
+
+  // Presente perfecto: resaltamos C3 (participio)
+  return highlightVariants(s, splitVariants(v && v.c3), "v-c3");
 }
 
 function makePresent(p, v){

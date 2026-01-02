@@ -577,6 +577,15 @@
     .v-c2{ color: var(--blue); font-weight:950; }      /* C2 Past (azul) */
     .v-c3{ color: var(--error); font-weight:950; }     /* C3 Participle (rojo) */
 
+    /* Exponente C1/C2/C3 junto al verbo resaltado */
+    .v-exp{
+      font-size: 0.65em;
+      vertical-align: super;
+      margin-left: 2px;
+      font-weight: 950;
+      opacity: 0.95;
+    }
+
     .btn-listen{
       background:#e2e8f0; border:none; border-radius:999px;
       padding:6px 10px; cursor:pointer; float:right;
