@@ -8070,16 +8070,33 @@ function getReadingStory(mode, v){
   const subjPas = subjForPassive(v);
   const ctx = pickStoryContext(v.c1);
 
-  // Protagonista (EN) coloreado por TIEMPO:
-  const vPres  = wrapTense(v.c1, "present");
-  const vPast  = wrapTense(v.c2, "past");
-  const vPastB = wrapTense(v.c1, "past");        // did/didn't + base (sigue siendo Past)
-  const vPerf  = wrapTense(v.c3, "perfect");     // have/has + V3
+  // Protagonista (EN) con colores por columna (C1/C2/C3) y exponente.
+  // En la historia: Past Simple negativa/interrogativa usa base verb (C1).
+  const pickStoryForm = (txt) => {
+    if(txt == null) return "";
+    const s = String(txt).trim();
+    // Si hay variantes tipo "got / gotten", usa la primera para que suene natural.
+    if(s.includes("/")) return s.split("/")[0].trim();
+    return s;
+  };
 
-  // En pasiva (EN): siempre V3 (participio) y siempre rojo (C3)
-  const vP_pres = wrapTense(v.c3, "perfect");
-  const vP_past = wrapTense(v.c3, "perfect");
-  const vP_perf = wrapTense(v.c3, "perfect");
+  const c1 = pickStoryForm(v.c1);
+  const c2 = pickStoryForm(v.c2);
+  const c3 = pickStoryForm(v.c3);
+
+  const vC1 = wrapWithExp(c1, "v-c1", "C1");
+  const vC2 = wrapWithExp(c2, "v-c2", "C2");
+  const vC3 = wrapWithExp(c3, "v-c3", "C3");
+
+  const vPres  = vC1;
+  const vPast  = vC2;
+  const vPastB = vC1;  // did/didn't + base
+  const vPerf  = vC3;  // have/has + V3
+
+  // En pasiva (EN): siempre V3 (C3)
+  const vP_pres = vC3;
+  const vP_past = vC3;
+  const vP_perf = vC3;
 
   // Protagonista (ES) en 1ra persona singular (yo)
   const inf = String(v.esp||"hacer").toLowerCase().trim();
@@ -8161,6 +8178,36 @@ function getReadingStory(mode, v){
 }
 
 let _readingStoryUtterance = null;
+let _readingStoryRate = 0.85; // Default story audio speed
+
+function updateReadingStoryRateLabel(){
+  const el = document.getElementById("readingStoryRateLabel");
+  if(!el) return;
+  const r = Math.round(_readingStoryRate * 100) / 100;
+  el.textContent = `${r}x`;
+}
+
+function changeReadingStoryRate(delta){
+  const r = Math.round((_readingStoryRate + delta) * 100) / 100;
+  _readingStoryRate = Math.max(0.55, Math.min(1.2, r));
+  updateReadingStoryRateLabel();
+  // If it's currently speaking, restart with the new speed.
+  try{
+    if(typeof speechSynthesis !== "undefined" && (speechSynthesis.speaking || speechSynthesis.pending)){
+      speakReadingStory();
+    }
+  }catch(_e){}
+}
+
+function resetReadingStoryRate(){
+  _readingStoryRate = 0.85;
+  updateReadingStoryRateLabel();
+  try{
+    if(typeof speechSynthesis !== "undefined" && (speechSynthesis.speaking || speechSynthesis.pending)){
+      speakReadingStory();
+    }
+  }catch(_e){}
+}
 function _pickEnglishVoice(){
   if(typeof speechSynthesis === "undefined") return null;
   const voices = speechSynthesis.getVoices ? speechSynthesis.getVoices() : [];
@@ -8183,6 +8230,8 @@ function speakReadingStory(){
     const el = document.getElementById("readingStoryEnglish");
     if(!el) return;
     let text = (el.textContent || "").replace(/\s+/g," ").trim();
+    // Avoid speaking the visual C1/C2/C3 exponents.
+    text = text.replace(/C[123]/gi, "").replace(/\s+/g, " ").trim();
     if(!text) return;
 
     const u = new SpeechSynthesisUtterance(text);
@@ -8191,7 +8240,7 @@ function speakReadingStory(){
     u.lang = (voice && voice.lang) ? voice.lang : "en-US";
     // ✅ Beginner-friendly speed (slower, clearer)
     // Keep punctuation intact so the browser can pause naturally.
-    u.rate = 0.85;
+    u.rate = _readingStoryRate;
     u.pitch = 1;
 
     _readingStoryUtterance = u;
@@ -8443,7 +8492,14 @@ if(voiceMode==="passive" && passiveOk){
       <div class="card" style="margin-top:16px;">
         <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
           <div style="font-weight:950; color:#0f172a;">📚 STORY (${storyLabel})</div>
-          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">${showReadingSpanish ? '<button class="roundbtn" id="btnReadingTranslate" type="button" onclick="toggleReadingStoryTranslation()" style="text-transform:none;">' + translateBtnText + '</button>' : ""}<button class="roundbtn" id="btnReadingAudio" type="button" onclick="speakReadingStory()" style="text-transform:none;">🔊 Play Audio</button><button class="roundbtn" id="btnReadingAudioStop" type="button" disabled onclick="stopReadingStory()" style="text-transform:none;">⏹ Stop</button></div>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">${showReadingSpanish ? '<button class="roundbtn" id="btnReadingTranslate" type="button" onclick="toggleReadingStoryTranslation()" style="text-transform:none;">' + translateBtnText + '</button>' : ""}
+            <button class="roundbtn" id="btnReadingRateDown" type="button" onclick="changeReadingStoryRate(-0.1)" title="Slower" style="text-transform:none;">🐢 −</button>
+            <span id="readingStoryRateLabel" style="font-weight:900; color:#fff; padding:0 6px;">${Math.round(_readingStoryRate*100)/100}x</span>
+            <button class="roundbtn" id="btnReadingRateUp" type="button" onclick="changeReadingStoryRate(0.1)" title="Faster" style="text-transform:none;">🐇 +</button>
+            <button class="roundbtn" id="btnReadingRateReset" type="button" onclick="resetReadingStoryRate()" title="Reset speed" style="text-transform:none;">↺</button>
+            <button class="roundbtn" id="btnReadingAudio" type="button" onclick="speakReadingStory()" style="text-transform:none;">🔊 Play Audio</button>
+            <button class="roundbtn" id="btnReadingAudioStop" type="button" disabled onclick="stopReadingStory()" style="text-transform:none;">⏹ Stop</button>
+          </div>
         </div>
 
         <div id="readingStoryEnglish" style="margin-top:10px; color:#0f172a; line-height:1.6; font-weight:850;">
