@@ -478,65 +478,6 @@ const GROUP_HINTS = {
 let __NY_VERBS_DB__ = null;
 let __NY_VERBS_DB_READY__ = false;
 
-
-// Normaliza la estructura de VERBS_DB (verbs.html) para que el index pueda consultarla sin errores:
-// - Mapea tiempos: P (Presente), Pa/past -> S (Pasado), PP (Presente perfecto)
-// - Corrige la ambigüedad de "You" en A/N (You singular vs You plural -> YouP)
-// - Normaliza key a minúsculas
-function __nyNormalizeVerbsDb(db){
-  if(!Array.isArray(db)) return;
-
-  const mapTimeKey = (k)=>{
-    const kl = String(k||"").trim().toLowerCase().replace(/\s+/g,"");
-    if(kl==="p" || kl==="pr" || kl==="pres" || kl==="present") return "P";
-    if(kl==="s" || kl==="pa" || kl==="pas" || kl==="past" || kl==="preterite") return "S";
-    if(kl==="pp" || kl==="perf" || kl==="presentperfect" || kl==="present_perfect") return "PP";
-    return String(k||"").trim();
-  };
-
-  db.forEach(entry=>{
-    if(!entry || typeof entry !== "object") return;
-
-    // key consistente
-    if(typeof entry.key === "string" && entry.key.trim()){
-      entry.key = entry.key.trim().toLowerCase();
-    }else if(typeof entry.c1 === "string" && entry.c1.trim()){
-      entry.key = entry.c1.trim().toLowerCase();
-    }
-
-    // active: normalizar tiempos y pronombres
-    if(entry.active && typeof entry.active === "object"){
-      const a = entry.active;
-      const norm = {};
-      Object.keys(a).forEach(k=>{
-        const nk = mapTimeKey(k);
-        norm[nk] = a[k];
-      });
-      entry.active = norm;
-
-      // En A/N suele venir "You" duplicado (singular y plural). Convertimos el segundo a "YouP".
-      ["P","S","PP"].forEach(tk=>{
-        const blk = entry.active[tk];
-        if(!blk || typeof blk !== "object") return;
-
-        ["A","N"].forEach(mk=>{
-          const arr = blk[mk] || blk[(mk==="A") ? "affirmative" : "negative"];
-          if(!Array.isArray(arr) || arr.length !== 8) return;
-
-          const k1 = Array.isArray(arr[1]) ? String(arr[1][0]||"").trim() : "";
-          const k6 = Array.isArray(arr[6]) ? String(arr[6][0]||"").trim() : "";
-
-          if(k1.toLowerCase()==="you" && k6.toLowerCase()==="you"){
-            // Mantener el primero como You (singular) y el segundo como YouP (plural)
-            if(Array.isArray(arr[1])) arr[1][0] = "You";
-            if(Array.isArray(arr[6])) arr[6][0] = "YouP";
-          }
-        });
-      });
-    }
-  });
-}
-
 async function loadVerbsDbFromVerbsHtml(){
   try{
     const res = await fetch("verbs.html", { cache: "no-store" });
@@ -2514,12 +2455,55 @@ function esParticiple(espGloss){
   return { part, tail, reflexive, key };
 }
 
+
+// =========================
+// Overrides ES (solo para casos irregulares en Presente Simple - Voz Activa)
+// Se usa cuando la BD (verbs.html) trae traducciones incorrectas o cuando el
+// generador automático no cubre cambios de raíz (huelo, apuesto, etc.)
+// =========================
+function __nySpanishOverrideActive(tKind, modeKey, p, v){
+  if(!v || !p) return null;
+  // Presente Simple en esta app se identifica como "P"
+  if(String(tKind) !== "P") return null;
+
+  const key = String(v.c1||"").toLowerCase().trim();
+  const pk  = p.key;
+
+  const MAP = {
+    smell: {
+      A: {I:"Yo huelo", You:"Tú hueles", He:"Él huele", She:"Ella huele", It:"Eso huele", We:"Nosotros olemos", YouP:"Ustedes huelen", They:"Ellos huelen"},
+      N: {I:"Yo no huelo", You:"Tú no hueles", He:"Él no huele", She:"Ella no huele", It:"Eso no huele", We:"Nosotros no olemos", YouP:"Ustedes no huelen", They:"Ellos no huelen"},
+      Q: {I:"¿Huelo yo?", You:"¿Hueles tú?", He:"¿Huele él?", She:"¿Huele ella?", It:"¿Huele eso?", We:"¿Olemos nosotros?", YouP:"¿Huelen ustedes?", They:"¿Huelen ellos?"}
+    },
+    // Puedes ir agregando aquí otros verbos problemáticos cuando el usuario comparta la tabla exacta
+  };
+
+  const vMap = MAP[key];
+  if(!vMap) return null;
+  const m = vMap[modeKey];
+  if(!m) return null;
+
+  return m[pk] || null;
+}
+
 function buildSpanishActiveLine(tKind, modeKey, p, v, comp){
   // ✅ Round 1: SOLO pronombre + verbo (sin complemento)
   // ✅ Round 2: pronombre + verbo + complemento
   const useComp = (currentRound===2); // Round 2: con complemento en todas las conjugaciones/tiempos (incluye "be")
   const compEs = (useComp && comp && comp.es) ? (" " + comp.es) : "";
   const pronEs = p.es;
+
+  // ✅ Overrides ES (si aplica) – prioridad máxima
+  const __ov = __nySpanishOverrideActive(tKind, modeKey, p, v);
+  if(__ov){
+    if(!compEs) return __ov;
+    return String(__ov).split(" / ").map(part=>{
+      part = String(part||"").trim();
+      if(!part) return part;
+      if(part.endsWith("?")) return (part.slice(0,-1) + compEs + "?").replace(/\s+/g," ").trim();
+      return (part + compEs).replace(/\s+/g," ").trim();
+    }).filter(Boolean).join(" / ");
+  }
 
   // ✅ Preferir traducción exacta desde verbs.html (si existe)
   const __fromDb = lookupSpanishLineFromVerbsHtml(tKind, modeKey, p, v);
