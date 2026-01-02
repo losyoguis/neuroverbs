@@ -5597,7 +5597,9 @@ function scrollToConjugationTables(){
   // Barra de estadísticas fija (HUD) arriba
   const hud = document.querySelector('.hud');
   const hudH = hud ? Math.ceil(hud.getBoundingClientRect().height) : 0;
-  const extraPad = 16;
+  // ✅ Subir un poco más para que queden visibles los botones VOZ ACTIVA / VOZ PASIVA
+  // (en móvil el HUD ocupa más espacio y puede tapar la fila de botones)
+  const extraPad = (window.innerWidth <= 640) ? 86 : 66;
 
   const y = target.getBoundingClientRect().top + window.pageYOffset - (hudH + extraPad);
   window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
