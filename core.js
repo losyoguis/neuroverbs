@@ -5591,17 +5591,22 @@ let activeDB = verbosDB_R1;
    - Lleva a la zona de tablas (VOZ ACTIVA / VOZ PASIVA)
    =========================== */
 function scrollToConjugationTables(){
-  const target = document.querySelector('.voiceRowInTables') || document.getElementById('master');
-  if(!target) return;
-
-  // Barra de estadísticas fija (HUD) arriba
+  const msg = document.getElementById('msg');
+  const voiceRow = document.querySelector('.voiceRowInTables');
+  const master = document.getElementById('master');
   const hud = document.querySelector('.hud');
   const hudH = hud ? Math.ceil(hud.getBoundingClientRect().height) : 0;
-  // ✅ Subir un poco más para que queden visibles los botones VOZ ACTIVA / VOZ PASIVA
-  // (en móvil el HUD ocupa más espacio y puede tapar la fila de botones)
-  const extraPad = (window.innerWidth <= 640) ? 86 : 66;
 
-  const y = target.getBoundingClientRect().top + window.pageYOffset - (hudH + extraPad);
+  const hasMsg = !!(msg && ((msg.textContent || '').trim().length > 0) && (msg.getBoundingClientRect().height > 0));
+  const target = hasMsg ? msg : (voiceRow || master);
+  if(!target) return;
+
+  // Queremos que se vea también la fila VOZ ACTIVA / VOZ PASIVA.
+  // Si hay mensaje (#msg) lo anclamos arriba; si no, anclamos a la fila de VOZ y subimos más.
+  const topGap = (window.innerWidth <= 640) ? 18 : 14; // respiración bajo el HUD
+  const pad = hudH + (hasMsg ? topGap : ((window.innerWidth <= 640) ? 170 : 140));
+
+  const y = target.getBoundingClientRect().top + window.pageYOffset - pad;
   window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
 }
 

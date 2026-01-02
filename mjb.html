@@ -216,14 +216,26 @@
 
 <script src="core.js"></script>
 <script>
-(function () {
-  try { if ('scrollRestoration' in history) history.scrollRestoration = 'manual'; } catch (e) {}
-  function focusBrand() {
-    const el = document.getElementById('appBrand');
-    if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'auto', block: 'start' });
-    else window.scrollTo(0, 0);
+(function(){
+  try{ if('scrollRestoration' in history) history.scrollRestoration = 'manual'; }catch(e){}
+
+  function forceTop(){
+    try{ window.scrollTo({ top: 0, left: 0, behavior: 'auto' }); }
+    catch(e){ try{ window.scrollTo(0,0); }catch(_){} }
   }
-  window.addEventListener('load', function () { setTimeout(focusBrand, 0); });
+
+  function forceTopSettled(){
+    forceTop();
+    requestAnimationFrame(forceTop);
+    requestAnimationFrame(()=>requestAnimationFrame(forceTop));
+    setTimeout(forceTop, 50);
+    setTimeout(forceTop, 200);
+  }
+
+  // ✅ Al refrescar, quedar como en la pantalla principal (banner + ranking visibles)
+  window.addEventListener('DOMContentLoaded', forceTopSettled, { once:true });
+  window.addEventListener('load', forceTopSettled, { once:true });
+  window.addEventListener('pageshow', forceTopSettled);
 })();
 </script>
 </body>
