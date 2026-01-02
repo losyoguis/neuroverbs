@@ -7704,7 +7704,56 @@ let currentVerb = null;
 /* =========================
    ✅ INIT
    ========================= */
-init();
+
+/* =============================
+   CARGA DE DBS EXTERNAS (verbs2 / verbs3)
+   ============================= */
+async function __nyLoadConstArrayFromHtml(file, constName){
+  try{
+    const res = await fetch(file, {cache: "no-store"});
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    const html = await res.text();
+    const re = new RegExp("const\\s+" + constName + "\\s*=\\s*(\\[[\\s\\S]*?\\])\\s*;");
+    const m = html.match(re);
+    if(!m) return [];
+    const arrText = m[1];
+    const db = Function("return " + arrText)();
+    return Array.isArray(db) ? db : [];
+  }catch(err){
+    console.warn("No se pudo cargar", file, err);
+    return [];
+  }
+}
+
+function __nyMergeDbInto(target, extra){
+  if(!Array.isArray(target) || !Array.isArray(extra)) return;
+  extra.forEach((e) => {
+    if(!e || typeof e !== "object") return;
+    const k = String((e.key || e.c1) || "").trim().toLowerCase();
+    if(!k) return;
+    const idx = target.findIndex(x => String((x.key || x.c1) || "").trim().toLowerCase() === k);
+    if(idx >= 0) target[idx] = e;
+    else target.push(e);
+  });
+}
+
+async function __nyLoadExtras(){
+  // Carga en paralelo y mezcla (verbs2 puede traer correcciones; verbs3 es el Grupo 3)
+  const [db2, db3] = await Promise.all([
+    __nyLoadConstArrayFromHtml("verbs2.html", "VERBS2_DB"),
+    __nyLoadConstArrayFromHtml("verbs3.html", "VERBS3_DB")
+  ]);
+  __nyMergeDbInto(VERBS_DB, db2);
+  __nyMergeDbInto(VERBS_DB, db3);
+}
+
+async function bootstrap(){
+  await __nyLoadExtras();
+  init();
+}
+
+bootstrap();
+
 
 function init(){
   // datalist
