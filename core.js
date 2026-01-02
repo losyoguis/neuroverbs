@@ -598,66 +598,6 @@ function __nyPronIndexForQ(pKey){
   return 0;
 }
 
-
-// ===========================
-// ✅ Overrides puntuales de traducción ES (cuando la BD externa no trae la variante exacta)
-//   - SOLO afecta las líneas ES (no cambia la conjugación en inglés)
-//   - Útil para verbos con 2 sentidos principales (ej: leave = salir / dejar)
-// ===========================
-const __NY_SPANISH_OVERRIDES__ = {
-  // leave — presente simple (voz activa)
-  "leave": {
-    "P": { // Present Simple
-      "A": {
-        I: "Yo salgo / dejo",
-        You: "Tú sales / dejas",
-        He: "Él sale / deja",
-        She: "Ella sale / deja",
-        It: "Eso sale / deja",
-        We: "Nosotros salimos",
-        YouP: "Ustedes salen",
-        They: "Ellos salen"
-      },
-      "N": {
-        I: "Yo no salgo / dejo",
-        You: "Tú no sales / dejas",
-        He: "Él no sale / deja",
-        She: "Ella no sale / deja",
-        It: "Eso no sale / deja",
-        We: "Nosotros no salimos",
-        YouP: "Ustedes no salen",
-        They: "Ellos no salen"
-      },
-      "Q": {
-        I: "¿Salgo yo? / ¿Dejo yo?",
-        You: "¿Sales tú? / ¿Dejas tú?",
-        He: "¿Sale él? / ¿Deja él?",
-        She: "¿Sale ella? / ¿Deja ella?",
-        It: "¿Sale eso? / ¿Deja eso?",
-        We: "¿Salimos nosotros?",
-        YouP: "¿Salen ustedes?",
-        They: "¿Salen ellos?"
-      }
-    }
-  }
-};
-
-function __nyGetSpanishOverride(tKind, modeKey, p, v){
-  try{
-    const key = __nyVerbKeyFromIndexVerb(v);
-    const byVerb = __NY_SPANISH_OVERRIDES__[key];
-    if(!byVerb) return null;
-    const byT = byVerb[tKind];
-    if(!byT) return null;
-    const byMode = byT[modeKey];
-    if(!byMode) return null;
-    return byMode[p.key] || null;
-  }catch(_){
-    return null;
-  }
-}
-
-
 function lookupSpanishLineFromVerbsHtml(tKind, modeKey, p, v){
   if(!__NY_VERBS_DB_READY__ || !v || !p) return null;
 
@@ -2515,6 +2455,101 @@ function esParticiple(espGloss){
   return { part, tail, reflexive, key };
 }
 
+
+/* ===========================
+   ✅ OVERRIDES ESPAÑOL (ACTIVA)
+   - Para verbos cuya traducción/conjugación no debe depender del auto-conjugador
+   - Se aplica ANTES de consultar verbs.html
+   =========================== */
+const __NY_ES_OVERRIDES__ = {
+  leave: {
+    P: {
+      A: {
+        I: "Yo salgo / dejo",
+        You: "Tú sales / dejas",
+        He: "Él sale / deja",
+        She: "Ella sale / deja",
+        It: "Eso sale / deja",
+        We: "Nosotros salimos",
+        YouP: "Ustedes salen",
+        They: "Ellos salen"
+      },
+      N: {
+        I: "Yo no salgo / dejo",
+        You: "Tú no sales / dejas",
+        He: "Él no sale / deja",
+        She: "Ella no sale / deja",
+        It: "Eso no sale / deja",
+        We: "Nosotros no salimos",
+        YouP: "Ustedes no salen",
+        They: "Ellos no salen"
+      },
+      Q: {
+        I: "¿Salgo yo? / ¿Dejo yo?",
+        You: "¿Sales tú? / ¿Dejas tú?",
+        He: "¿Sale él? / ¿Deja él?",
+        She: "¿Sale ella? / ¿Deja ella?",
+        It: "¿Sale eso? / ¿Deja eso?",
+        We: "¿Salimos nosotros?",
+        YouP: "¿Salen ustedes?",
+        They: "¿Salen ellos?"
+      }
+    }
+  },
+  light: {
+    P: {
+      A: {
+        I: "Yo enciendo / ilumino",
+        You: "Tú enciendes / iluminas",
+        He: "Él enciende / ilumina",
+        She: "Ella enciende / ilumina",
+        It: "Eso enciende / ilumina",
+        We: "Nosotros encendemos",
+        YouP: "Ustedes encienden",
+        They: "Ellos encienden"
+      },
+      N: {
+        I: "Yo no enciendo / ilumino",
+        You: "Tú no enciendes / iluminas",
+        He: "Él no enciende / ilumina",
+        She: "Ella no enciende / ilumina",
+        It: "Eso no enciende / ilumina",
+        We: "Nosotros no encendemos",
+        YouP: "Ustedes no encienden",
+        They: "Ellos no encienden"
+      },
+      Q: {
+        I: "¿Enciendo yo? / ¿Ilumino yo?",
+        You: "¿Enciendes tú?",
+        He: "¿Enciende él?",
+        She: "¿Enciende ella?",
+        It: "¿Enciende eso?",
+        We: "¿Encendemos nosotros?",
+        YouP: "¿Encienden ustedes?",
+        They: "¿Encienden ellos?"
+      }
+    }
+  }
+};
+
+function __nyGetSpanishOverrideLine(tKind, modeKey, p, v){
+  try{
+    const verbKey = String((v && v.c1) ? v.c1 : "").trim().toLowerCase();
+    if(!verbKey) return null;
+    const byVerb = __NY_ES_OVERRIDES__[verbKey];
+    if(!byVerb) return null;
+    const byT = byVerb[String(tKind||"")];
+    if(!byT) return null;
+    const byM = byT[String(modeKey||"")];
+    if(!byM) return null;
+    const pKey = (p && p.key) ? p.key : null;
+    if(!pKey) return null;
+    return byM[pKey] || null;
+  }catch(_e){
+    return null;
+  }
+}
+
 function buildSpanishActiveLine(tKind, modeKey, p, v, comp){
   // ✅ Round 1: SOLO pronombre + verbo (sin complemento)
   // ✅ Round 2: pronombre + verbo + complemento
@@ -2522,11 +2557,12 @@ function buildSpanishActiveLine(tKind, modeKey, p, v, comp){
   const compEs = (useComp && comp && comp.es) ? (" " + comp.es) : "";
   const pronEs = p.es;
 
-  const __ov = __nyGetSpanishOverride(tKind, modeKey, p, v);
-  if(__ov){
-    if(!compEs) return __ov;
-    // Insertar complemento respetando signos de pregunta y alternativas " / "
-    return String(__ov).split(" / ").map(part=>{
+  // ✅ Preferir traducción exacta desde verbs.html (si existe)
+  // ✅ OVERRIDE local (si existe) — tiene prioridad sobre verbs.html y sobre el auto-conjugador
+  const __override = __nyGetSpanishOverrideLine(tKind, modeKey, p, v);
+  if(__override){
+    if(!compEs) return __override;
+    return String(__override).split(" / ").map(part=>{
       part = String(part||"").trim();
       if(!part) return part;
       if(part.endsWith("?")){
@@ -2536,7 +2572,6 @@ function buildSpanishActiveLine(tKind, modeKey, p, v, comp){
     }).join(" / ");
   }
 
-    // ✅ Preferir traducción exacta desde verbs.html (si existe)
   const __fromDb = lookupSpanishLineFromVerbsHtml(tKind, modeKey, p, v);
   if(__fromDb){
     if(!compEs) return __fromDb;
@@ -3870,17 +3905,11 @@ function cerrarAyuda(){
   syncModalOpen();
 }
 
-window.addEventListener("load", () => {
-  // ✅ Iniciar UI sin bloquear (evita pantallas en blanco si verbs.html tarda o falla)
-  try { init(); } catch (e) { console.error(e); }
-  try { updateHudSafe(); } catch (_) {}
-
-  // ✅ Sincronizar verbs.html en segundo plano y refrescar menús al terminar
-  try{
-    Promise.resolve(ensureActiveDbFromVerbsHtml())
-      .then(()=>{ try{ actualizarDias(); }catch(_){ } })
-      .catch(()=>{});
-  }catch(_){}
+window.addEventListener("load", async () => {
+  // Sincroniza la base de verbos antes de iniciar la UI (Grupo/Día + Active/Passive)
+  try { await ensureActiveDbFromVerbsHtml(); } catch (e) {}
+  init();
+  updateHudSafe();
 });
 window.addEventListener("resize", pinStatsBar);
 window.addEventListener("scroll", pinStatsBar);
