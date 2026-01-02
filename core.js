@@ -6686,7 +6686,9 @@ function mostrar(){
   const v = current[idx];
   if(!v) return;
 
-  document.getElementById('verbo-esp').innerText = v.esp;
+  // ✅ En el encabezado principal mostramos el verbo en INGLÉS
+  const vTop = document.getElementById('verbo-en');
+  if(vTop) vTop.innerText = (v.c1 || "").toUpperCase();
   updateMasteryUI(v);
   renderVerbIllustration(v);
 
@@ -8571,6 +8573,7 @@ function renderSpelling(v){
 function getSpellIllustrationSVG(v){
   const c1 = String(v?.c1||"").trim().toLowerCase();
   const esp = String(v?.esp||"").trim().toLowerCase();
+  const espLabel = String(v?.esp||"").trim() || String(v?.c1||"").trim() || "verb";
 
   const pick = (emoji, label)=> {
     const safeLabel = String(label||"").replace(/[<>]/g,"").slice(0,40);
@@ -8590,34 +8593,47 @@ function getSpellIllustrationSVG(v){
   };
 
   // 🔥 Mapeo rápido (puedes ampliar esta lista si quieres)
-  if(c1==="cut" || esp.includes("cortar") || esp.includes("recortar")) return pick("✂️","cut");
-  if(c1==="put" || esp.includes("poner") || esp.includes("colocar") || esp.includes("meter")) return pick("📦","put");
-  if(c1==="go" || esp.includes("ir")) return pick("➡️","go");
-  if(c1==="come" || esp.includes("venir")) return pick("🚶‍♂️","come");
-  if(c1==="eat" || esp.includes("comer")) return pick("🍽️","eat");
-  if(c1==="drink" || esp.includes("beber") || esp.includes("tomar")) return pick("🥤","drink");
-  if(c1==="read" || esp.includes("leer")) return pick("📖","read");
-  if(c1==="write" || esp.includes("escribir")) return pick("✍️","write");
-  if(c1==="see" || esp.includes("ver")) return pick("👀","see");
-  if(c1==="say" || esp.includes("decir")) return pick("💬","say");
-  if(c1==="tell" || esp.includes("contar") || esp.includes("decir")) return pick("🗣️","tell");
-  if(c1==="take" || esp.includes("tomar") || esp.includes("llevar")) return pick("🤲","take");
-  if(c1==="give" || esp.includes("dar")) return pick("🎁","give");
-  if(c1==="make" || esp.includes("hacer") || esp.includes("fabricar")) return pick("🛠️","make");
-  if(c1==="think" || esp.includes("pensar")) return pick("🧠","think");
-  if(c1==="run" || esp.includes("correr")) return pick("🏃","run");
-  if(c1==="buy" || esp.includes("comprar")) return pick("🛒","buy");
-  if(c1==="sell" || esp.includes("vender")) return pick("💰","sell");
-  if(c1==="sleep" || esp.includes("dormir")) return pick("😴","sleep");
-  if(c1==="sing" || esp.includes("cantar")) return pick("🎤","sing");
-  if(c1==="swim" || esp.includes("nadar")) return pick("🏊","swim");
-  if(c1==="drive" || esp.includes("conduc")) return pick("🚗","drive");
-  if(c1==="fly" || esp.includes("volar")) return pick("✈️","fly");
-  if(c1==="teach" || esp.includes("enseñar")) return pick("👨‍🏫","teach");
-  if(c1==="learn" || esp.includes("aprender")) return pick("📚","learn");
+  // ✅ La etiqueta inferior debe ser el ESPAÑOL (como en el ejemplo: CUT arriba / CORTAR abajo)
+  if(c1==="cut" || esp.includes("cortar") || esp.includes("recortar")) return pick("✂️", espLabel);
+  if(c1==="get" || esp.includes("obtener") || esp.includes("conseguir") || esp.includes("recibir")) return pick("📥", espLabel);
+  if(c1==="put" || esp.includes("poner") || esp.includes("colocar") || esp.includes("meter")) return pick("📦", espLabel);
+  if(c1==="go" || esp.includes("ir")) return pick("➡️", espLabel);
+  if(c1==="come" || esp.includes("venir")) return pick("🚶‍♂️", espLabel);
+  if(c1==="eat" || esp.includes("comer")) return pick("🍽️", espLabel);
+  if(c1==="drink" || esp.includes("beber") || esp.includes("tomar")) return pick("🥤", espLabel);
+  if(c1==="read" || esp.includes("leer")) return pick("📖", espLabel);
+  if(c1==="write" || esp.includes("escribir")) return pick("✍️", espLabel);
+  if(c1==="see" || esp.includes("ver")) return pick("👀", espLabel);
+  if(c1==="say" || esp.includes("decir")) return pick("💬", espLabel);
+  if(c1==="tell" || esp.includes("contar") || esp.includes("decir")) return pick("🗣️", espLabel);
+  if(c1==="take" || esp.includes("tomar") || esp.includes("llevar")) return pick("🤲", espLabel);
+  if(c1==="give" || esp.includes("dar")) return pick("🎁", espLabel);
+  if(c1==="make" || esp.includes("hacer") || esp.includes("fabricar")) return pick("🛠️", espLabel);
+  if(c1==="think" || esp.includes("pensar")) return pick("🧠", espLabel);
+  if(c1==="know" || esp.includes("saber") || esp.includes("conocer")) return pick("💡", espLabel);
+  if(c1==="choose" || esp.includes("elegir") || esp.includes("escoger")) return pick("🗳️", espLabel);
+  if(c1==="grow" || esp.includes("crecer") || esp.includes("cultivar")) return pick("🌱", espLabel);
+  if(c1==="foresee" || esp.includes("prever") || esp.includes("anticipar")) return pick("🔮", espLabel);
+  if(c1==="mistake" || esp.includes("equivoc") || esp.includes("confundir")) return pick("🤦", espLabel);
+  if(c1==="undertake" || esp.includes("emprender") || esp.includes("asumir")) return pick("🚀", espLabel);
+  if(c1==="sink" || esp.includes("hund") || esp.includes("sumerg")) return pick("🚢", espLabel);
+  if(c1==="shrink" || esp.includes("encog") || esp.includes("reduc")) return pick("📉", espLabel);
+  if(c1==="stride" || esp.includes("zanc") || esp.includes("paso largo")) return pick("👣", espLabel);
+  if(c1==="swell" || esp.includes("hinch") || esp.includes("infl")) return pick("🎈", espLabel);
+  if(c1==="undo" || esp.includes("deshacer") || esp.includes("revert")) return pick("↩️", espLabel);
+  if(c1==="run" || esp.includes("correr")) return pick("🏃", espLabel);
+  if(c1==="buy" || esp.includes("comprar")) return pick("🛒", espLabel);
+  if(c1==="sell" || esp.includes("vender")) return pick("💰", espLabel);
+  if(c1==="sleep" || esp.includes("dormir")) return pick("😴", espLabel);
+  if(c1==="sing" || esp.includes("cantar")) return pick("🎤", espLabel);
+  if(c1==="swim" || esp.includes("nadar")) return pick("🏊", espLabel);
+  if(c1==="drive" || esp.includes("conduc")) return pick("🚗", espLabel);
+  if(c1==="fly" || esp.includes("volar")) return pick("✈️", espLabel);
+  if(c1==="teach" || esp.includes("enseñar")) return pick("👨‍🏫", espLabel);
+  if(c1==="learn" || esp.includes("aprender")) return pick("📚", espLabel);
 
   // Default (si no hay mapeo): icono genérico "brain"
-  return pick("🧩","verb");
+  return pick("🧩", espLabel);
 }
 
 /* ===========================
@@ -8733,13 +8749,13 @@ function renderVerbIllustration(v){
   const esp = String(v?.esp||"").toUpperCase();
   const src = getVerbPhotoUrl(v);
 
-  // Contenedor con caption (estilo Duolingo + identidad)
+  // ✅ Arriba (fuera de la imagen) va el verbo en INGLÉS (verbo-en)
+  // ✅ Debajo/en la imagen mostramos el verbo en ESPAÑOL (como en el ejemplo: CUT arriba / CORTAR abajo)
   el.innerHTML = `
     <div class="verbIllustrationInner">
-      <img id="verbPhoto" alt="Imagen del verbo ${esp}" loading="lazy" referrerpolicy="no-referrer" src="${src}" />
-      <div class="verbCaption" aria-hidden="true">
-        <span class="verbTag">🎬 <small>Acción:</small> ${esp}</span>
-        <span class="verbTag">🇬🇧 <small>Verb:</small> ${c1}</span>
+      <img id="verbPhoto" alt="Imagen del verbo ${c1}" loading="lazy" referrerpolicy="no-referrer" src="${src}" />
+      <div class="verbCaption center" aria-hidden="true">
+        <span class="verbTag verbTagEsp">${esp}</span>
       </div>
     </div>
   `;

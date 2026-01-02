@@ -438,8 +438,8 @@
       color:var(--primary); text-transform:uppercase;
     }
 
-        /* verb esp override */
-    #verbo-esp{ color: var(--c1) !important; }
+        /* verb (EN) override */
+    #verbo-en{ color: var(--c1) !important; }
 
     .inputs{
       display:grid; grid-template-columns:repeat(3,1fr);
@@ -1390,6 +1390,8 @@
       align-items:flex-end;
       pointer-events:none;
     }
+    /* ✅ Caption centrado cuando solo mostramos un tag (ES debajo / EN arriba) */
+    .verbCaption.center{ justify-content:center; }
     .verbTag{
       display:inline-flex;
       align-items:center;
@@ -1405,6 +1407,7 @@
       backdrop-filter: blur(6px);
       -webkit-backdrop-filter: blur(6px);
     }
+    .verbTagEsp{ font-size:1.25rem; padding:10px 16px; letter-spacing:.08em; }
     .verbTag small{ font-weight:900; opacity:.85; }
     .verbIllustrationInner{
       position:relative;
