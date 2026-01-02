@@ -598,6 +598,66 @@ function __nyPronIndexForQ(pKey){
   return 0;
 }
 
+
+// ===========================
+// ✅ Overrides puntuales de traducción ES (cuando la BD externa no trae la variante exacta)
+//   - SOLO afecta las líneas ES (no cambia la conjugación en inglés)
+//   - Útil para verbos con 2 sentidos principales (ej: leave = salir / dejar)
+// ===========================
+const __NY_SPANISH_OVERRIDES__ = {
+  // leave — presente simple (voz activa)
+  "leave": {
+    "P": { // Present Simple
+      "A": {
+        I: "Yo salgo / dejo",
+        You: "Tú sales / dejas",
+        He: "Él sale / deja",
+        She: "Ella sale / deja",
+        It: "Eso sale / deja",
+        We: "Nosotros salimos",
+        YouP: "Ustedes salen",
+        They: "Ellos salen"
+      },
+      "N": {
+        I: "Yo no salgo / dejo",
+        You: "Tú no sales / dejas",
+        He: "Él no sale / deja",
+        She: "Ella no sale / deja",
+        It: "Eso no sale / deja",
+        We: "Nosotros no salimos",
+        YouP: "Ustedes no salen",
+        They: "Ellos no salen"
+      },
+      "Q": {
+        I: "¿Salgo yo? / ¿Dejo yo?",
+        You: "¿Sales tú? / ¿Dejas tú?",
+        He: "¿Sale él? / ¿Deja él?",
+        She: "¿Sale ella? / ¿Deja ella?",
+        It: "¿Sale eso? / ¿Deja eso?",
+        We: "¿Salimos nosotros?",
+        YouP: "¿Salen ustedes?",
+        They: "¿Salen ellos?"
+      }
+    }
+  }
+};
+
+function __nyGetSpanishOverride(tKind, modeKey, p, v){
+  try{
+    const key = __nyVerbKeyFromIndexVerb(v);
+    const byVerb = __NY_SPANISH_OVERRIDES__[key];
+    if(!byVerb) return null;
+    const byT = byVerb[tKind];
+    if(!byT) return null;
+    const byMode = byT[modeKey];
+    if(!byMode) return null;
+    return byMode[p.key] || null;
+  }catch(_){
+    return null;
+  }
+}
+
+
 function lookupSpanishLineFromVerbsHtml(tKind, modeKey, p, v){
   if(!__NY_VERBS_DB_READY__ || !v || !p) return null;
 
@@ -2003,23 +2063,19 @@ function abrirWeb(){
    INIT / UI
    =========================== */
 function init(){
-  // 0) Siempre poblar Grupo/Día primero (para que la UI nunca quede “en blanco” si algo falla después)
+  pinStatsBar();
+  loadState();
+
   const gNames=[
     "GRUPO 1: (Day 1-8) |   C1 = C2 = C3",
     "GRUPO 2: (Day 9-25) |  C1 ≠ C2 = C3",
     "GRUPO 3: (Day 26-40) | C1 ≠ C2 ≠ C3"
   ];
-  const selGrupo = document.getElementById('sel-grupo');
-  if(selGrupo){
-    selGrupo.innerHTML = gNames.map((n,i)=>`<option value="${i+1}">${n}</option>`).join('');
-  }
+  document.getElementById('sel-grupo').innerHTML =
+    gNames.map((n,i)=>`<option value="${i+1}">${n}</option>`).join('');
 
-  try{ renderGroupHint(1); }catch(_){}
-  try{ actualizarDias(); }catch(_){}
-
-  // 1) El resto de inicialización debe ser tolerante a fallos
-  try{ pinStatsBar(); }catch(_){}
-  try{ loadState(); }catch(_){}
+  renderGroupHint(1);
+  actualizarDias();
 
   const inst = document.getElementById("instOverlay");
   if(inst){
@@ -2028,20 +2084,12 @@ function init(){
     });
   }
 
-  const eb = document.getElementById("ebookBtn");
+  const eb = document.getElementById("ebookOverlay");
   if(eb){
-    eb.addEventListener("click", openEbook);
+    eb.addEventListener("click", (e)=>{
+      if(e.target && e.target.id === "ebookOverlay") cerrarEbook();
+    });
   }
-
-  // listeners (defensivos)
-  const sG = document.getElementById("sel-grupo");
-  if(sG) sG.addEventListener("change", ()=>{ try{ actualizarDias(); }catch(_){} });
-
-  const sD = document.getElementById("sel-dia");
-  if(sD) sD.addEventListener("change", ()=>{ try{ cargarDia(); }catch(_){} });
-
-  // Garantiza HUD safe
-  try{ updateHudSafe(); }catch(_){}
 }
 
 /* ESC para cerrar modales */
@@ -2241,24 +2289,26 @@ function validar(){
 }
 
 function actualizarStats(){
-  const _st = document.getElementById('streak'); if(_st) _st.innerText = streak;
-  const _xp = document.getElementById('xp');     if(_xp) _xp.innerText = xp;
-  const _ac = document.getElementById('acc');    if(_ac) _ac.innerText = (att===0 ? 100 : Math.round((corr/att)*100)) + "%";
-
+  document.getElementById('streak').innerText = streak;
+  document.getElementById('xp').innerText = xp;
+  document.getElementById('acc').innerText = (att===0 ? 100 : Math.round((corr/att)*100)) + "%";
   updateGamificationUI();
   const __suppress = !!window.__suppressXpSync;
 
   // ✅ Sincronizar XP a Sheets (delta) y refrescar ranking
-  if(__suppress){ __lastXpSynced = xp; persistState(); return; }
+    if(__suppress){ __lastXpSynced = xp; persistState(); return; }
 
-  try{
+try{
     const idToken = localStorage.getItem("google_id_token");
     if(idToken){
       if(__lastXpSynced === null) __lastXpSynced = xp;
       const delta = xp - __lastXpSynced;
       if(delta > 0){
         __lastXpSynced = xp;
-        syncXpToSheets(delta).catch(()=>{});
+        queueXpDelta(idToken, delta);
+        if(!window.__lbDebounce){
+          window.__lbDebounce = setTimeout(()=>{ window.__lbDebounce=null; cargarLeaderboard(50); }, 1200);
+        }
       }
     }
   }catch(_){}
@@ -2472,7 +2522,21 @@ function buildSpanishActiveLine(tKind, modeKey, p, v, comp){
   const compEs = (useComp && comp && comp.es) ? (" " + comp.es) : "";
   const pronEs = p.es;
 
-  // ✅ Preferir traducción exacta desde verbs.html (si existe)
+  const __ov = __nyGetSpanishOverride(tKind, modeKey, p, v);
+  if(__ov){
+    if(!compEs) return __ov;
+    // Insertar complemento respetando signos de pregunta y alternativas " / "
+    return String(__ov).split(" / ").map(part=>{
+      part = String(part||"").trim();
+      if(!part) return part;
+      if(part.endsWith("?")){
+        return (part.slice(0,-1).trim() + compEs + "?").replace(/\s+/g," ").trim();
+      }
+      return (part + compEs).replace(/\s+/g," ").trim();
+    }).join(" / ");
+  }
+
+    // ✅ Preferir traducción exacta desde verbs.html (si existe)
   const __fromDb = lookupSpanishLineFromVerbsHtml(tKind, modeKey, p, v);
   if(__fromDb){
     if(!compEs) return __fromDb;
@@ -3807,16 +3871,16 @@ function cerrarAyuda(){
 }
 
 window.addEventListener("load", () => {
-  // ✅ NO bloquear el arranque de la UI esperando la BD externa.
-  // La app trae una BD local (verbosDB). Si verbs.html está disponible, se sincroniza en segundo plano.
+  // ✅ Iniciar UI sin bloquear (evita pantallas en blanco si verbs.html tarda o falla)
+  try { init(); } catch (e) { console.error(e); }
+  try { updateHudSafe(); } catch (_) {}
+
+  // ✅ Sincronizar verbs.html en segundo plano y refrescar menús al terminar
   try{
-    ensureActiveDbFromVerbsHtml()
-      .then(()=>{ try{ actualizarDias(); }catch(_){} })
+    Promise.resolve(ensureActiveDbFromVerbsHtml())
+      .then(()=>{ try{ actualizarDias(); }catch(_){ } })
       .catch(()=>{});
   }catch(_){}
-
-  init();
-  try{ updateHudSafe(); }catch(_){}
 });
 window.addEventListener("resize", pinStatsBar);
 window.addEventListener("scroll", pinStatsBar);
