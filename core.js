@@ -5585,6 +5585,24 @@ let currentRound = 1;
 let focusGroupAfterLoad = false; // ✅ para que al cambiar Round el foco vaya a Grupo
 let activeDB = verbosDB_R1;
 
+/* ===========================
+   ✅ SCROLL CONTROLADO
+   - Evita que el usuario se quede en el formulario
+   - Lleva a la zona de tablas (VOZ ACTIVA / VOZ PASIVA)
+   =========================== */
+function scrollToConjugationTables(){
+  const target = document.querySelector('.voiceRowInTables') || document.getElementById('master');
+  if(!target) return;
+
+  // Barra de estadísticas fija (HUD) arriba
+  const hud = document.querySelector('.hud');
+  const hudH = hud ? Math.ceil(hud.getBoundingClientRect().height) : 0;
+  const extraPad = 16;
+
+  const y = target.getBoundingClientRect().top + window.pageYOffset - (hudH + extraPad);
+  window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+}
+
 // ✅ Evitar que la página haga scroll automático hacia el formulario al recargar.
 // Solo hacemos focus/scroll cuando el usuario ya interactuó (click/touch/teclado).
 let __userInteracted = false;
@@ -6565,6 +6583,14 @@ function conjugarDesdeModal(){
 
   hideMotivation();
   pendingVerb = null;
+
+  // ✅ Después de conjugar, llevar al usuario a la zona de tablas
+  // (evita quedarse en el formulario y mejora la UX en móvil)
+  try{
+    requestAnimationFrame(()=>requestAnimationFrame(()=>scrollToConjugationTables()));
+  }catch(_){
+    scrollToConjugationTables();
+  }
 }
 
 /* ===========================
