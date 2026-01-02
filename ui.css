@@ -233,13 +233,18 @@
       letter-spacing:.2px;
     }
 
-    /* ✅ BOTÓN FLOTANTE SIEMPRE VISIBLE (ABAJO) */
-    .ebook-float{
+    /* ✅ ACCESOS RÁPIDOS (ABAJO‑IZQUIERDA): SMART‑E‑BOOK + ASISTENTE IA */
+    .float-actions{
       position: fixed;
-      right: 14px;
+      left: 14px;
       bottom: 14px;
-      /* ✅ Debe quedar por debajo de overlays/modales */
-      z-index: 200;
+      z-index: 200; /* por debajo de overlays/modales */
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .float-action{
       background: var(--secondary);
       color:#0b1220;
       border:2px solid rgba(0,0,0,.12);
@@ -250,17 +255,33 @@
       letter-spacing:.2px;
       text-decoration:none;
       box-shadow:0 18px 40px rgba(0,0,0,.45);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      white-space:nowrap;
     }
-    .ebook-float:hover{
+    .float-action:hover{
       background: var(--secondaryHover);
       transform: translateY(-1px);
     }
+    .float-action.web-float{
+      background:#0b1220;
+      color:#fff;
+      border:2px solid rgba(255,255,255,.12);
+    }
+    .float-action.web-float:hover{
+      background:#0b1220;
+      border-color:rgba(255,255,255,.25);
+    }
 
-    /* ✅ Ajuste móvil: baja el botón para que no tape las flechas */
+    /* ✅ Ajuste móvil: más compacto y sin tapar controles */
     @media (max-width: 520px){
-      .ebook-float{
+      .float-actions{
         bottom: 4px;
-        right: 10px;
+        left: 10px;
+        gap: 8px;
+      }
+      .float-action{
         padding: 10px 12px;
         font-size: .78rem;
         border-radius: 12px;
@@ -622,7 +643,7 @@
     /* ✅ Cuando un modal está abierto, bajamos la prioridad del HUD (barra de puntuación y botón flotante)
        para que NUNCA tape el contenido del modal (especialmente en Google Sites). */
     body.modal-open .stats,
-    body.modal-open .ebook-float{
+    body.modal-open .float-actions{
       pointer-events: none !important;
       opacity: .18 !important;
       filter: blur(.6px);
@@ -1484,10 +1505,13 @@
         border-radius: 16px;
       }
 
-      /* Botón flotante: más pequeño */
-      .ebook-float{
-        right: 12px;
+      /* Accesos rápidos: más compactos */
+      .float-actions{
+        left: 12px;
         bottom: 12px;
+        gap: 8px;
+      }
+      .float-action{
         padding: 10px 12px;
         border-radius: 13px;
         font-size: .78rem;
@@ -1502,7 +1526,7 @@
 
     /* Mejoras táctiles */
     @media (hover: none){
-      .roundbtn, .btn-main, .btn-audio, .btn-mini, .ebook-float{
+      .roundbtn, .btn-main, .btn-audio, .btn-mini, .float-action{
         -webkit-tap-highlight-color: transparent;
       }
     }
@@ -1847,13 +1871,20 @@ box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);;justify-content:flex-start;text-ali
         border-radius: 14px !important;
       }
 
-      /* Botón inferior (ASISTENTE IA) como CTA full-width */
-      .ebook-float{
+      /* Accesos rápidos (abajo) en móvil: apilados y full-width */
+      .float-actions{
         left: 12px !important;
         right: 12px !important;
         bottom: calc(env(safe-area-inset-bottom, 0px) + 10px) !important;
         width: auto !important;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+      }
+      .float-action{
+        width: 100%;
         text-align: center;
+        justify-content: center;
       }
 
       /* Footer: más compacto en móvil */
@@ -1868,3 +1899,35 @@ box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);;justify-content:flex-start;text-ali
     }
 
 
+
+
+/* NEUROVERBS branding */
+.brand{ scroll-margin-top: 96px; }
+.brand h1{ font-size: 2.0rem; letter-spacing: 0.08em; text-transform: uppercase; }
+.brand .brandMark{ margin-right: 8px; }
+.brand .brandTag{ margin-top: 6px; font-weight: 900; opacity: 0.95; }
+
+
+/* ===== Footer ===== */
+.appFooter{
+  margin: 28px auto 18px;
+  max-width: 1200px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: rgba(10, 15, 30, .65);
+  border: 1px solid rgba(255, 178, 74, .35);
+  box-shadow: 0 14px 40px rgba(0,0,0,.35);
+  text-align: center;
+}
+.appFooter .footerBy{
+  font-weight: 800;
+  color: #e7e7ff;
+  letter-spacing: .2px;
+}
+.appFooter .footerLink{
+  display: inline-block;
+  margin-top: 8px;
+  color: #6aa9ff;
+  font-weight: 900;
+  text-decoration: underline;
+}

@@ -5466,24 +5466,94 @@ let verbosDB_R2 = verbosDB.map(v => ({...v, d: v.d + 40}));
 
 /* ✅ Complementos (Round 2). En pasiva se usan como SUJETO (objeto del activo). */
 const COMPLEMENTS = {
-  cut:   {en:"the paper", es:"el papel"},
-  put:   {en:"the book on the table", es:"el libro en la mesa"},
-  read:  {en:"the story", es:"la historia"},
-  eat:   {en:"an apple", es:"una manzana"},
-  drink: {en:"water", es:"agua"},
-  write: {en:"a message", es:"un mensaje"},
-  speak: {en:"English", es:"inglés"},
-  make:  {en:"a plan", es:"un plan"},
-  take:  {en:"a photo", es:"una foto"},
-  give:  {en:"a gift", es:"un regalo"},
-  buy:   {en:"a notebook", es:"un cuaderno"},
-  bring: {en:"the keys", es:"las llaves"},
-  do:    {en:"the homework", es:"la tarea"},
-  have:  {en:"a meeting", es:"una reunión"},
-  be:    {en:"at home", es:"en casa"},
-  run:   {en:"the race", es:"la carrera"},
-  swim:  {en:"the channel", es:"el canal"},
-  sleep: {en:"the night", es:"la noche"}
+  "beat": { en: "the drum", es: "el tambor" },
+  "behold": { en: "the sunrise", es: "el amanecer" },
+  "bend": { en: "the wire", es: "el alambre" },
+  "bet": { en: "the money", es: "el dinero" },
+  "bid": { en: "the item", es: "el artículo" },
+  "bind": { en: "the book", es: "el libro" },
+  "blend": { en: "the smoothie", es: "el batido" },
+  "breed": { en: "the horse", es: "el caballo" },
+  "broadcast": { en: "the announcement", es: "el anuncio" },
+  "burst": { en: "the balloon", es: "el globo" },
+  "cast": { en: "the spell", es: "el hechizo" },
+  "choose": { en: "the winner", es: "el ganador" },
+  "cling": { en: "the rope", es: "la cuerda" },
+  "cost": { en: "the ticket", es: "el tiquete" },
+  "cut": { en: "the paper", es: "el papel" },
+  "eat": { en: "the cake", es: "el pastel" },
+  "feed": { en: "the baby", es: "el bebé" },
+  "find": { en: "the treasure", es: "el tesoro" },
+  "fit": { en: "the suit", es: "el traje" },
+  "flee": { en: "the danger", es: "el peligro" },
+  "forecast": { en: "the weather", es: "el clima" },
+  "foresee": { en: "the problem", es: "el problema" },
+  "get": { en: "the package", es: "el paquete" },
+  "grind": { en: "the coffee", es: "el café" },
+  "grow": { en: "the crop", es: "el cultivo" },
+  "hang": { en: "the picture", es: "el cuadro" },
+  "have": { en: "a good time", es: "un buen rato" },
+  "hear": { en: "the sound", es: "el sonido" },
+  "hit": { en: "the target", es: "el blanco" },
+  "hold": { en: "the line", es: "la línea" },
+  "hurt": { en: "the body", es: "el cuerpo" },
+  "inlay": { en: "the gem", es: "la gema" },
+  "knit": { en: "the sweater", es: "el suéter" },
+  "know": { en: "the secret", es: "el secreto" },
+  "lay": { en: "the egg", es: "el huevo" },
+  "lead": { en: "the team", es: "el equipo" },
+  "lean": { en: "the ladder", es: "la escalera" },
+  "learn": { en: "the topic", es: "el tema" },
+  "leave": { en: "the building", es: "el edificio" },
+  "lend": { en: "the money", es: "el dinero" },
+  "let": { en: "the student", es: "el estudiante" },
+  "light": { en: "the fire", es: "el fuego" },
+  "mistake": { en: "the name", es: "el nombre" },
+  "overstand": { en: "the message", es: "el mensaje" },
+  "pay": { en: "the bill", es: "la cuenta" },
+  "play": { en: "the game", es: "el juego" },
+  "put": { en: "the book", es: "el libro" },
+  "quit": { en: "the habit", es: "el hábito" },
+  "read": { en: "the book", es: "el libro" },
+  "rid": { en: "the problem", es: "el problema" },
+  "say": { en: "the sentence", es: "la oración" },
+  "sell": { en: "the product", es: "el producto" },
+  "send": { en: "the email", es: "el correo" },
+  "set": { en: "the timer", es: "el temporizador" },
+  "shrink": { en: "the fabric", es: "la tela" },
+  "shut": { en: "the door", es: "la puerta" },
+  "sink": { en: "the ship", es: "el barco" },
+  "sit": { en: "the seat", es: "el asiento" },
+  "slit": { en: "the envelope", es: "el sobre" },
+  "smell": { en: "the perfume", es: "el perfume" },
+  "sow": { en: "the seed", es: "la semilla" },
+  "speed": { en: "the car", es: "el carro" },
+  "spell": { en: "the word", es: "la palabra" },
+  "spend": { en: "the money", es: "el dinero" },
+  "spit": { en: "the gum", es: "el chicle" },
+  "split": { en: "the log", es: "el tronco" },
+  "spread": { en: "the rumor", es: "el rumor" },
+  "stand": { en: "the pressure", es: "la presión" },
+  "stay": { en: "the night", es: "la noche" },
+  "sting": { en: "the arm", es: "el brazo" },
+  "stride": { en: "the corridor", es: "el pasillo" },
+  "strike": { en: "the deal", es: "el acuerdo" },
+  "sweat": { en: "a lot of sweat", es: "mucho sudor" },
+  "swell": { en: "the ankle", es: "el tobillo" },
+  "swing": { en: "the bat", es: "el bate" },
+  "tell": { en: "the joke", es: "el chiste" },
+  "thrust": { en: "the knife", es: "el cuchillo" },
+  "unbind": { en: "the knot", es: "el nudo" },
+  "understand": { en: "the concept", es: "el concepto" },
+  "undertake": { en: "the project", es: "el proyecto" },
+  "undo": { en: "the change", es: "el cambio" },
+  "unwind": { en: "the cable", es: "el cable" },
+  "uphold": { en: "the agreement", es: "el acuerdo" },
+  "wet": { en: "the floor", es: "el piso" },
+  "wind": { en: "the watch", es: "el reloj" },
+  "withhold": { en: "the payment", es: "el pago" },
+  "withstand": { en: "the heat", es: "el calor" },
+  "wring": { en: "the cloth", es: "el paño" },
 };
 function getComplement(v){
   const key = String(v.c1||"").toLowerCase().trim();
@@ -5514,6 +5584,16 @@ let currentRound = 1;
 
 let focusGroupAfterLoad = false; // ✅ para que al cambiar Round el foco vaya a Grupo
 let activeDB = verbosDB_R1;
+
+// ✅ Evitar que la página haga scroll automático hacia el formulario al recargar.
+// Solo hacemos focus/scroll cuando el usuario ya interactuó (click/touch/teclado).
+let __userInteracted = false;
+try{
+  window.addEventListener('pointerdown', ()=>{ __userInteracted = true; }, { once:true, passive:true });
+  window.addEventListener('keydown', ()=>{ __userInteracted = true; }, { once:true });
+}catch(_){
+  // ignore
+}
 
 /* ✅ NUEVO: MODO DE VOZ */
 let voiceMode = "active"; // "active" | "passive"
@@ -6181,7 +6261,7 @@ function isProbablyPluralEN(np){
 function passiveAllowed(v){
   // pasiva natural requiere verbo transitivo (objeto directo).
   // Lista corta de verbos típicamente intransitivos en este set (se advierte al usuario).
-  const no = new Set(["go","come","become","arise","rise","fall","be"]);
+  const no = new Set(["go","come","become","arise","rise","fall","be","cost","have","get","fit","flee","stay","stride"]);
   return !no.has(String(v.c1||"").toLowerCase().trim());
 }
 function subjForPassive(v){
@@ -6573,14 +6653,18 @@ window.addEventListener("keydown", (e)=>{
 
 function actualizarDias(){
 
-  // ✅ Mantener visible la sección "Selecciona Grupo"
-  try{
-    const sg = document.getElementById('sel-grupo');
-    if(sg){
-      sg.focus();
-      sg.scrollIntoView({behavior:'smooth', block:'center'});
-    }
-  }catch(_){}
+  // ✅ IMPORTANTE: NO hacer scroll automático al recargar.
+  // Solo enfocamos/centramos el selector cuando el usuario ya interactuó.
+  if(__userInteracted){
+    try{
+      const sg = document.getElementById('sel-grupo');
+      if(sg){
+        // preventScroll evita saltos en navegadores compatibles
+        try{ sg.focus({ preventScroll: true }); }catch(_){ sg.focus(); }
+        sg.scrollIntoView({behavior:'smooth', block:'center'});
+      }
+    }catch(_){}
+  }
 
   const g = parseInt(document.getElementById('sel-grupo').value,10);
   renderGroupHint(g);
@@ -6641,15 +6725,28 @@ function mostrar(){
   spellingState = null;
   practiceState = null;
 
-  // ✅ Foco inteligente: si vienes de cambiar Round, ubica el cursor en Grupo
-  if(focusGroupAfterLoad){
-    focusGroupAfterLoad = false;
-    try{
-      const sg = document.getElementById('sel-grupo');
-      if(sg){ sg.focus(); sg.scrollIntoView({behavior:'smooth', block:'center'}); }
-    }catch(_){ }
-  }else{
-    document.getElementById('c1').focus();
+  // ✅ Evitar saltos de scroll al recargar.
+  // Solo hacemos focus/scroll cuando el usuario ya interactuó.
+  if(__userInteracted){
+    // Si vienes de cambiar Round, ubica el cursor en Grupo
+    if(focusGroupAfterLoad){
+      focusGroupAfterLoad = false;
+      try{
+        const sg = document.getElementById('sel-grupo');
+        if(sg){
+          try{ sg.focus({ preventScroll: true }); }catch(_){ sg.focus(); }
+          sg.scrollIntoView({behavior:'smooth', block:'center'});
+        }
+      }catch(_){ }
+    }else{
+      // Foco en C1 solo si ya hay interacción
+      try{
+        const c1 = document.getElementById('c1');
+        if(c1){
+          try{ c1.focus({ preventScroll: true }); }catch(_){ c1.focus(); }
+        }
+      }catch(_){ }
+    }
   }
 }
 
@@ -7271,11 +7368,6 @@ function generarTablas(v){
       });
 
       html += `</tbody></table>
-        <div class="legend">${
-          voiceMode==="passive"
-            ? `Voz pasiva: <b>${subjPas.en}</b> + BE + V3 (C3) + (by + agente).`
-            : `Voz activa: sujeto + verbo (C1/C2/C3) + complemento (Round 2).`
-        }</div>
       </div>`;
     });
 
