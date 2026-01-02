@@ -2310,6 +2310,8 @@ const IRR_PRESENT_FULL = {
   venir:   ["vengo","vienes","viene","viene","viene","venimos","vienen","vienen"],
   conducir:["conduzco","conduces","conduce","conduce","conduce","conducimos","conducen","conducen"],
   oir:     ["oigo","oyes","oye","oye","oye","oímos","oyen","oyen"], // oír
+  tener: ["tengo","tienes","tiene","tiene","tiene","tenemos","tienen","tienen"],
+
 };
 
 const IRR_PRET = {
@@ -2326,6 +2328,8 @@ const IRR_PRET = {
   traer:   ["traje","trajiste","trajo","trajo","trajo","trajimos","trajeron","trajeron"],
   decir:   ["dije","dijiste","dijo","dijo","dijo","dijimos","dijeron","dijeron"],
   conducir:["conduje","condujiste","condujo","condujo","condujo","condujimos","condujeron","condujeron"],
+  tener: ["tuve","tuviste","tuvo","tuvo","tuvo","tuvimos","tuvieron","tuvieron"],
+
 };
 
 const IRR_PART = {
