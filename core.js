@@ -6133,6 +6133,27 @@ function wrapWithExp(text, cls){
   return `<span class="${cls}">${text}<sup class="v-exp">${exp}</sup></span>`;
 }
 
+
+// ✅ En presente simple afirmativo (3ra persona), pinta SOLO la "s" final en violeta.
+function wrapWithExpThirdPersonS(text, cls){
+  const exp = (cls==="v-c1") ? "C1" : (cls==="v-c2") ? "C2" : (cls==="v-c3") ? "C3" : "";
+  const t = String(text ?? "");
+  if(!exp) return `<span class="${cls}">${t}</span>`;
+  if(/s$/i.test(t) && t.length>1){
+    const main = t.slice(0, -1);
+    const last = t.slice(-1);
+    return `<span class="${cls}">${main}<span class="v-suffix-s">${last}</span><sup class="v-exp">${exp}</sup></span>`;
+  }
+  return `<span class="${cls}">${t}<sup class="v-exp">${exp}</sup></span>`;
+}
+
+function highlightPhraseThirdPersonS(line, ph, cls){
+  if(!line || !ph) return line || "";
+  const escaped = escapeRegExp(ph);
+  const re = new RegExp(`(^|[^\\w])(${escaped})(?=[^\\w]|$)`, "gi");
+  return line.replace(re, (m,g1,g2)=> `${g1}${wrapWithExpThirdPersonS(g2, cls)}`);
+}
+
 function highlightPhrase(line, ph, cls){
   if(!line || !ph) return line || "";
   const escaped = escapeRegExp(ph);
@@ -6184,8 +6205,9 @@ function colorizeConjugation(enLine, tKind, moodKey, p, v, modeUsed){
   // ✅ Verbos normales
   if(tKind === "P"){
     const base = (v && v.c1) ? v.c1 : "";
-    const form = (moodKey === "A" && isThirdSing(p)) ? thirdPersonS(base) : base;
-    return highlightPhrase(s, form, "v-c1");
+    const is3 = (moodKey === "A" && isThirdSing(p));
+    const form = is3 ? thirdPersonS(base) : base;
+    return is3 ? highlightPhraseThirdPersonS(s, form, "v-c1") : highlightPhrase(s, form, "v-c1");
   }
 
   if(tKind === "S"){
@@ -8247,22 +8269,28 @@ function speakReadingStory(){
     _readingStoryUtterance = u;
 
     const playBtn = document.getElementById("btnReadingAudio");
+    const pauseBtn = document.getElementById("btnReadingAudioPause");
     const stopBtn = document.getElementById("btnReadingAudioStop");
     if(playBtn) playBtn.disabled = true;
+    if(pauseBtn){ pauseBtn.disabled = false; pauseBtn.textContent = "⏸ Pause"; }
     if(stopBtn) stopBtn.disabled = false;
 
     u.onend = () => {
       const pb = document.getElementById("btnReadingAudio");
+      const pab = document.getElementById("btnReadingAudioPause");
       const sb = document.getElementById("btnReadingAudioStop");
       if(pb) pb.disabled = false;
       if(sb) sb.disabled = true;
+      if(pab){ pab.disabled = true; pab.textContent = "⏸ Pause"; }
       _readingStoryUtterance = null;
     };
     u.onerror = () => {
       const pb = document.getElementById("btnReadingAudio");
+      const pab = document.getElementById("btnReadingAudioPause");
       const sb = document.getElementById("btnReadingAudioStop");
       if(pb) pb.disabled = false;
       if(sb) sb.disabled = true;
+      if(pab){ pab.disabled = true; pab.textContent = "⏸ Pause"; }
       _readingStoryUtterance = null;
     };
 
@@ -8289,7 +8317,8 @@ function togglePauseReadingStory(){
   try{
     if(typeof speechSynthesis === "undefined") return;
     const pauseBtn = document.getElementById("btnReadingAudioPause");
-    if(!speechSynthesis.speaking || !_readingStoryUtterance) return;
+    if(!_readingStoryUtterance) return;
+    if(!(speechSynthesis.speaking || speechSynthesis.paused)) return;
     if(speechSynthesis.paused){
       speechSynthesis.resume();
       _readingStoryPaused = false;

@@ -577,7 +577,9 @@
     .v-c2{ color: var(--blue); font-weight:950; }      /* C2 Past (azul) */
     .v-c3{ color: var(--error); font-weight:950; }     /* C3 Participle (rojo) */
 
-    /* Exponente C1/C2/C3 junto al verbo resaltado */
+    
+    .v-suffix-s{ color:#a855f7; font-weight:900; }  /* sufijo 's' en violeta */
+/* Exponente C1/C2/C3 junto al verbo resaltado */
     .v-exp{
       font-size: 0.65em;
       vertical-align: super;
