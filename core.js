@@ -478,43 +478,63 @@ const GROUP_HINTS = {
 let __NY_VERBS_DB__ = null;
 let __NY_VERBS_DB_READY__ = false;
 
-// ✅ BD2 (overrides): verbos con traducción ES corregida (solo cuando exista en verbs2.html)
-let __NY_VERBS2_DB__ = null;
-let __NY_VERBS2_DB_READY__ = false;
 
-// Normaliza una DB estilo VERBS_DB: asegura 'key' en minúscula
+// Normaliza la estructura de VERBS_DB (verbs.html) para que el index pueda consultarla sin errores:
+// - Mapea tiempos: P (Presente), Pa/past -> S (Pasado), PP (Presente perfecto)
+// - Corrige la ambigüedad de "You" en A/N (You singular vs You plural -> YouP)
+// - Normaliza key a minúsculas
 function __nyNormalizeVerbsDb(db){
   if(!Array.isArray(db)) return;
-  for(const v of db){
-    if(!v || typeof v!=="object") continue;
-    if(!v.key){
-      const k = String(v.c1 || v.base || v.infinitive || v.inf || v.verb || "").trim().toLowerCase();
-      if(k) v.key = k;
-    }else{
-      v.key = String(v.key).trim().toLowerCase();
+
+  const mapTimeKey = (k)=>{
+    const kl = String(k||"").trim().toLowerCase().replace(/\s+/g,"");
+    if(kl==="p" || kl==="pr" || kl==="pres" || kl==="present") return "P";
+    if(kl==="s" || kl==="pa" || kl==="pas" || kl==="past" || kl==="preterite") return "S";
+    if(kl==="pp" || kl==="perf" || kl==="presentperfect" || kl==="present_perfect") return "PP";
+    return String(k||"").trim();
+  };
+
+  db.forEach(entry=>{
+    if(!entry || typeof entry !== "object") return;
+
+    // key consistente
+    if(typeof entry.key === "string" && entry.key.trim()){
+      entry.key = entry.key.trim().toLowerCase();
+    }else if(typeof entry.c1 === "string" && entry.c1.trim()){
+      entry.key = entry.c1.trim().toLowerCase();
     }
-  }
-}
 
-// Carga BD2 desde verbs2.html (si existe). No bloquea la app.
-async function loadVerbsDbFromVerbs2Html(){
-  try{
-    const res = await fetch("verbs2.html", { cache: "no-store" });
-    if(!res.ok) return { ok:false, count:0 };
+    // active: normalizar tiempos y pronombres
+    if(entry.active && typeof entry.active === "object"){
+      const a = entry.active;
+      const norm = {};
+      Object.keys(a).forEach(k=>{
+        const nk = mapTimeKey(k);
+        norm[nk] = a[k];
+      });
+      entry.active = norm;
 
-    const txt = await res.text();
-    const m = txt.match(/const\s+VERBS2_DB\s*=\s*(\[[\s\S]*?\n\s*\]);/);
-    if(!m) return { ok:false, count:0 };
+      // En A/N suele venir "You" duplicado (singular y plural). Convertimos el segundo a "YouP".
+      ["P","S","PP"].forEach(tk=>{
+        const blk = entry.active[tk];
+        if(!blk || typeof blk !== "object") return;
 
-    __NY_VERBS2_DB__ = (new Function("return " + m[1]))();
-    __NY_VERBS2_DB_READY__ = Array.isArray(__NY_VERBS2_DB__) && __NY_VERBS2_DB__.length > 0;
-    if(__NY_VERBS2_DB_READY__) __nyNormalizeVerbsDb(__NY_VERBS2_DB__);
+        ["A","N"].forEach(mk=>{
+          const arr = blk[mk] || blk[(mk==="A") ? "affirmative" : "negative"];
+          if(!Array.isArray(arr) || arr.length !== 8) return;
 
-    return { ok: __NY_VERBS2_DB_READY__, count: (__NY_VERBS2_DB__||[]).length };
-  }catch(e){
-    __NY_VERBS2_DB_READY__ = false;
-    return { ok:false, count:0, error: String(e?.message || e) };
-  }
+          const k1 = Array.isArray(arr[1]) ? String(arr[1][0]||"").trim() : "";
+          const k6 = Array.isArray(arr[6]) ? String(arr[6][0]||"").trim() : "";
+
+          if(k1.toLowerCase()==="you" && k6.toLowerCase()==="you"){
+            // Mantener el primero como You (singular) y el segundo como YouP (plural)
+            if(Array.isArray(arr[1])) arr[1][0] = "You";
+            if(Array.isArray(arr[6])) arr[6][0] = "YouP";
+          }
+        });
+      });
+    }
+  });
 }
 
 async function loadVerbsDbFromVerbsHtml(){
@@ -638,26 +658,13 @@ function __nyPronIndexForQ(pKey){
 }
 
 function lookupSpanishLineFromVerbsHtml(tKind, modeKey, p, v){
-  // ✅ Prioridad: verbs2.html (BD2) → verbs.html (BD1)
-  const anyReady = (__NY_VERBS_DB_READY__ || __NY_VERBS2_DB_READY__);
-  if(!anyReady || !v || !p) return null;
+  if(!__NY_VERBS_DB_READY__ || !v || !p) return null;
 
   const key = __nyVerbKeyFromIndexVerb(v);
   if(!key) return null;
 
-  const pick = (db) => {
-    if(!Array.isArray(db)) return null;
-    const e = db.find(x => x && x.key === key);
-    if(!e || !e.active || !e.active[tKind]) return null;
-    return e;
-  };
-
-  // Intenta BD2 primero (solo si tiene el tiempo pedido)
-  let entry = __NY_VERBS2_DB_READY__ ? pick(__NY_VERBS2_DB__) : null;
-  // Si BD2 no tiene ese bloque, usa BD1
-  if(!entry) entry = __NY_VERBS_DB_READY__ ? pick(__NY_VERBS_DB__) : null;
-
-  if(!entry) return null;
+  const entry = __NY_VERBS_DB__.find(e => e && e.key === key);
+  if(!entry || !entry.active || !entry.active[tKind]) return null;
 
   const blk = entry.active[tKind];
 
@@ -686,7 +693,7 @@ function lookupSpanishLineFromVerbsHtml(tKind, modeKey, p, v){
 }
 
 // Cargamos la DB lo más pronto posible (sin bloquear la app)
-window.addEventListener("DOMContentLoaded", () => { loadVerbsDbFromVerbsHtml(); loadVerbsDbFromVerbs2Html(); });
+window.addEventListener("DOMContentLoaded", () => { loadVerbsDbFromVerbsHtml(); });
 
 
 
