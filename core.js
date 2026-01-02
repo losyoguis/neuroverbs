@@ -2530,6 +2530,41 @@ const __NY_ES_OVERRIDES__ = {
       }
     }
   }
+,
+  sow: {
+    P: {
+      A: {
+        I: "Yo siembro",
+        You: "Tú siembras",
+        He: "Él siembra",
+        She: "Ella siembra",
+        It: "Eso siembra",
+        We: "Nosotros sembramos",
+        YouP: "Ustedes siembran",
+        They: "Ellos siembran"
+      },
+      N: {
+        I: "Yo no siembro",
+        You: "Tú no siembras",
+        He: "Él no siembra",
+        She: "Ella no siembra",
+        It: "Eso no siembra",
+        We: "Nosotros no sembramos",
+        YouP: "Ustedes no siembran",
+        They: "Ellos no siembran"
+      },
+      Q: {
+        I: "¿Siembro yo?",
+        You: "¿Siembras tú?",
+        He: "¿Siembra él?",
+        She: "¿Siembra ella?",
+        It: "¿Siembra eso?",
+        We: "¿Sembramos nosotros?",
+        YouP: "¿Siembran ustedes?",
+        They: "¿Siembran ellos?"
+      }
+    }
+  }
 };
 
 function __nyGetSpanishOverrideLine(tKind, modeKey, p, v){
