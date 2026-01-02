@@ -484,22 +484,11 @@ async function loadVerbsDbFromVerbsHtml(){
     if(!res.ok) return { ok:false, count:0 };
 
     const txt = await res.text();
-    // Preferimos extraer la DB usando marcadores (más robusto). Fallback a regex antigua.
-        let arrTxt = "";
-        const hasMarkers = txt.includes("//<VERBS_DB_START>") && txt.includes("//<VERBS_DB_END>");
-        if(hasMarkers){
-          const chunk = txt.split("//<VERBS_DB_START>")[1].split("//<VERBS_DB_END>")[0];
-          const mm = chunk.match(/const\s+VERBS_DB\s*=\s*(\[[\s\S]*?\n\s*\];)/);
-          if(mm) arrTxt = mm[1];
-        }
-        if(!arrTxt){
-          const m = txt.match(/const\s+VERBS_DB\s*=\s*(\[[\s\S]*?\n\s*\];)/);
-          if(m) arrTxt = m[1];
-        }
-        if(!arrTxt) return { ok:false, count:0 };
+    const m = txt.match(/const\s+VERBS_DB\s*=\s*(\[[\s\S]*?\n\s*\]);/);
+    if(!m) return { ok:false, count:0 };
 
-        // Evaluamos el array JS (misma origin, archivo controlado por nosotros)
-        __NY_VERBS_DB__ = (new Function("return " + arrTxt))();
+    // Evaluamos el array JS (misma origin, archivo controlado por nosotros)
+    __NY_VERBS_DB__ = (new Function("return " + m[1]))();
     __NY_VERBS_DB_READY__ = Array.isArray(__NY_VERBS_DB__) && __NY_VERBS_DB__.length > 0;
 
     if(__NY_VERBS_DB_READY__){
@@ -1826,86 +1815,104 @@ function passivePPQ(v, agentP){
   return `${aux} ${subj.toLowerCase()} been ${v.c3} ${by}?`;
 }
 
-/* Español: equivalencia elegante en pasiva con "SE" (evita concordancia de participio) */
-function esSePassive(verbKey, tenseKind, moodKey, objES){
-  const obj = (objES || "").replace(/\s+/g," ").trim();
+/* Español: VOZ PASIVA (SER + PARTICIPIO + "por" + agente)
+   Objetivo: traducción clara y consistente para principiantes, como:
+   "El papel es cortado por mí hoy."
+   "El papel fue cortado por mí ayer."
+   "El papel ha sido cortado por mí esta semana."
+*/
+const ES_AGENT_POR = {
+  I:   "por mí",
+  You: "por ti",
+  He:  "por él",
+  She: "por ella",
+  It:  "por ello",
+  We:  "por nosotros",
+  YouP:"por ustedes",
+  They:"por ellos"
+};
 
-  const looksPlural = (s) => {
-    const t = (s || "").trim().toLowerCase();
-    return t.startsWith("los ") || t.startsWith("las ") || t.startsWith("unos ") || t.startsWith("unas ");
-  };
-  const pluralObj = looksPlural(obj);
+// Participios irregulares comunes (infinitivo -> participio masc. sing.)
+const ES_PART_IRREG = {
+  "abrir":"abierto",
+  "cubrir":"cubierto",
+  "decir":"dicho",
+  "escribir":"escrito",
+  "freír":"frito",
+  "hacer":"hecho",
+  "morir":"muerto",
+  "poner":"puesto",
+  "resolver":"resuelto",
+  "romper":"roto",
+  "satisfacer":"satisfecho",
+  "ver":"visto",
+  "volver":"vuelto"
+};
 
-  // Buscar el verbo en VERBS_DB (verbs.html) para obtener conjugación ES real
-  const entry = (__NY_VERBS_DB_READY__ && Array.isArray(__NY_VERBS_DB__))
-    ? __NY_VERBS_DB__.find(x => x && x.key === verbKey)
-    : null;
-
-  const stripSubjectEs = (s) => {
-    s = String(s||"").replace(/\s+/g," ").trim();
-    const prefixes = ["Yo","Tú","Él","Ella","Eso","Nosotros","Nosotras","Ustedes","Ellos","Ellas"];
-    for(const p of prefixes){
-      if(s.toLowerCase().startsWith((p+" ").toLowerCase())){
-        return s.slice(p.length+1).trim();
-      }
-    }
-    return s.replace(/^(yo|tú|él|ella|eso|nosotros|nosotras|ustedes|ellos|ellas)\s+/i,"").trim();
-  };
-
-  const pickEsVerbPhrase = (tKind, isPlural) => {
-    const block = entry && entry.active && entry.active[tKind];
-    const rows = block && block.A;
-    if(!Array.isArray(rows)) return "";
-    const want = isPlural ? "THEY" : "IT";
-    const row = rows.find(r => r && r[0] === want) || rows.find(r => r && r[0] === "IT") || rows.find(r => r && r[0] === "THEY");
-    const esLine = row && row[2] ? row[2] : "";
-    return stripSubjectEs(esLine);
-  };
-
-  let core = "";
-  if(entry){
-    if(tenseKind==="P") core = pickEsVerbPhrase("P", pluralObj);
-    else if(tenseKind==="S") core = pickEsVerbPhrase("S", pluralObj);
-    else core = pickEsVerbPhrase("PP", pluralObj);
-  }
-
-  // Fallback genérico (solo si no hay data en VERBS_DB)
-  if(!core){
-    if(tenseKind==="P") core = objVerbEs("present");
-    else if(tenseKind==="S") core = objVerbEs("past");
-    else core = objVerbEs("pp");
-  }
-
-  const tailObj = obj ? (" " + obj) : "";
-  if(moodKey==="A") return `Se ${core}${tailObj}.`;
-  if(moodKey==="N") return `No se ${core}${tailObj}.`;
-  return `¿Se ${core}${tailObj}?`;
+function esVerbInfFromLabel(esLabel){
+  let v = String(esLabel||"").trim();
+  v = v.split("/")[0].trim();           // primera opción si viene "Guardar / Mantener"
+  v = v.replace(/\(.*?\)/g,"").trim(); // quita paréntesis
+  v = v.replace(/\s+se$/i,"").trim();   // quita "se" final reflexivo
+  v = v.toLowerCase().replace(/\s+/g," ").trim();
+  return v;
 }
 
-function esSePassiveLegacy(tenseKind, moodKey, objES){
-  const obj = String(objES||"la tarea").trim();
-  if(tenseKind==="P"){
-    if(moodKey==="A") return `Se ${objVerbEs("present")} ${obj}.`;
-    if(moodKey==="N") return `No se ${objVerbEs("present")} ${obj}.`;
-    return `¿Se ${objVerbEs("present")} ${obj}?`;
-  }
-  if(tenseKind==="S"){
-    if(moodKey==="A") return `Se ${objVerbEs("past")} ${obj}.`;
-    if(moodKey==="N") return `No se ${objVerbEs("past")} ${obj}.`;
-    return `¿Se ${objVerbEs("past")} ${obj}?`;
-  }
-  // PP
-  if(moodKey==="A") return `Se ${objVerbEs("pp")} ${obj}.`;
-  if(moodKey==="N") return `No se ${objVerbEs("pp")} ${obj}.`;
-  return `¿Se ${objVerbEs("pp")} ${obj}?`;
+function esParticipleFromInfinitive(esInf){
+  const v = esVerbInfFromLabel(esInf);
+  if(!v) return "hecho";
+  if(ES_PART_IRREG[v]) return ES_PART_IRREG[v];
+  if(v.endsWith("ar")) return v.slice(0,-2) + "ado";
+  if(v.endsWith("er") || v.endsWith("ir")) return v.slice(0,-2) + "ido";
+  return v;
 }
-function objVerbEs(kind){
-  // En español con "se" el verbo varía según el verbo original; aquí usamos una estructura genérica
-  // (se hace / se hizo / se ha hecho) porque el objetivo del módulo es VOZ PASIVA EN INGLÉS.
-  // Esto mantiene gramática correcta y consistente.
-  if(kind==="present") return "hace";
-  if(kind==="past") return "hizo";
-  return "ha hecho";
+
+function esGuessGenderNumber(np){
+  const s = String(np||"").trim().toLowerCase();
+  const starts = (w)=>s.startsWith(w+" ");
+  const plural = starts("los") || starts("las") || starts("unos") || starts("unas");
+  const feminine = starts("la") || starts("una") || starts("las") || starts("unas") || starts("esta") || starts("esa");
+  return {plural, feminine};
+}
+
+function esAgreeParticiple(partMasSing, feminine, plural){
+  let p = String(partMasSing||"").trim().toLowerCase();
+  if(!p) p = "hecho";
+  if(feminine && p.endsWith("o")) p = p.slice(0,-1) + "a";
+  if(plural && !p.endsWith("s")) p = p + "s";
+  return p;
+}
+
+function esAuxSerPassive(tenseKind, plural){
+  if(tenseKind==="P")  return plural ? "son" : "es";
+  if(tenseKind==="S")  return plural ? "fueron" : "fue";
+  return plural ? "han sido" : "ha sido"; // PP
+}
+
+function esSerPassiveLine(v, tenseKind, moodKey, agentP, subjES, tail){
+  const subjRaw = String(subjES||"la tarea").replace(/\s+/g," ").trim().replace(/[\.!?]+$/,"");
+  const subj = capFirst(subjRaw);
+  const {plural, feminine} = esGuessGenderNumber(subjRaw);
+  const aux = esAuxSerPassive(tenseKind, plural);
+  const part0 = esParticipleFromInfinitive(v?.esp || "");
+  const part = esAgreeParticiple(part0, feminine, plural);
+  const por = ES_AGENT_POR[agentP?.key] || "por ellos";
+  const t = String(tail||"").trim();
+
+  const coreA = `${subj} ${aux} ${part} ${por}`.replace(/\s+/g," ").trim();
+  const coreN = `${subj} no ${aux} ${part} ${por}`.replace(/\s+/g," ").trim();
+
+  if(moodKey==="Q"){
+    const q = `${coreA}${t ? (" " + t) : ""}`.replace(/\s+/g," ").trim();
+    return `¿${q}?`;
+  }
+  const s = (moodKey==="N") ? coreN : coreA;
+  const out = `${s}${t ? (" " + t) : ""}`.replace(/\s+/g," ").trim();
+  return out + ".";
+}
+
+function esSerPassiveWithTail(v, tenseKind, moodKey, agentP, subjES, tail){
+  return esSerPassiveLine(v, tenseKind, moodKey, agentP, subjES, tail);
 }
 
 /* ===========================
@@ -2782,7 +2789,7 @@ function generarTablas(v){
               <td class="en-col">
                 <button class="btn-listen" type="button" data-say="${encodeURIComponent(en)}">🔊</button>
                 <span class="en">${enHTML}</span>
-                ${voiceMode !== "passive" ? `<div class="es">${esLine}</div>` : ``}
+                <div class="es">${esLine}</div>
               </td>
             </tr>`;
           return;
@@ -2802,7 +2809,8 @@ function generarTablas(v){
         if(t.kind==="PP" && m.key==="Q") en = passivePPQ(v,p);
 
         // Español: estructura correcta tipo "Se ha hecho la tarea."
-        const esLine = esSePassive(v.key, t.kind, m.key, subjPas.es);
+        const tailES = (t.kind==="P") ? "hoy" : (t.kind==="S") ? "ayer" : "esta semana";
+        const esLine = esSerPassiveWithTail(v, t.kind, m.key, p, subjPas.es, tailES);
         const enHTML = colorizeConjugation(en, t.kind, m.key, p, v, "passive");
 
         html += `
@@ -2810,7 +2818,7 @@ function generarTablas(v){
             <td class="en-col">
               <button class="btn-listen" type="button" data-say="${encodeURIComponent(en)}">🔊</button>
               <span class="en">${enHTML}</span>
-              ${voiceMode !== "passive" ? `<div class="es">${esLine}</div>` : ``}
+              <div class="es">${esLine}</div>
             </td>
           </tr>`;
       });
@@ -3040,12 +3048,12 @@ function renderPractice(v){
       q8Expected: makeExpectedSet([en8Base, ...en8Variants]),
       q9Expected: makeExpectedSet([en9Base]),
       es: {
-        4: `Se ${objVerbEs("past")} ${subjPas.es} ayer.`,
-        5: `No se ${objVerbEs("present")} ${subjPas.es} todos los días.`,
-        6: `¿Se ${objVerbEs("present")} ${subjPas.es}?`,
-        7: `Se ${objVerbEs("pp")} ${subjPas.es} ya.`,
-        8: `No se ${objVerbEs("pp")} ${subjPas.es}.`,
-        9: `¿Se ${objVerbEs("past")} ${subjPas.es} anoche?`
+        4: esSerPassiveWithTail(v, "S",  "A", PRON[0], subjPas.es, "ayer"),
+        5: esSerPassiveWithTail(v, "P",  "N", PRON[0], subjPas.es, "todos los días"),
+        6: esSerPassiveWithTail(v, "P",  "Q", PRON[0], subjPas.es, ""),
+        7: esSerPassiveWithTail(v, "PP", "A", PRON[0], subjPas.es, "ya"),
+        8: esSerPassiveWithTail(v, "PP", "N", PRON[0], subjPas.es, ""),
+        9: esSerPassiveWithTail(v, "S",  "Q", PRON[0], subjPas.es, "anoche")
       }
     };
   }
@@ -3251,28 +3259,6 @@ function checkPractice(qid){
    - Solo para la sección Reading (debajo de la tabla Reading)
    =========================== */
 let readingStoryTranslationVisible = false;
-
-let readingRate = 0.85;
-try{
-  const rr = parseFloat(localStorage.getItem("ny_reading_rate") || "");
-  if(Number.isFinite(rr)) readingRate = rr;
-}catch(e){}
-
-function updateReadingRateLabel(){
-  const el = document.getElementById("readingRateLabel");
-  if(el) el.textContent = `${(readingRate||0.85).toFixed(2)}x`;
-}
-
-function setReadingRate(next){
-  const v = Math.min(1.15, Math.max(0.60, Number(next)));
-  if(!Number.isFinite(v)) return;
-  readingRate = v;
-  try{ localStorage.setItem("ny_reading_rate", String(readingRate)); }catch(e){}
-  updateReadingRateLabel();
-}
-function incReadingRate(){ setReadingRate((readingRate||0.85) + 0.05); }
-function decReadingRate(){ setReadingRate((readingRate||0.85) - 0.05); }
-
 
 function hashStr(s){
   s = String(s||"");
@@ -3578,7 +3564,7 @@ function speakReadingStory(){
     u.lang = (voice && voice.lang) ? voice.lang : "en-US";
     // ✅ Beginner-friendly speed (slower, clearer)
     // Keep punctuation intact so the browser can pause naturally.
-    u.rate = (typeof readingRate !== "undefined" ? (readingRate||0.85) : 0.85);
+    u.rate = 0.85;
     u.pitch = 1;
 
     _readingStoryUtterance = u;
@@ -3665,10 +3651,7 @@ function renderReading(v){
   // 🔎 Control: en "READING" de VOZ PASIVA (cuando aplica), ocultamos traducción al español.
   const isPassiveReading = (voiceMode==="passive" && passiveOk);
   const showReadingSpanish = true;
-  // (Ya no ocultamos español en pasiva)
-
-
-  if(voiceMode==="passive" && passiveOk){
+if(voiceMode==="passive" && passiveOk){
     const sEN = subjPas.en;
     const plural = isProbablyPluralEN(sEN);
     const beP = bePresentFor(plural);
@@ -3692,17 +3675,17 @@ function renderReading(v){
     ];
 
     es = [
-      addTailEs(esSePassive(v.key,"P","A", subjPas.es), "hoy"),
-      addTailEs(esSePassive(v.key,"P","N", subjPas.es), "hoy"),
-      addTailEs(esSePassive(v.key,"P","Q", subjPas.es), "hoy"),
+      esSerPassiveWithTail(v, "P",  "A", PRON[0], subjPas.es, "hoy"),
+      esSerPassiveWithTail(v, "P",  "N", PRON[0], subjPas.es, "hoy"),
+      esSerPassiveWithTail(v, "P",  "Q", PRON[0], subjPas.es, "hoy"),
 
-      addTailEs(esSePassive(v.key,"S","A", subjPas.es), "ayer"),
-      addTailEs(esSePassive(v.key,"S","N", subjPas.es), "ayer"),
-      addTailEs(esSePassive(v.key,"S","Q", subjPas.es), "ayer"),
+      esSerPassiveWithTail(v, "S",  "A", PRON[0], subjPas.es, "ayer"),
+      esSerPassiveWithTail(v, "S",  "N", PRON[0], subjPas.es, "ayer"),
+      esSerPassiveWithTail(v, "S",  "Q", PRON[0], subjPas.es, "ayer"),
 
-      addTailEs(esSePassive(v.key,"PP","A", subjPas.es), "esta semana"),
-      addTailEs(esSePassive(v.key,"PP","N", subjPas.es), "esta semana"),
-      addTailEs(esSePassive(v.key,"PP","Q", subjPas.es), "esta semana")
+      esSerPassiveWithTail(v, "PP", "A", PRON[0], subjPas.es, "esta semana"),
+      esSerPassiveWithTail(v, "PP", "N", PRON[0], subjPas.es, "esta semana"),
+      esSerPassiveWithTail(v, "PP", "Q", PRON[0], subjPas.es, "esta semana")
     ].map(x=>x.replace(/\s+/g," ").trim());
 
     // meta (tKind/mood) para colorear C3 en pasiva
@@ -3833,18 +3816,7 @@ function renderReading(v){
       <div class="card" style="margin-top:16px;">
         <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
           <div style="font-weight:950; color:#0f172a;">📚 STORY (${storyLabel})</div>
-          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-            ${showReadingSpanish ? `<button class="roundbtn" id="btnReadingTranslate" type="button" onclick="toggleReadingStoryTranslation()" style="text-transform:none;">🌎 Translate</button>` : ``}
-
-            <div id="readingRateBox" style="display:flex; gap:6px; align-items:center; background:#f1f5f9; border:1px solid #e2e8f0; padding:6px 10px; border-radius:999px;">
-              <button class="roundbtn" type="button" onclick="decReadingRate()" aria-label="Bajar velocidad">➖</button>
-              <span id="readingRateLabel" style="font-weight:950; color:#0f172a; min-width:56px; text-align:center;">${(readingRate||0.85).toFixed(2)}x</span>
-              <button class="roundbtn" type="button" onclick="incReadingRate()" aria-label="Subir velocidad">➕</button>
-            </div>
-
-            <button class="roundbtn" id="btnReadingAudio" type="button" onclick="speakReadingStory()" style="text-transform:none;">🔊 Play</button>
-            <button class="roundbtn" id="btnReadingAudioStop" type="button" onclick="stopReadingStory()" style="text-transform:none;">⏹ Stop</button>
-          </div>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">${showReadingSpanish ? '<button class="roundbtn" id="btnReadingTranslate" type="button" onclick="toggleReadingStoryTranslation()" style="text-transform:none;">' + translateBtnText + '</button>' : ""}<button class="roundbtn" id="btnReadingAudio" type="button" onclick="speakReadingStory()" style="text-transform:none;">🔊 Play Audio</button><button class="roundbtn" id="btnReadingAudioStop" type="button" disabled onclick="stopReadingStory()" style="text-transform:none;">⏹ Stop</button></div>
         </div>
 
         <div id="readingStoryEnglish" style="margin-top:10px; color:#0f172a; line-height:1.6; font-weight:850;">
@@ -3868,7 +3840,6 @@ function renderReading(v){
 
   document.getElementById("readingArea").innerHTML = html;
   bindListenButtons();
-  try{ updateReadingRateLabel(); }catch(e){}
   const rn = document.getElementById("readingNav");
   if(rn) rn.style.display = "flex";
   const rnf = document.getElementById("readingNavFooter");
@@ -4629,3 +4600,4 @@ let activeEl = null;
       hide();
     }, {passive:true});
   })(); });
+
