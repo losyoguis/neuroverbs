@@ -2455,37 +2455,6 @@ function esParticiple(espGloss){
   return { part, tail, reflexive, key };
 }
 
-
-// =========================
-// Overrides ES (solo para casos irregulares en Presente Simple - Voz Activa)
-// Se usa cuando la BD (verbs.html) trae traducciones incorrectas o cuando el
-// generador automático no cubre cambios de raíz (huelo, apuesto, etc.)
-// =========================
-function __nySpanishOverrideActive(tKind, modeKey, p, v){
-  if(!v || !p) return null;
-  // Presente Simple en esta app se identifica como "P"
-  if(String(tKind) !== "P") return null;
-
-  const key = String(v.c1||"").toLowerCase().trim();
-  const pk  = p.key;
-
-  const MAP = {
-    smell: {
-      A: {I:"Yo huelo", You:"Tú hueles", He:"Él huele", She:"Ella huele", It:"Eso huele", We:"Nosotros olemos", YouP:"Ustedes huelen", They:"Ellos huelen"},
-      N: {I:"Yo no huelo", You:"Tú no hueles", He:"Él no huele", She:"Ella no huele", It:"Eso no huele", We:"Nosotros no olemos", YouP:"Ustedes no huelen", They:"Ellos no huelen"},
-      Q: {I:"¿Huelo yo?", You:"¿Hueles tú?", He:"¿Huele él?", She:"¿Huele ella?", It:"¿Huele eso?", We:"¿Olemos nosotros?", YouP:"¿Huelen ustedes?", They:"¿Huelen ellos?"}
-    },
-    // Puedes ir agregando aquí otros verbos problemáticos cuando el usuario comparta la tabla exacta
-  };
-
-  const vMap = MAP[key];
-  if(!vMap) return null;
-  const m = vMap[modeKey];
-  if(!m) return null;
-
-  return m[pk] || null;
-}
-
 function buildSpanishActiveLine(tKind, modeKey, p, v, comp){
   // ✅ Round 1: SOLO pronombre + verbo (sin complemento)
   // ✅ Round 2: pronombre + verbo + complemento
@@ -2493,17 +2462,61 @@ function buildSpanishActiveLine(tKind, modeKey, p, v, comp){
   const compEs = (useComp && comp && comp.es) ? (" " + comp.es) : "";
   const pronEs = p.es;
 
-  // ✅ Overrides ES (si aplica) – prioridad máxima
-  const __ov = __nySpanishOverrideActive(tKind, modeKey, p, v);
-  if(__ov){
-    if(!compEs) return __ov;
-    return String(__ov).split(" / ").map(part=>{
-      part = String(part||"").trim();
-      if(!part) return part;
-      if(part.endsWith("?")) return (part.slice(0,-1) + compEs + "?").replace(/\s+/g," ").trim();
-      return (part + compEs).replace(/\s+/g," ").trim();
-    }).filter(Boolean).join(" / ");
-  }
+  // ✅ Overrides ES (solo cuando se requiera una traducción específica)
+  // Nota: esto NO afecta otros verbos/tiempos.
+  try{
+    const __k = __nyVerbKeyFromIndexVerb(v);
+    const __pDb = __nyPronKeyToDb(p.key);
+    if(tKind==="P" && __k==="play"){
+      const __OVR = {
+        A: {
+          I: "Yo juego / toco",
+          YOU_S: "Tú juegas / tocas",
+          HE: "Él juega / toca",
+          SHE: "Ella juega / toca",
+          IT: "Eso juega / toca",
+          WE: "Nosotros jugamos",
+          YOU_P: "Ustedes juegan",
+          THEY: "Ellos juegan"
+        },
+        N: {
+          I: "Yo no juego / toco",
+          YOU_S: "Tú no juegas / tocas",
+          HE: "Él no juega / toca",
+          SHE: "Ella no juega / toca",
+          IT: "Eso no juega / toca",
+          WE: "Nosotros no jugamos",
+          YOU_P: "Ustedes no juegan",
+          THEY: "Ellos no juegan"
+        },
+        Q: {
+          I: "¿Juego yo? / ¿Toco yo?",
+          YOU_S: "¿Juegas tú? / ¿Tocas tú?",
+          HE: "¿Juega él? / ¿Toca él?",
+          SHE: "¿Juega ella? / ¿Toca ella?",
+          IT: "¿Juega eso? / ¿Toca eso?",
+          WE: "¿Jugamos nosotros?",
+          YOU_P: "¿Juegan ustedes?",
+          THEY: "¿Juegan ellos?"
+        }
+      };
+      const __m = (modeKey==="A"||modeKey==="N"||modeKey==="Q") ? modeKey : null;
+      if(__m && __OVR[__m] && __OVR[__m][__pDb]){
+        const __line = __OVR[__m][__pDb];
+        if(!compEs) return __line;
+        // Insertar complemento respetando signos de pregunta y alternativas " / "
+        return String(__line).split(" / ").map(part=>{
+          part = String(part||"").trim();
+          if(!part) return part;
+          if(part.endsWith("?")){
+            const base = part.slice(0,-1).trim();
+            return (base + compEs + "?").replace("  "," ");
+          }
+          return (part + compEs).replace("  "," ");
+        }).join(" / ");
+      }
+    }
+  }catch(e){/* noop */}
 
   // ✅ Preferir traducción exacta desde verbs.html (si existe)
   const __fromDb = lookupSpanishLineFromVerbsHtml(tKind, modeKey, p, v);
