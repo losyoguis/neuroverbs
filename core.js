@@ -478,7 +478,7 @@ const GROUP_HINTS = {
 let __NY_VERBS_DB__ = null;
 let __NY_VERBS_DB_READY__ = false;
 
-async function loadVerbsDbFromVerbsHtml(){
+async async function loadVerbsDbFromVerbsHtml(){
   try{
     const res = await fetch("verbs.html", { cache: "no-store" });
     if(!res.ok) return { ok:false, count:0 };
@@ -576,6 +576,63 @@ async function loadVerbsDbFromVerbsHtml(){
 
 function __nyVerbKeyFromIndexVerb(v){
   return String((v && v.c1) ? v.c1 : "").trim().toLowerCase();
+}
+
+/* ===========================
+   ✅ ES Overrides (Presente Simple - Voz Activa)
+   - Se usan ANTES de la BD para verbos que el auto-generador en ES no puede conjugar bien
+   =========================== */
+const __NY_ES_PS_OVERRIDES__ = {
+  // leave: salgo / dejo (doble significado en ES)
+  "leave": {
+    "A": { // Afirmativa
+      "I":    "Yo salgo / dejo",
+      "You":  "Tú sales / dejas",
+      "He":   "Él sale / deja",
+      "She":  "Ella sale / deja",
+      "It":   "Eso sale / deja",
+      "We":   "Nosotros salimos",
+      "YouP": "Ustedes salen",
+      "They": "Ellos salen"
+    },
+    "N": { // Negativa
+      "I":    "Yo no salgo / dejo",
+      "You":  "Tú no sales / dejas",
+      "He":   "Él no sale / deja",
+      "She":  "Ella no sale / deja",
+      "It":   "Eso no sale / deja",
+      "We":   "Nosotros no salimos",
+      "YouP": "Ustedes no salen",
+      "They": "Ellos no salen"
+    },
+    "Q": { // Interrogativa
+      "I":    "¿Salgo yo? / ¿Dejo yo?",
+      "You":  "¿Sales tú? / ¿Dejas tú?",
+      "He":   "¿Sale él? / ¿Deja él?",
+      "She":  "¿Sale ella? / ¿Deja ella?",
+      "It":   "¿Sale eso? / ¿Deja eso?",
+      "We":   "¿Salimos nosotros?",
+      "YouP": "¿Salen ustedes?",
+      "They": "¿Salen ellos?"
+    }
+  }
+};
+
+function __nyLookupEsOverrideLine(tKind, modeKey, p, v){
+  try{
+    if(!p || !v) return null;
+    // En esta app: Presente Simple suele ser "P"
+    if(String(tKind||"") !== "P") return null;
+    const verbKey = String((v.c1||"")).trim().toLowerCase();
+    const ov = __NY_ES_PS_OVERRIDES__[verbKey];
+    if(!ov) return null;
+    const blk = ov[String(modeKey||"")];
+    if(!blk) return null;
+    const pk = (p.key === "YOU_P") ? "YouP" : (p.key === "YouP") ? "YouP" : String(p.key||"");
+    return blk[pk] || null;
+  }catch(_e){
+    return null;
+  }
 }
 function __nyPronKeyToDb(pKey){
   // index usa: I, You, He, She, It, We, YouP, They
@@ -2462,61 +2519,21 @@ function buildSpanishActiveLine(tKind, modeKey, p, v, comp){
   const compEs = (useComp && comp && comp.es) ? (" " + comp.es) : "";
   const pronEs = p.es;
 
-  // ✅ Overrides ES (solo cuando se requiera una traducción específica)
-  // Nota: esto NO afecta otros verbos/tiempos.
-  try{
-    const __k = __nyVerbKeyFromIndexVerb(v);
-    const __pDb = __nyPronKeyToDb(p.key);
-    if(tKind==="P" && __k==="play"){
-      const __OVR = {
-        A: {
-          I: "Yo juego / toco",
-          YOU_S: "Tú juegas / tocas",
-          HE: "Él juega / toca",
-          SHE: "Ella juega / toca",
-          IT: "Eso juega / toca",
-          WE: "Nosotros jugamos",
-          YOU_P: "Ustedes juegan",
-          THEY: "Ellos juegan"
-        },
-        N: {
-          I: "Yo no juego / toco",
-          YOU_S: "Tú no juegas / tocas",
-          HE: "Él no juega / toca",
-          SHE: "Ella no juega / toca",
-          IT: "Eso no juega / toca",
-          WE: "Nosotros no jugamos",
-          YOU_P: "Ustedes no juegan",
-          THEY: "Ellos no juegan"
-        },
-        Q: {
-          I: "¿Juego yo? / ¿Toco yo?",
-          YOU_S: "¿Juegas tú? / ¿Tocas tú?",
-          HE: "¿Juega él? / ¿Toca él?",
-          SHE: "¿Juega ella? / ¿Toca ella?",
-          IT: "¿Juega eso? / ¿Toca eso?",
-          WE: "¿Jugamos nosotros?",
-          YOU_P: "¿Juegan ustedes?",
-          THEY: "¿Juegan ellos?"
-        }
-      };
-      const __m = (modeKey==="A"||modeKey==="N"||modeKey==="Q") ? modeKey : null;
-      if(__m && __OVR[__m] && __OVR[__m][__pDb]){
-        const __line = __OVR[__m][__pDb];
-        if(!compEs) return __line;
-        // Insertar complemento respetando signos de pregunta y alternativas " / "
-        return String(__line).split(" / ").map(part=>{
-          part = String(part||"").trim();
-          if(!part) return part;
-          if(part.endsWith("?")){
-            const base = part.slice(0,-1).trim();
-            return (base + compEs + "?").replace("  "," ");
-          }
-          return (part + compEs).replace("  "," ");
-        }).join(" / ");
+  // ✅ Override ES (Presente Simple) para verbos problemáticos (prioridad sobre BD)
+  const __ovEs = __nyLookupEsOverrideLine(tKind, modeKey, p, v);
+  if(__ovEs){
+    if(!compEs) return __ovEs;
+    // Insertar complemento respetando signos de pregunta y alternativas " / "
+    return String(__ovEs).split(" / ").map(part=>{
+      part = String(part||"").trim();
+      if(!part) return part;
+      if(part.endsWith("?")){
+        return (part.slice(0,-1).trim() + compEs + "?").replace(/\s+/g," ").trim();
       }
-    }
-  }catch(e){/* noop */}
+      return (part + compEs).replace(/\s+/g," ").trim();
+    }).join(" / ");
+  }
+
 
   // ✅ Preferir traducción exacta desde verbs.html (si existe)
   const __fromDb = lookupSpanishLineFromVerbsHtml(tKind, modeKey, p, v);
