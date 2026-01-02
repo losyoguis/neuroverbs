@@ -873,7 +873,7 @@ let verbosDB = [
   {g:2, d:25, esp:"Coser", c1:"sew", c2:"sewed", c3:"sewed", ex:"El participio también puede ser 'sewn'.", alt3:["sewn"]},
   {g:2, d:25, esp:"Sembrar", c1:"sow", c2:"sowed", c3:"sowed", ex:"El participio también puede ser 'sown'.", alt3:["sown"]},
   {g:2, d:25, esp:"Mostrar", c1:"show", c2:"showed", c3:"shown"},
-  {g:2, d:25, esp:"Haber/Tener", c1:"have", c2:"had", c3:"had"},
+  {g:2, d:25, esp:"Tener", c1:"have", c2:"had", c3:"had"},
 
   {g:3, d:26, esp:"Obtener", c1:"get", c2:"got", c3:"gotten", ex:"En inglés británico es común 'got' como participio.", alt3:["got"]},
   {g:3, d:26, esp:"Olvidar", c1:"forget", c2:"forgot", c3:"forgotten"},
@@ -2455,136 +2455,6 @@ function esParticiple(espGloss){
   return { part, tail, reflexive, key };
 }
 
-
-/* ===========================
-   ✅ OVERRIDES ESPAÑOL (ACTIVA)
-   - Para verbos cuya traducción/conjugación no debe depender del auto-conjugador
-   - Se aplica ANTES de consultar verbs.html
-   =========================== */
-const __NY_ES_OVERRIDES__ = {
-  leave: {
-    P: {
-      A: {
-        I: "Yo salgo / dejo",
-        You: "Tú sales / dejas",
-        He: "Él sale / deja",
-        She: "Ella sale / deja",
-        It: "Eso sale / deja",
-        We: "Nosotros salimos",
-        YouP: "Ustedes salen",
-        They: "Ellos salen"
-      },
-      N: {
-        I: "Yo no salgo / dejo",
-        You: "Tú no sales / dejas",
-        He: "Él no sale / deja",
-        She: "Ella no sale / deja",
-        It: "Eso no sale / deja",
-        We: "Nosotros no salimos",
-        YouP: "Ustedes no salen",
-        They: "Ellos no salen"
-      },
-      Q: {
-        I: "¿Salgo yo? / ¿Dejo yo?",
-        You: "¿Sales tú? / ¿Dejas tú?",
-        He: "¿Sale él? / ¿Deja él?",
-        She: "¿Sale ella? / ¿Deja ella?",
-        It: "¿Sale eso? / ¿Deja eso?",
-        We: "¿Salimos nosotros?",
-        YouP: "¿Salen ustedes?",
-        They: "¿Salen ellos?"
-      }
-    }
-  },
-  light: {
-    P: {
-      A: {
-        I: "Yo enciendo / ilumino",
-        You: "Tú enciendes / iluminas",
-        He: "Él enciende / ilumina",
-        She: "Ella enciende / ilumina",
-        It: "Eso enciende / ilumina",
-        We: "Nosotros encendemos",
-        YouP: "Ustedes encienden",
-        They: "Ellos encienden"
-      },
-      N: {
-        I: "Yo no enciendo / ilumino",
-        You: "Tú no enciendes / iluminas",
-        He: "Él no enciende / ilumina",
-        She: "Ella no enciende / ilumina",
-        It: "Eso no enciende / ilumina",
-        We: "Nosotros no encendemos",
-        YouP: "Ustedes no encienden",
-        They: "Ellos no encienden"
-      },
-      Q: {
-        I: "¿Enciendo yo? / ¿Ilumino yo?",
-        You: "¿Enciendes tú?",
-        He: "¿Enciende él?",
-        She: "¿Enciende ella?",
-        It: "¿Enciende eso?",
-        We: "¿Encendemos nosotros?",
-        YouP: "¿Encienden ustedes?",
-        They: "¿Encienden ellos?"
-      }
-    }
-  }
-,
-  sow: {
-    P: {
-      A: {
-        I: "Yo siembro",
-        You: "Tú siembras",
-        He: "Él siembra",
-        She: "Ella siembra",
-        It: "Eso siembra",
-        We: "Nosotros sembramos",
-        YouP: "Ustedes siembran",
-        They: "Ellos siembran"
-      },
-      N: {
-        I: "Yo no siembro",
-        You: "Tú no siembras",
-        He: "Él no siembra",
-        She: "Ella no siembra",
-        It: "Eso no siembra",
-        We: "Nosotros no sembramos",
-        YouP: "Ustedes no siembran",
-        They: "Ellos no siembran"
-      },
-      Q: {
-        I: "¿Siembro yo?",
-        You: "¿Siembras tú?",
-        He: "¿Siembra él?",
-        She: "¿Siembra ella?",
-        It: "¿Siembra eso?",
-        We: "¿Sembramos nosotros?",
-        YouP: "¿Siembran ustedes?",
-        They: "¿Siembran ellos?"
-      }
-    }
-  }
-};
-
-function __nyGetSpanishOverrideLine(tKind, modeKey, p, v){
-  try{
-    const verbKey = String((v && v.c1) ? v.c1 : "").trim().toLowerCase();
-    if(!verbKey) return null;
-    const byVerb = __NY_ES_OVERRIDES__[verbKey];
-    if(!byVerb) return null;
-    const byT = byVerb[String(tKind||"")];
-    if(!byT) return null;
-    const byM = byT[String(modeKey||"")];
-    if(!byM) return null;
-    const pKey = (p && p.key) ? p.key : null;
-    if(!pKey) return null;
-    return byM[pKey] || null;
-  }catch(_e){
-    return null;
-  }
-}
-
 function buildSpanishActiveLine(tKind, modeKey, p, v, comp){
   // ✅ Round 1: SOLO pronombre + verbo (sin complemento)
   // ✅ Round 2: pronombre + verbo + complemento
@@ -2593,20 +2463,6 @@ function buildSpanishActiveLine(tKind, modeKey, p, v, comp){
   const pronEs = p.es;
 
   // ✅ Preferir traducción exacta desde verbs.html (si existe)
-  // ✅ OVERRIDE local (si existe) — tiene prioridad sobre verbs.html y sobre el auto-conjugador
-  const __override = __nyGetSpanishOverrideLine(tKind, modeKey, p, v);
-  if(__override){
-    if(!compEs) return __override;
-    return String(__override).split(" / ").map(part=>{
-      part = String(part||"").trim();
-      if(!part) return part;
-      if(part.endsWith("?")){
-        return (part.slice(0,-1).trim() + compEs + "?").replace(/\s+/g," ").trim();
-      }
-      return (part + compEs).replace(/\s+/g," ").trim();
-    }).join(" / ");
-  }
-
   const __fromDb = lookupSpanishLineFromVerbsHtml(tKind, modeKey, p, v);
   if(__fromDb){
     if(!compEs) return __fromDb;
