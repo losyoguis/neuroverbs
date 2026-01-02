@@ -448,7 +448,7 @@ window.addEventListener("load", () => {
    =========================== */
 const GROUP_HINTS = {
   1: {
-    title: "🧠 Round 1 - Group 1",
+    title: "Round 1 - Group 1",
     days: "Day 1 to 8",
     bullets: [
       "El patrón que se repite es que el verbo es de <em>una sílaba</em> y termina en <em>t</em> o <em>d</em>.",
@@ -456,14 +456,14 @@ const GROUP_HINTS = {
     ]
   },
   2: {
-    title: "🧠 Round 1 - Group 2",
+    title: "Round 1 - Group 2",
     days: "Day 9 to 25",
     bullets: [
       "Familia verbal: el pasado y el participio <em>son los mismos</em> (C2=C3)."
     ]
   },
   3: {
-    title: "🧠 Round 1 - Group 3",
+    title: "Round 1 - Group 3",
     days: "Day 26 to 40",
     bullets: [
       "Familia verbal: el infinitivo, el pasado y el participio <em>son diferentes</em> (C1≠C2≠C3)."
@@ -5159,11 +5159,12 @@ function renderGroupHint(groupId){
   const titulo = document.getElementById("pistaTitulo");
   const dias = document.getElementById("pistaDias");
   const lista = document.getElementById("pistaLista");
+  const logoHTML = '<img src="assets/brain.png" alt="" class="inlineLogo">';
 
   const h = GROUP_HINTS[groupId] || null;
 
   if(!h){
-    titulo.textContent = "🧠 Pista Neuronal";
+    titulo.innerHTML = `${logoHTML} Pista Neuronal`;
     dias.textContent = "";
     lista.innerHTML = "";
     return;
@@ -5177,7 +5178,7 @@ function renderGroupHint(groupId){
     ? h.days.replace(/Day\s+(\d+)\s+to\s+(\d+)/i, (_,a,b)=>`Day ${Number(a)+40} to ${Number(b)+40}`)
     : h.days;
 
-  titulo.textContent = roundTitle;
+  titulo.innerHTML = `${logoHTML} ${roundTitle}`;
   dias.textContent = roundDays;
   lista.innerHTML = h.bullets.map(b=>`<li>${b}</li>`).join("");
 }
@@ -6608,12 +6609,12 @@ function showMotivation(v){
 
   const templatesEN = [
     `Awesome! <span class="motivation-verb">“${verbEN}”</span> mastered (${tag}). Keep going! 🚀`,
-    `Neurons connected! <span class="motivation-verb">“${verbEN}”</span> unlocked (${tag}). 🧠✨`,
+    `Neurons connected! <span class="motivation-verb">“${verbEN}”</span> unlocked (${tag}). ✨`,
     `Great job! You leveled up with <span class="motivation-verb">“${verbEN}”</span> (${tag}). 🔥`
   ];
   const templatesES = [
     `¡Excelente! Dominaste <span class="motivation-verb">“${verbES}”</span> (${tag}). 🚀`,
-    `¡Neuronas conectadas! <span class="motivation-verb">“${verbES}”</span> (${tag}). 🧠✨`,
+    `¡Neuronas conectadas! <span class="motivation-verb">“${verbES}”</span> (${tag}). ✨`,
     `¡Muy bien! Subiste de nivel con <span class="motivation-verb">“${verbES}”</span> (${tag}). 🔥`
   ];
 
@@ -8274,10 +8275,31 @@ function stopReadingStory(){
     if(speechSynthesis.speaking || speechSynthesis.pending) speechSynthesis.cancel();
   }catch(e){}
   const playBtn = document.getElementById("btnReadingAudio");
+  const pauseBtn = document.getElementById("btnReadingAudioPause");
   const stopBtn = document.getElementById("btnReadingAudioStop");
   if(playBtn) playBtn.disabled = false;
+  if(pauseBtn){ pauseBtn.disabled = true; pauseBtn.textContent = "⏸ Pause"; }
   if(stopBtn) stopBtn.disabled = true;
+  _readingStoryPaused = false;
   _readingStoryUtterance = null;
+}
+
+
+function togglePauseReadingStory(){
+  try{
+    if(typeof speechSynthesis === "undefined") return;
+    const pauseBtn = document.getElementById("btnReadingAudioPause");
+    if(!speechSynthesis.speaking || !_readingStoryUtterance) return;
+    if(speechSynthesis.paused){
+      speechSynthesis.resume();
+      _readingStoryPaused = false;
+      if(pauseBtn) pauseBtn.textContent = "⏸ Pause";
+    }else{
+      speechSynthesis.pause();
+      _readingStoryPaused = true;
+      if(pauseBtn) pauseBtn.textContent = "▶ Resume";
+    }
+  }catch(e){}
 }
 
 // Make sure voices are loaded on some browsers
@@ -8494,10 +8516,11 @@ if(voiceMode==="passive" && passiveOk){
           <div style="font-weight:950; color:#0f172a;">📚 STORY (${storyLabel})</div>
           <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">${showReadingSpanish ? '<button class="roundbtn" id="btnReadingTranslate" type="button" onclick="toggleReadingStoryTranslation()" style="text-transform:none;">' + translateBtnText + '</button>' : ""}
             <button class="roundbtn" id="btnReadingRateDown" type="button" onclick="changeReadingStoryRate(-0.1)" title="Slower" style="text-transform:none;">🐢 −</button>
-            <span id="readingStoryRateLabel" style="font-weight:900; color:#fff; padding:0 6px;">${Math.round(_readingStoryRate*100)/100}x</span>
+            <span id="readingStoryRateLabel" style="min-width:62px; text-align:center; font-weight:950; color:#fff; background:#1d4ed8; border:1px solid rgba(255,255,255,.25); padding:6px 10px; border-radius:12px; box-shadow:0 10px 20px rgba(0,0,0,.18);">${Math.round(_readingStoryRate*100)/100}x</span>
             <button class="roundbtn" id="btnReadingRateUp" type="button" onclick="changeReadingStoryRate(0.1)" title="Faster" style="text-transform:none;">🐇 +</button>
             <button class="roundbtn" id="btnReadingRateReset" type="button" onclick="resetReadingStoryRate()" title="Reset speed" style="text-transform:none;">↺</button>
             <button class="roundbtn" id="btnReadingAudio" type="button" onclick="speakReadingStory()" style="text-transform:none;">🔊 Play Audio</button>
+            <button class="roundbtn" id="btnReadingAudioPause" type="button" disabled onclick="togglePauseReadingStory()" style="text-transform:none;">⏸ Pause</button>
             <button class="roundbtn" id="btnReadingAudioStop" type="button" disabled onclick="stopReadingStory()" style="text-transform:none;">⏹ Stop</button>
           </div>
         </div>
@@ -8751,7 +8774,7 @@ function getSpellIllustrationSVG(v){
   if(c1==="take" || esp.includes("tomar") || esp.includes("llevar")) return pick("🤲", espLabel);
   if(c1==="give" || esp.includes("dar")) return pick("🎁", espLabel);
   if(c1==="make" || esp.includes("hacer") || esp.includes("fabricar")) return pick("🛠️", espLabel);
-  if(c1==="think" || esp.includes("pensar")) return pick("🧠", espLabel);
+  if(c1==="think" || esp.includes("pensar")) return pick("💭", espLabel);
   if(c1==="know" || esp.includes("saber") || esp.includes("conocer")) return pick("💡", espLabel);
   if(c1==="choose" || esp.includes("elegir") || esp.includes("escoger")) return pick("🗳️", espLabel);
   if(c1==="grow" || esp.includes("crecer") || esp.includes("cultivar")) return pick("🌱", espLabel);
@@ -8904,7 +8927,7 @@ function renderVerbIllustration(v){
   const img = document.getElementById("verbPhoto");
   if(img){
     img.onerror = () => {
-      // Si la imagen local no existe, usamos el ícono 🧠 como respaldo.
+      // Si la imagen local no existe, usamos el ícono  como respaldo.
       img.onerror = null;
       img.src = "assets/brain.png";
       img.style.objectFit = "contain";
