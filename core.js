@@ -503,6 +503,34 @@ async function loadVerbsDbFromVerbsHtml(){
 }
 
 
+async function loadVerbsDbFromVerbs2Html() {
+  try {
+    const res = await fetch('verbs2.html', { cache: 'no-store' });
+    if (!res.ok) throw new Error('verbs2.html not found');
+    const text = await res.text();
+
+    // Extraer `const VERBS2_DB = [...]`
+    const m = text.match(/const\s+VERBS2_DB\s*=\s*(\[[\s\S]*?\])\s*;/);
+    if (!m) throw new Error('VERBS2_DB not found in verbs2.html');
+
+    // Evaluar de forma aislada
+    const tmp = Function('return ' + m[1])();
+    if (!Array.isArray(tmp)) throw new Error('VERBS2_DB is not an array');
+
+    __NY_VERBS2_DB__ = tmp;
+    __NY_VERBS2_DB_READY__ = true;
+    console.log('[verbs2] Loaded overrides:', __NY_VERBS2_DB__.length);
+  } catch (err) {
+    // verbs2.html es opcional: no bloquear la app si no existe.
+    __NY_VERBS2_DB__ = [];
+    __NY_VERBS2_DB_READY__ = false;
+    // console.debug('[verbs2] Not loaded:', err?.message || err);
+  }
+}
+
+
+
+
   // ===== Sincronización de verbos (index.html ↔ verbs.html) =====
   // Carga la base VERBS_DB desde verbs.html y la fusiona con la base interna,
   // para que los menús de Grupo/Día y los ejercicios consulten SIEMPRE los verbos actualizados.
@@ -511,6 +539,7 @@ async function loadVerbsDbFromVerbsHtml(){
     if (__verbsHtmlSyncPromise) return __verbsHtmlSyncPromise;
     __verbsHtmlSyncPromise = (async () => {
       const res = await loadVerbsDbFromVerbsHtml();
+  loadVerbsDbFromVerbs2Html();
 
       const rawDb = window.__NY_VERBS_DB__ || [];
       if (res?.ok && window.__NY_VERBS_DB_READY__ && Array.isArray(rawDb) && rawDb.length) {
@@ -634,7 +663,8 @@ function lookupSpanishLineFromVerbsHtml(tKind, modeKey, p, v){
 }
 
 // Cargamos la DB lo más pronto posible (sin bloquear la app)
-window.addEventListener("DOMContentLoaded", () => { loadVerbsDbFromVerbsHtml(); });
+window.addEventListener("DOMContentLoaded", () => { loadVerbsDbFromVerbsHtml();
+  loadVerbsDbFromVerbs2Html(); });
 
 
 
@@ -1507,6 +1537,26 @@ function colorizeConjugation(enLine, tKind, moodKey, p, v, modeUsed){
     // BE: am/is/are — was/were — been
     if(tKind==="P"){
       const k = p.key || p;
+
+  // 1) Primero: overrides (verbs2.html)
+  if (__NY_VERBS2_DB_READY__ && Array.isArray(__NY_VERBS2_DB__) && __NY_VERBS2_DB__.length) {
+    const e2 = __NY_VERBS2_DB__.find(x => (x?.key || x?.c1 || '').toLowerCase() === k);
+    if (e2 && e2.active && e2.active[tKind] && e2.active[tKind][modeKey]) {
+      const block2 = e2.active[tKind][modeKey];
+      if (Array.isArray(block2)) {
+        if (modeKey === 'Q') {
+          const row2 = block2[pronIndex];
+          if (row2) return (row2.length === 2 ? row2[1] : row2[2] || '');
+        } else {
+          const dbPronKey2 = __nyPronKeyToDb(pronKey);
+          const row2 = block2.find(r => r && r[0] === dbPronKey2);
+          if (row2) return row2[2] || '';
+        }
+      }
+    }
+  }
+
+  // 2) Si no hay override, usar verbs.html
       const form = (k==="I") ? "am" : (k==="He"||k==="She"||k==="It") ? "is" : "are";
       const target = (moodKey==="Q") ? capFirst(form) : form;
       return highlightPhrase(s, target, "v-c1");
@@ -2310,8 +2360,7 @@ const IRR_PRESENT_FULL = {
   venir:   ["vengo","vienes","viene","viene","viene","venimos","vienen","vienen"],
   conducir:["conduzco","conduces","conduce","conduce","conduce","conducimos","conducen","conducen"],
   oir:     ["oigo","oyes","oye","oye","oye","oímos","oyen","oyen"], // oír
-  tener: ["tengo","tienes","tiene","tiene","tiene","tenemos","tienen","tienen"],
-
+  tener:   ["tengo","tienes","tiene","tiene","tiene","tenemos","tienen","tienen"],
 };
 
 const IRR_PRET = {
@@ -2328,8 +2377,7 @@ const IRR_PRET = {
   traer:   ["traje","trajiste","trajo","trajo","trajo","trajimos","trajeron","trajeron"],
   decir:   ["dije","dijiste","dijo","dijo","dijo","dijimos","dijeron","dijeron"],
   conducir:["conduje","condujiste","condujo","condujo","condujo","condujimos","condujeron","condujeron"],
-  tener: ["tuve","tuviste","tuvo","tuvo","tuvo","tuvimos","tuvieron","tuvieron"],
-
+  tener:   ["tuve","tuviste","tuvo","tuvo","tuvo","tuvimos","tuvieron","tuvieron"],
 };
 
 const IRR_PART = {
@@ -2345,6 +2393,7 @@ const IRR_PART = {
   volver:"vuelto",
   resolver:"resuelto",
   oir:"oído",
+  tener:"tenido",
 };
 
 const STEM_E_IE = new Set(["cerrar","empezar","pensar","sentir","perder","entender","mentir","herir","sentar","despertar"]);
@@ -2614,7 +2663,7 @@ function buildSpanishActiveLine(tKind, modeKey, p, v, comp){
     const ref = reflexive ? (ES_REFLEX[p.key] + " ") : "";
     if(modeKey==="A") return `${pronEs} ${ref}${form}${tailTxt}${compEs}`.replace(/\s+/g," ").trim();
     if(modeKey==="N") return `${pronEs} no ${ref}${form}${tailTxt}${compEs}`.replace(/\s+/g," ").trim();
-    return `¿${pronEs} ${ref}${form}${tailTxt}${compEs}?`.replace(/\s+/g," ").trim();
+    return `¿${capFirst(`${ref}${form}${tailTxt}`.replace(/\s+/g," " ).trim())} ${pronEs.toLowerCase()}${compEs}?`.replace(/\s+/g," " ).trim();
   }
 
   if(tKind==="S"){ // pasado simple (pretérito)
@@ -2623,7 +2672,7 @@ function buildSpanishActiveLine(tKind, modeKey, p, v, comp){
     const ref = reflexive ? (ES_REFLEX[p.key] + " ") : "";
     if(modeKey==="A") return `${pronEs} ${ref}${form}${tailTxt}${compEs}`.replace(/\s+/g," ").trim();
     if(modeKey==="N") return `${pronEs} no ${ref}${form}${tailTxt}${compEs}`.replace(/\s+/g," ").trim();
-    return `¿${pronEs} ${ref}${form}${tailTxt}${compEs}?`.replace(/\s+/g," ").trim();
+    return `¿${capFirst(`${ref}${form}${tailTxt}`.replace(/\s+/g," " ).trim())} ${pronEs.toLowerCase()}${compEs}?`.replace(/\s+/g," " ).trim();
   }
 
   // Presente perfecto: haber + participio
