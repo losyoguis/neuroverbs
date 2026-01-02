@@ -484,7 +484,10 @@ async function loadVerbsDbFromVerbsHtml(){
     if(!res.ok) return { ok:false, count:0 };
 
     const txt = await res.text();
-    const m = txt.match(/const\s+VERBS_DB\s*=\s*(\[[\s\S]*?\n\s*\]);/);
+    // 1) Preferimos marcadores para que NO se rompa al formatear verbs.html
+    let m = txt.match(/\/\/\s*<VERBS_DB_START>\s*\n?\s*const\s+VERBS_DB\s*=\s*(\[[\s\S]*?\]);\s*\n?\s*\/\/\s*<VERBS_DB_END>/);
+    // 2) Fallback (compatibilidad con versiones antiguas)
+    if(!m) m = txt.match(/const\s+VERBS_DB\s*=\s*(\[[\s\S]*?\n\s*\]);/);
     if(!m) return { ok:false, count:0 };
 
     // Evaluamos el array JS (misma origin, archivo controlado por nosotros)
@@ -3228,6 +3231,33 @@ function checkPractice(qid){
    =========================== */
 let readingStoryTranslationVisible = false;
 
+// 🎧 Velocidad de audio para STORY (se guarda en localStorage)
+let readingRate = (() => {
+  try{
+    const raw = localStorage.getItem("ny_reading_rate");
+    const v = parseFloat(raw);
+    if(Number.isFinite(v)) return Math.min(1.15, Math.max(0.60, v));
+  }catch(e){}
+  return 0.85; // beginner-friendly default
+})();
+
+function updateReadingRateLabel(){
+  const el = document.getElementById("readingRateLabel");
+  if(el) el.textContent = `${(readingRate||0.85).toFixed(2)}x`;
+}
+
+function setReadingRate(next){
+  const v = Math.min(1.15, Math.max(0.60, Number(next)));
+  if(!Number.isFinite(v)) return;
+  readingRate = v;
+  try{ localStorage.setItem("ny_reading_rate", String(readingRate)); }catch(e){}
+  updateReadingRateLabel();
+}
+
+function incReadingRate(){ setReadingRate((readingRate||0.85) + 0.05); }
+function decReadingRate(){ setReadingRate((readingRate||0.85) - 0.05); }
+
+
 function hashStr(s){
   s = String(s||"");
   let h = 0;
@@ -3532,7 +3562,7 @@ function speakReadingStory(){
     u.lang = (voice && voice.lang) ? voice.lang : "en-US";
     // ✅ Beginner-friendly speed (slower, clearer)
     // Keep punctuation intact so the browser can pause naturally.
-    u.rate = 0.85;
+    u.rate = (readingRate || 0.85); // controlled by UI
     u.pitch = 1;
 
     _readingStoryUtterance = u;
@@ -3616,10 +3646,9 @@ function renderReading(v){
   let es = [];
   let meta = [];
 
-  // 🔎 Control: en "READING" de VOZ PASIVA (cuando aplica), ocultamos traducción al español.
+  // ✅ En READING mostramos español tanto en voz activa como pasiva.
   const isPassiveReading = (voiceMode==="passive" && passiveOk);
-  const showReadingSpanish = !isPassiveReading;
-  if(!showReadingSpanish) readingStoryTranslationVisible = false;
+  const showReadingSpanish = true;
 
 
   if(voiceMode==="passive" && passiveOk){
@@ -3645,19 +3674,22 @@ function renderReading(v){
       `${capFirst(have)} ${sEN.toLowerCase()} been ${v.c3} ${byMe} this week?`
     ];
 
-    es = [
-      `Se ${objVerbEs("present")} ${subjPas.es} hoy.`,
-      `No se ${objVerbEs("present")} ${subjPas.es} hoy.`,
-      `¿Se ${objVerbEs("present")} ${subjPas.es} hoy?`,
+    
+// ✅ Español pasivo perfecto (SE + formas derivadas desde VERBS_DB)
+const objES = subjPas.es;
+es = [
+  ensurePeriodEs(addTailEs(esSePassive(v.key, "P",  "A", objES), "hoy")),
+  ensurePeriodEs(addTailEs(esSePassive(v.key, "P",  "N", objES), "hoy")),
+  addTailEs(esSePassive(v.key, "P",  "Q", objES), "hoy"),
 
-      `Se ${objVerbEs("past")} ${subjPas.es} ayer.`,
-      `No se ${objVerbEs("past")} ${subjPas.es} ayer.`,
-      `¿Se ${objVerbEs("past")} ${subjPas.es} ayer?`,
+  ensurePeriodEs(addTailEs(esSePassive(v.key, "S",  "A", objES), "ayer")),
+  ensurePeriodEs(addTailEs(esSePassive(v.key, "S",  "N", objES), "ayer")),
+  addTailEs(esSePassive(v.key, "S",  "Q", objES), "ayer"),
 
-      `Se ${objVerbEs("pp")} ${subjPas.es} esta semana.`,
-      `No se ${objVerbEs("pp")} ${subjPas.es} esta semana.`,
-      `¿Se ${objVerbEs("pp")} ${subjPas.es} esta semana?`
-    ].map(x=>x.replace(/\s+/g," ").trim());
+  ensurePeriodEs(addTailEs(esSePassive(v.key, "PP", "A", objES), "esta semana")),
+  ensurePeriodEs(addTailEs(esSePassive(v.key, "PP", "N", objES), "esta semana")),
+  addTailEs(esSePassive(v.key, "PP", "Q", objES), "esta semana")
+].map(x=>ensurePeriodEs(String(x||"")).replace(/\s+/g," ").trim());
 
     // meta (tKind/mood) para colorear C3 en pasiva
     meta = [
@@ -3787,7 +3819,7 @@ function renderReading(v){
       <div class="card" style="margin-top:16px;">
         <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
           <div style="font-weight:950; color:#0f172a;">📚 STORY (${storyLabel})</div>
-          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">${showReadingSpanish ? '<button class="roundbtn" id="btnReadingTranslate" type="button" onclick="toggleReadingStoryTranslation()" style="text-transform:none;">' + translateBtnText + '</button>' : ""}<button class="roundbtn" id="btnReadingAudio" type="button" onclick="speakReadingStory()" style="text-transform:none;">🔊 Play Audio</button><button class="roundbtn" id="btnReadingAudioStop" type="button" disabled onclick="stopReadingStory()" style="text-transform:none;">⏹ Stop</button></div>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">${showReadingSpanish ? '<button class="roundbtn" id="btnReadingTranslate" type="button" onclick="toggleReadingStoryTranslation()" style="text-transform:none;">' + translateBtnText + '</button>' : ""}<span style="display:inline-flex; align-items:center; gap:6px; padding:2px 6px; border:1px solid #e2e8f0; border-radius:999px; background:#fff;"><button class="roundbtn" id="btnReadingRateDown" type="button" onclick="decReadingRate()" title="Bajar velocidad" style="text-transform:none;">➖</button><span id="readingRateLabel" style="font-weight:950; color:#334155; min-width:56px; text-align:center;">${(readingRate||0.85).toFixed(2)}x</span><button class="roundbtn" id="btnReadingRateUp" type="button" onclick="incReadingRate()" title="Subir velocidad" style="text-transform:none;">➕</button></span><button class="roundbtn" id="btnReadingAudio" type="button" onclick="speakReadingStory()" style="text-transform:none;">🔊 Play Audio</button><button class="roundbtn" id="btnReadingAudioStop" type="button" disabled onclick="stopReadingStory()" style="text-transform:none;">⏹ Stop</button></div>
         </div>
 
         <div id="readingStoryEnglish" style="margin-top:10px; color:#0f172a; line-height:1.6; font-weight:850;">
@@ -3810,6 +3842,7 @@ function renderReading(v){
   `;
 
   document.getElementById("readingArea").innerHTML = html;
+  updateReadingRateLabel();
   bindListenButtons();
   const rn = document.getElementById("readingNav");
   if(rn) rn.style.display = "flex";
