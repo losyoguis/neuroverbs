@@ -1934,3 +1934,82 @@ box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);;justify-content:flex-start;text-ali
   font-weight: 900;
   text-decoration: underline;
 }
+
+/* Footer actions (smart-e-book + sitio) */
+.appFooter .footerActions{
+  margin-top: 12px;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.appFooter .footerActions .footerLink{ margin-top: 0; }
+.appFooter .footerBtn{
+  background: var(--secondary);
+  color: #0b1220;
+  border: 2px solid rgba(0,0,0,.12);
+  padding: 10px 12px;
+  border-radius: 14px;
+  font-weight: 950;
+  letter-spacing: .2px;
+  text-transform: none; /* ✅ mantener “smart-e-book” en minúscula */
+  text-decoration: none;
+  box-shadow: 0 12px 26px rgba(0,0,0,.25);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+.appFooter .footerBtn:hover{
+  background: var(--secondaryHover);
+  transform: translateY(-1px);
+}
+
+/* ===== Footer layout upgrade (smart-e-book en fila superior) ===== */
+.appFooter .footerInner{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.appFooter .footerTopRow{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.appFooter .footerMetaRow{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.appFooter .footerMetaRow .footerLink{ margin-top: 0; }
+
+/* Resaltado del link del Smart E-book */
+.appFooter .footerBtn--highlight{
+  border: 2px solid rgba(255, 178, 74, .65);
+  box-shadow: 0 16px 36px rgba(255, 178, 74, .18), 0 14px 34px rgba(0,0,0,.28);
+  padding: 12px 16px;
+  border-radius: 16px;
+}
+
+/* ===== Float actions a la derecha (ASISTENTE IA) ===== */
+.float-actions.float-actions-right{
+  left: auto !important;
+  right: 14px !important;
+  align-items: flex-end;
+}
+@media (max-width: 600px){
+  .float-actions.float-actions-right{
+    left: auto !important;
+    right: 12px !important;
+    width: auto !important;
+    justify-content: flex-end !important;
+  }
+  .float-actions.float-actions-right .float-btn{
+    flex: 0 0 auto !important;
+    width: auto !important;
+  }
+}

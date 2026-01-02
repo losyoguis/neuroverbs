@@ -68,9 +68,8 @@
 
 </div>
 
-<!-- ✅✅✅ ACCESOS RÁPIDOS (ABAJO‑IZQUIERDA): SMART‑E‑BOOK + ASISTENTE IA -->
-<div class="float-actions" aria-label="Accesos rápidos">
-  <a class="float-action web-float" data-help="🌐 Abrir el Smart‑E‑Book (Google Sites) en una pestaña nueva." href="#" onclick="abrirWeb(); return false;" rel="noopener" title="Abrir Smart‑E‑Book">SMART‑E‑BOOK 🌐</a>
+<!-- ✅✅✅ ACCESOS RÁPIDOS (ABAJO‑IZQUIERDA): ASISTENTE IA -->
+<div class="float-actions float-actions-right" aria-label="Accesos rápidos">
   <a class="float-action ai-float" data-help="🤖 Abre el Asistente IA para resolver dudas, pedir ejemplos y practicar verbos." href="https://chatgpt.com/g/g-688f92ef15e88191a178208283c76eb6-neuro-aprendizaje-de-los-verbos-irregulares" rel="noopener" target="_blank" title="Abrir Asistente IA">ASISTENTE IA 🤖</a>
 </div>
 <div class="motivation-backdrop" id="motivationBackdrop"></div>
@@ -102,21 +101,17 @@
 </div>
 
 <div class="roundbar">
-<!-- ✅ FILA 1: INSTRUCCIONES + E-BOOK + WEB -->
+<!-- ✅ FILA 1: INSTRUCCIONES + E-BOOK + REVIEW -->
 <div class="roundrow">
 <button class="roundbtn" data-help="Guía rápida: cómo usar la app paso a paso." onclick="abrirInstrucciones()" title="Guía rápida: cómo usar la app paso a paso." type="button">INSTRUCCIONES 📌</button>
 <button class="roundbtn ebook" data-help="Abre el e-book (Canva) dentro de la app." onclick="abrirEbook()" title="Abre el e-book (Canva) dentro de la app." type="button">E-BOOK 📚</button>
+<button class="roundbtn review" data-help="Review: repasa y gana XP extra con retos." onclick="abrirReview()" title="Review: repasa y gana XP extra con retos." type="button">REVIEW 🧩</button>
 </div>
 
 <!-- ✅ FILA 2: ROUND 1 + ROUND 2 + VOZ ACTIVA + VOZ PASIVA -->
 <div class="roundrow">
 <button class="roundbtn active" data-help="Round 1: Pronombre + Verbo (sin complemento). Cambia el modo de práctica." id="btnRound1" onclick="setRound(1)" title="Round 1: Pronombre + Verbo (sin complemento)." type="button">Round 1</button>
 <button class="roundbtn" data-help="Round 2: Pronombre + Verbo + Complemento. Cambia el modo de práctica." id="btnRound2" onclick="setRound(2)" title="Round 2: Pronombre + Verbo + Complemento." type="button">Round 2</button>
-</div>
-
-<!-- ✅ FILA 3: REVIEW (CENTRADO) -->
-<div class="roundrow">
-<button class="roundbtn" data-help="Review: repasa y gana XP extra con retos." onclick="abrirReview()" title="Review: repasa y gana XP extra con retos." type="button">REVIEW 🧩</button>
 </div>
 
 <!-- Hint -->
@@ -326,11 +321,21 @@
 
 <footer class="appFooter" role="contentinfo">
   <div class="footerInner">
-    <div class="footerBy">Diseñado por <b>Spelling Yoguis Bee</b></div>
-    <a class="footerLink"
-       data-help="🌐 Abrir el sitio oficial de Los Yoguis (recursos y proyectos)."
-       href="https://sites.google.com/view/losyoguis/los-yoguis"
-       target="_blank" rel="noopener">www.losyoguis.com</a>
+    <div class="footerTopRow" aria-label="Smart E-book">
+      <a class="footerBtn footerBtn--highlight"
+         data-help="🌐 Abrir el Smart‑E‑Book (Google Sites) en una pestaña nueva."
+         href="https://sites.google.com/iemanueljbetancur.edu.co/smartebook/inicio"
+         onclick="abrirWeb(); return false;"
+         target="_blank" rel="noopener">smart-e-book 🌐</a>
+    </div>
+
+    <div class="footerMetaRow" aria-label="Créditos y sitio">
+      <div class="footerBy">Diseñado por <b>Spelling Yoguis Bee</b></div>
+      <a class="footerLink"
+         data-help="🌐 Abrir el sitio oficial de Los Yoguis (recursos y proyectos)."
+         href="https://sites.google.com/view/losyoguis/los-yoguis"
+         target="_blank" rel="noopener">www.losyoguis.com</a>
+    </div>
   </div>
 </footer>
 
