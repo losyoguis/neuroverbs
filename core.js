@@ -8733,12 +8733,10 @@ function getVerbPhotoQuery(v){
 }
 
 function getVerbPhotoUrl(v){
-  const q = getVerbPhotoQuery(v);
-  const sig = _hash32(String(v?.c1||"verb") + "|" + String(v?.esp||"")) % 99;
-  // Unsplash Source: fotos grandes y llamativas sin API key.
-  // Nota: puede variar entre cargas (es normal), pero se estabiliza por verbo con "sig".
-  // Usamos "featured" para priorizar fotos más impactantes.
-  return `https://source.unsplash.com/featured/900x520?${encodeURIComponent(q)}&sig=${sig}`;
+  // 🖼️ Imagen local por verbo (evita depender de internet)
+  const key = String(v?.key || v?.c1 || "").trim().toLowerCase().replace(/[^a-z]/g, "");
+  if(!key) return "assets/brain.png";
+  return `assets/verbs/${key}.svg`;
 }
 
 function renderVerbIllustration(v){
@@ -8764,7 +8762,10 @@ function renderVerbIllustration(v){
   const img = document.getElementById("verbPhoto");
   if(img){
     img.onerror = () => {
-      el.innerHTML = getSpellIllustrationSVG(v);
+      // Si la imagen local no existe, usamos el ícono 🧠 como respaldo.
+      img.onerror = null;
+      img.src = "assets/brain.png";
+      img.style.objectFit = "contain";
     };
   }
 }
