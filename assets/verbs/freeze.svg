@@ -12,5 +12,7 @@
   <rect x="10" y="10" width="340" height="200" rx="28" fill="url(#g)" stroke="rgba(255,180,0,0.35)" stroke-width="3"/>
   <rect x="20" y="20" width="320" height="180" rx="22" fill="rgba(255,255,255,0.04)" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
   <text x="50%" y="52%" text-anchor="middle" dominant-baseline="middle"
-        style="font-size:92px; filter:url(#s); font-family: 'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji', sans-serif;">🔗</text>
+        style="font-size:96px; filter:url(#s); font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji', sans-serif;">🧊</text>
+  <text x="50%" y="188" text-anchor="middle"
+        style="font-size:22px; letter-spacing:1px; opacity:0.45; fill:#fff; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;">FREEZE</text>
 </svg>
