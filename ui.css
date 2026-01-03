@@ -448,7 +448,44 @@
       display:grid; grid-template-columns:repeat(3,1fr);
       gap:12px; margin-bottom:14px;
     }
-    input{
+    
+
+    /* ✅ Inputs con botón mini de audio al lado (C1/C2/C3) */
+    .inputWrap{
+      display:flex;
+      gap:10px;
+      align-items:stretch;
+    }
+    .inputWrap input{
+      flex:1;
+      width:auto;
+    }
+    .listenMini{
+      border:none;
+      cursor:pointer;
+      border-radius:16px;
+      font-weight:950;
+      padding:0 12px;
+      min-width:74px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:6px;
+      color:#fff;
+      transition:.15s;
+      box-shadow:0 10px 20px rgba(0,0,0,.10);
+      user-select:none;
+    }
+    .listenMini:hover{ transform:translateY(-1px); opacity:.96; }
+    .listenMini:active{ transform:translateY(0); opacity:.92; }
+    .listenIcon{ font-size:1.1rem; line-height:1; }
+    .listenTag{ font-size:.95rem; letter-spacing:.03em; }
+
+    .listenC1{ background:var(--c1); }
+    .listenC2{ background:var(--c2); }
+    .listenC3{ background:var(--c3); }
+
+input{
       width:100%; padding:16px;
       border:3px solid #e2e8f0; border-radius:16px;
       text-align:center; font-size:1.2rem; font-weight:900;
@@ -1505,6 +1542,13 @@
       .inputs{
         grid-template-columns: 1fr;
       }
+
+      .listenMini{
+        min-width: 66px;
+        padding: 0 10px;
+        border-radius: 14px;
+      }
+
 
       /* Botones de audio: 2 por fila */
       .audio{

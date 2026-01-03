@@ -157,14 +157,24 @@
 </div>
 </div>
 <div class="inputs">
-<input autocomplete="off" id="c1" placeholder="INFINITIVO (C1)"/>
-<input autocomplete="off" id="c2" placeholder="PASADO (C2)"/>
-<input autocomplete="off" id="c3" placeholder="PARTICIPIO (C3)"/>
-</div>
-<div aria-label="Ayudas de pronunciación" class="audio">
-<button class="btn-audio btn-a" data-help="Escucha la pronunciación del verbo en C1 (Base)." onclick="hablarC1()" title="Escucha la pronunciación del verbo en C1 (Base)." type="button">🔊 LISTENING C1</button>
-<button class="btn-audio btn-b" data-help="Escucha la pronunciación del verbo en C2 (Pasado)." onclick="hablarC2()" title="Escucha la pronunciación del verbo en C2 (Pasado)." type="button">🔊 LISTENING C2</button>
-<button class="btn-audio btn-c" data-help="Escucha la pronunciación del verbo en C3 (Participio)." onclick="hablarC3()" title="Escucha la pronunciación del verbo en C3 (Participio)." type="button">🔊 LISTENING C3</button>
+  <div class="inputWrap">
+    <input autocomplete="off" id="c1" placeholder="INFINITIVO (C1)"/>
+    <button class="listenMini listenC1" data-help="Escucha la pronunciación del verbo en C1 (Base)." onclick="hablarC1()" title="Escucha la pronunciación del verbo en C1 (Base)." type="button" aria-label="Escuchar C1">
+      <span class="listenIcon">🔊</span><span class="listenTag">C1</span>
+    </button>
+  </div>
+  <div class="inputWrap">
+    <input autocomplete="off" id="c2" placeholder="PASADO (C2)"/>
+    <button class="listenMini listenC2" data-help="Escucha la pronunciación del verbo en C2 (Pasado)." onclick="hablarC2()" title="Escucha la pronunciación del verbo en C2 (Pasado)." type="button" aria-label="Escuchar C2">
+      <span class="listenIcon">🔊</span><span class="listenTag">C2</span>
+    </button>
+  </div>
+  <div class="inputWrap">
+    <input autocomplete="off" id="c3" placeholder="PARTICIPIO (C3)"/>
+    <button class="listenMini listenC3" data-help="Escucha la pronunciación del verbo en C3 (Participio)." onclick="hablarC3()" title="Escucha la pronunciación del verbo en C3 (Participio)." type="button" aria-label="Escuchar C3">
+      <span class="listenIcon">🔊</span><span class="listenTag">C3</span>
+    </button>
+  </div>
 </div>
 <button class="btn-main btn-associar" data-help="✅ Conectar Neuronas: valida C1/C2/C3. Si aciertas, sumas XP y avanzas." onclick="validar()">Asociar - Repetir y Conectar Neuronas</button>
 <div id="msg"></div>
