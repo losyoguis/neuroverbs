@@ -909,17 +909,6 @@ function renderVocab(data){
 
 
 
-      const ul = $('#vocabExamples');
-      ul.innerHTML = '';
-      (data.examples||[]).forEach(ex=>{
-        const li = document.createElement('li');
-        li.textContent = ex;
-        ul.appendChild(li);
-      });
-      if(!ul.children.length){
-        ul.innerHTML = '<li class="vocabMuted">—</li>';
-      }
-    }
 
     function speakTerm(term){
       if(!('speechSynthesis' in window)) return;

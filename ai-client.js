@@ -22,7 +22,24 @@
     try { json = text ? JSON.parse(text) : {}; } catch(e){ json = {error:"Respuesta no es JSON", raw:text}; }
 
     if(!res.ok){
-      const msg = (json && (json.error || json.message)) ? (json.error || json.message) : ("HTTP " + res.status);
+      let msg = (json && (json.error || json.message)) ? (json.error || json.message) : ("HTTP " + res.status);
+
+      // Mensajes más claros para rutas faltantes (ej: /chat no desplegado)
+      if(res.status === 404){
+        const p = String(path || "");
+        if(p === (cfg().endpoints.chat || "/chat")){
+          msg = "Tu Worker no tiene el endpoint /chat (Ruta no encontrada). Abre Cloudflare → Workers & Pages → neuroverbs-api → Edit code, pega el archivo cloudflare-worker/worker.js del ZIP y luego Deploy.";
+        } else if(p === (cfg().endpoints.generate || "/generate")){
+          msg = "Tu Worker no tiene el endpoint /generate (Ruta no encontrada). Revisa que el Worker desplegado sea el correcto.";
+        } else if(p === (cfg().endpoints.vocab || "/vocab")){
+          msg = "Tu Worker no tiene el endpoint /vocab (Ruta no encontrada). Revisa que el Worker desplegado sea el correcto.";
+        }
+      }
+
+      if(res.status === 401 || res.status === 403){
+        msg = "No autorizado. Revisa el secret OPENAI_API_KEY en Cloudflare (Variables & Secrets) o los permisos del Worker.";
+      }
+
       const err = new Error(msg);
       err.status = res.status;
       err.payload = json;

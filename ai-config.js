@@ -4,7 +4,10 @@
 
 (function(){
   const defaultBase = "https://neuroverbs-api.yoguisindevoz.workers.dev";
-  const base = (localStorage.getItem("NEUROVERBS_API_BASE") || defaultBase).replace(/\/$/, "");
+  let base = (localStorage.getItem("NEUROVERBS_API_BASE") || defaultBase).trim();
+  // Evita que se quede apuntando a un placeholder típico de ejemplo.
+  if (!base || /TU-WORKER|YOUR-WORKER/i.test(base)) base = defaultBase;
+  base = base.replace(/\/$/, "");
   window.NEUROVERBS_API = {
     base,
     endpoints: {
