@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Teacher Yoguis | Input</title>
+  <meta name="theme-color" content="#0b1220" />
+  <link rel="stylesheet" href="ui.css" />
+</head>
+<body>
+
+<!-- ✅ Acceso rápido (igual que index) -->
+<div class="float-actions float-actions-right" aria-label="Accesos rápidos">
+  <a class="float-action ai-float" data-help="🤖 Abre el Asistente IA para resolver dudas, pedir ejemplos y practicar." href="https://chatgpt.com/g/g-688f92ef15e88191a178208283c76eb6-neuro-aprendizaje-de-los-verbos-irregulares" target="_blank" rel="noopener" title="Abrir Asistente IA">ASISTENTE IA 🤖</a>
+</div>
+
+<div class="app">
+  <header class="tyTopbar">
+    <a class="tyBrandMini" href="teacher-yoguis.html" aria-label="Teacher Yoguis Dashboard">
+      <img src="assets/brain.png" alt="NEUROVERBS" class="tyBrandLogo">
+      <div class="tyBrandText">
+        <div class="tyBrandName">NEUROVERBS</div>
+        <div class="tyBrandSub">Teacher Yoguis</div>
+      </div>
+    </a>
+    <div class="tyTopRight">
+      <a class="tyHomeLink" href="index.html" title="Inicio">Inicio</a>
+      <div class="tyAvatar" title="Usuario">YV</div>
+    </div>
+  </header>
+  <div class="tyGradLine" aria-hidden="true"></div>
+
+  <div class="tyLayout">
+    <section class="card tyCenterCard" aria-label="Nuevo contenido">
+      <div class="tySectionLabel">Nuevo contenido</div>
+      <div class="tyCenterWrap">
+        <div class="tyBigIcon">🧠</div>
+        <h2 class="tyCenterTitle">¿Sobre qué tema te gustaría estudiar?</h2>
+        <div class="tyCenterSub">¡Elige el tema que quieras y escribe en inglés o español!</div>
+
+        <div class="tyInputRow">
+          <input id="topic" type="text" placeholder="Escribe aquí" autocomplete="off" />
+          <button class="btn-mini" id="btnSuggestions" type="button">Sugerencias</button>
+        </div>
+
+        <div class="tyRange tyRangeCenter">
+          <input id="diffRange" type="range" min="0" max="2" step="1" value="1" />
+          <div class="tyRangeLabels"><span>Fácil</span><span>Medio</span><span>Difícil</span></div>
+        </div>
+
+        <button class="btn-main tyBigBtn" id="btnStart" type="button">Comenzar</button>
+        <div class="legend">Se abrirá la lección en una nueva página (Contenido + Cuestionario + Audio).</div>
+      </div>
+    </section>
+
+    <aside class="card" aria-label="Mis contenidos">
+      <div class="tyCardHead">
+        <h2>Mis contenidos</h2>
+        <button class="btn-mini" id="btnClear" type="button" title="Limpiar historial">Limpiar</button>
+      </div>
+
+      <div class="tySideTabs" role="tablist" aria-label="Estado de contenidos">
+        <button class="sideTab active" data-tab="open" type="button" role="tab" aria-selected="true">Abiertos</button>
+        <button class="sideTab" data-tab="done" type="button" role="tab" aria-selected="false">Concluidos</button>
+      </div>
+
+      <div class="tyHistory" id="history"></div>
+    </aside>
+  </div>
+
+</div>
+<script>
+  const $ = (s)=>document.querySelector(s);
+
+  const DIFF = [
+    {key:'easy',  label:'Fácil'},
+    {key:'medium',label:'Intermedio'},
+    {key:'hard',  label:'Difícil'}
+  ];
+
+  function loadHistory(){
+    try{ return JSON.parse(localStorage.getItem('ty_history')||'[]') }catch(e){ return [] }
+  }
+  function saveHistory(arr){
+    localStorage.setItem('ty_history', JSON.stringify(arr.slice(0, 20)));
+  }
+  function addHistory(topic, levelKey){
+    const now = new Date();
+    const arr = loadHistory();
+    const clean = (topic||'').trim();
+    const prev = arr.filter(x => (x.topic||'').toLowerCase() !== clean.toLowerCase());
+    prev.unshift({topic: clean, level: levelKey, ts: now.toISOString(), status:'open'});
+    saveHistory(prev);
+  }
+
+  function renderHistory(){
+    const tab = document.querySelector('.sideTab.active')?.dataset.tab || 'open';
+    const wrap = $('#history');
+    const arr = loadHistory().filter(x => (x.status||'open') === tab);
+    if(!arr.length){
+      wrap.innerHTML = '<div class="empty">Sin contenidos aún. Crea tu primer tema arriba 👆</div>';
+      return;
+    }
+    wrap.innerHTML = '<div class="histTitle">Últimos 7 días</div>' + arr.slice(0,10).map(x=>{
+      const d = new Date(x.ts);
+      const diff = DIFF.find(d=>d.key===x.level)?.label || 'Intermedio';
+      return `
+        <div class="item" data-topic="${encodeURIComponent(x.topic)}" data-level="${x.level}">
+          <div>
+            <b>${x.topic}</b>
+            <small>${diff} • ${d.toLocaleDateString()}</small>
+          </div>
+          <div class="go">Explorar</div>
+        </div>
+      `;
+    }).join('');
+
+    wrap.querySelectorAll('.item').forEach(el=>{
+      el.addEventListener('click', ()=>{
+        const topic = decodeURIComponent(el.dataset.topic || '');
+        const level = el.dataset.level || 'medium';
+        location.href = `teacher-yoguis-content.html?topic=${encodeURIComponent(topic)}&level=${encodeURIComponent(level)}`;
+      });
+    });
+  }
+
+  function setDiff(val){
+    const obj = DIFF[Number(val)] || DIFF[1];
+return obj.key;
+  }
+
+  // events
+  $('#diffRange').addEventListener('input', (e)=>setDiff(e.target.value));
+  setDiff($('#diffRange').value);
+
+  document.querySelectorAll('.sideTab').forEach(t=>{
+    t.addEventListener('click', ()=>{
+      document.querySelectorAll('.sideTab').forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+      renderHistory();
+    });
+  });
+
+  $('#btnClear').addEventListener('click', ()=>{
+    localStorage.removeItem('ty_history');
+    renderHistory();
+  });
+
+  const SUGGESTIONS = [
+    'Energía solar', 'Transición energética', 'Medellín', 'Amazonía', 'Inteligencia artificial',
+    'Historia del inglés', 'Verbos irregulares', 'Fútbol', 'Emprendimiento', 'Cambio climático'
+  ];
+  $('#btnSuggestions').addEventListener('click', ()=>{
+    const topic = SUGGESTIONS[Math.floor(Math.random()*SUGGESTIONS.length)];
+    $('#topic').value = topic;
+    $('#topic').focus();
+  });
+
+  function start(){
+    const topic = ($('#topic').value||'').trim();
+    if(!topic){
+      $('#topic').focus();
+      $('#topic').style.borderColor = 'rgba(239,68,68,.65)';
+      setTimeout(()=>$('#topic').style.borderColor='', 900);
+      return;
+    }
+    const level = setDiff($('#diffRange').value);
+    addHistory(topic, level);
+    location.href = `teacher-yoguis-content.html?topic=${encodeURIComponent(topic)}&level=${encodeURIComponent(level)}`;
+  }
+
+  $('#btnStart').addEventListener('click', start);
+  $('#topic').addEventListener('keydown', (e)=>{ if(e.key==='Enter') start(); });
+
+  renderHistory();
+</script>
+
+</body>
+</html>

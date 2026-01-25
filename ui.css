@@ -2051,9 +2051,11 @@ box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);;justify-content:flex-start;text-ali
   gap: 12px;
 }
 .appFooter .footerTopRow{
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  flex-direction:column;
+  gap:12px;
 }
 .appFooter .footerMetaRow{
   display: flex;
@@ -2079,6 +2081,8 @@ box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);;justify-content:flex-start;text-ali
   padding: 12px 16px;
   border-radius: 16px;
 }
+.footerBtn--secondary{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.18)}
+
 
 /* ===== Float actions a la derecha (ASISTENTE IA) ===== */
 .float-actions.float-actions-right{
@@ -2097,4 +2101,894 @@ box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);;justify-content:flex-start;text-ali
     flex: 0 0 auto !important;
     width: auto !important;
   }
+}
+
+/* ===============================
+   Teacher Yoguis (NEUROVERBS theme)
+   Usa ui.css (mismo front-end del index)
+   =============================== */
+
+.tyHeaderRow{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+  margin: 10px 0 12px;
+}
+.tyHeaderRow .tyPill{
+  display:inline-flex;
+  gap:8px;
+  align-items:center;
+  padding:8px 10px;
+  border-radius:999px;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.16);
+  color:#fff;
+  font-weight:950;
+}
+.tyHeaderRow .tyPill b{ color: var(--secondary); }
+
+.tyLayout{
+  display:grid;
+  grid-template-columns: 1fr 360px;
+  gap:12px;
+  align-items:start;
+}
+@media (max-width: 980px){
+  .tyLayout{ grid-template-columns: 1fr; }
+}
+
+.tyCardHead{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-bottom:10px;
+}
+.tyCardHead h2{
+  margin:0;
+  font-size:1.02rem;
+  font-weight:950;
+  color:#0f172a;
+}
+
+.tyForm input[type="text"]{
+  text-align:left;
+  font-size:1rem;
+  font-weight:900;
+}
+
+.tyRange{
+  margin-top:10px;
+  background:#f1f5f9;
+  padding:14px;
+  border-radius:16px;
+  border:1px solid #e2e8f0;
+}
+.tyRangeTop{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.tyRangeTop b{ font-size:.85rem; font-weight:950; }
+.tyRangeTop span{ color:var(--muted); font-size:.8rem; font-weight:900; }
+.tyRange input[type="range"]{ width:100%; }
+.tyRangeLabels{
+  display:flex;
+  justify-content:space-between;
+  color:var(--muted);
+  font-size:.78rem;
+  margin-top:8px;
+  font-weight:900;
+}
+
+.tyTabs,
+.tySideTabs{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  justify-content:center;
+  margin: 10px 0 10px;
+}
+.tyTabs .tab,
+.tySideTabs .sideTab{
+  flex: 1;
+  min-width: 140px;
+  text-align:center;
+  padding:10px 12px;
+  border-radius:999px;
+  border:2px solid #e2e8f0;
+  background:#fff;
+  color:#0f172a;
+  font-weight:950;
+  cursor:pointer;
+  user-select:none;
+}
+.tyTabs .tab.active,
+.tySideTabs .sideTab.active{
+  background: rgba(242,139,22,.16);
+  border-color: rgba(242,139,22,.55);
+}
+
+.tyHistory{
+  max-height: 56vh;
+  overflow:auto;
+  padding-right: 4px;
+}
+.tyHistory .histTitle{
+  font-size:.78rem;
+  color:var(--muted);
+  font-weight:950;
+  margin: 10px 0 8px;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+}
+.tyHistory .empty{
+  background:#fff;
+  border:1px dashed #cbd5e1;
+  border-radius:16px;
+  padding:14px;
+  color:var(--muted);
+  font-weight:900;
+}
+.tyHistory .item{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  padding:12px;
+  border-radius:16px;
+  border:1px solid #e2e8f0;
+  background:#fff;
+  margin: 0 0 10px;
+  cursor:pointer;
+  transition: transform .12s ease, border-color .12s ease;
+}
+.tyHistory .item:hover{
+  transform: translateY(-1px);
+  border-color: rgba(242,139,22,.55);
+}
+.tyHistory .item b{ display:block; font-weight:950; color:#0f172a; }
+.tyHistory .item small{ color:var(--muted); font-weight:900; }
+.tyHistory .go{
+  padding:8px 10px;
+  border-radius:999px;
+  background: rgba(242,139,22,.16);
+  border:1px solid rgba(242,139,22,.35);
+  color:#0b1220;
+  font-weight:950;
+  white-space:nowrap;
+}
+
+.tyContentArea{
+  max-height: 62vh;
+  overflow:auto;
+}
+.tyPara{ margin:0 0 14px; line-height:1.55; font-size:15px; }
+.tyPara .sentence{
+  transition: background-color .12s ease, box-shadow .12s ease;
+  border-radius:10px;
+  padding:2px 3px;
+}
+.tyPara .sentence.speaking{
+  background: rgba(242,139,22,.18);
+  box-shadow: 0 0 0 4px rgba(242,139,22,.12);
+}
+
+.tyControls{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:flex-end;
+}
+.tySeg{
+  display:flex;
+  border:2px solid #e2e8f0;
+  border-radius:999px;
+  overflow:hidden;
+  background:#fff;
+}
+.tySeg button{
+  border:0;
+  background:transparent;
+  padding:10px 12px;
+  font-weight:950;
+  color:var(--muted);
+  cursor:pointer;
+  min-width:56px;
+}
+.tySeg button.active{
+  background: rgba(242,139,22,.16);
+  color:#0f172a;
+}
+
+.tySmallSelect{
+  min-width: 120px;
+}
+
+.tyLinkCard{
+  text-decoration:none;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  align-items:center;
+  justify-content:center;
+  min-height: 160px;
+  transition: transform .12s ease, border-color .12s ease;
+}
+.tyLinkCard:hover{
+  transform: translateY(-2px);
+  border-color: rgba(242,139,22,.55);
+}
+.tyLinkCard .tyIcon{
+  width:54px;
+  height:54px;
+  border-radius:18px;
+  display:grid;
+  place-items:center;
+  background: rgba(242,139,22,.14);
+  border: 1px solid rgba(242,139,22,.25);
+  font-size: 1.4rem;
+}
+.tyLinkCard .tyTitle{ font-weight:950; color:#0f172a; font-size: 1.05rem; }
+.tyLinkCard .tyDesc{ color:var(--muted); font-weight:900; text-align:center; font-size: .88rem; }
+
+/* Botones de acción compactos dentro de Teacher Yoguis */
+.tyBtnRow{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:flex-start; }
+.tyBtnRow .btn-mini{ text-transform: none; }
+.tyIconButton{display:inline-flex;align-items:center;gap:8px;}
+.tyIconButton span{font-weight:950;}
+.isHidden{display:none;}
+
+/* ===== Teacher Yoguis: Quiz (sin estilos inline) ===== */
+.tyStem{ margin:0 0 10px; }
+.quiz{ display:flex; flex-direction:column; gap:12px; }
+.q{
+  background:#fff;
+  border:1px solid #e2e8f0;
+  border-radius:16px;
+  padding:14px;
+}
+.q h4{ margin:0 0 10px; font-size:1rem; font-weight:950; color:#0f172a; }
+.opt{
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  padding:10px;
+  border-radius:14px;
+  border:1px solid #e2e8f0;
+  background:#f8fafc;
+  margin:8px 0;
+  cursor:pointer;
+}
+.opt:hover{ border-color: rgba(242,139,22,.55); background:#fff; }
+
+/* ⚠️ ui.css tiene estilo global para input; aquí se neutraliza para radios */
+.quiz input[type="radio"]{
+  width:auto !important;
+  padding:0 !important;
+  margin:3px 0 0 0 !important;
+  border:0 !important;
+  box-shadow:none !important;
+  background:transparent !important;
+  border-radius:0 !important;
+  text-align:left !important;
+}
+
+.quiz .result{
+  margin-top:10px;
+  padding:10px;
+  border-radius:14px;
+  font-weight:950;
+  border:1px solid #e2e8f0;
+  background:#fff;
+}
+.quiz .result.ok{ border-color: rgba(34,197,94,.45); background: rgba(34,197,94,.12); color:#14532d; }
+.quiz .result.bad{ border-color: rgba(239,68,68,.45); background: rgba(239,68,68,.12); color:#7f1d1d; }
+
+.quiz .score{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:6px;
+}
+.quiz .score button{
+  background:var(--secondary);
+  color:#0b1220;
+  border:0;
+  padding:12px 14px;
+  border-radius:14px;
+  font-weight:950;
+  cursor:pointer;
+}
+.quiz .score button:hover{ transform: translateY(-1px); }
+
+/* =========================================================
+   Teacher Yoguis • Vocabulario por hover/clic
+   (Pronunciación + traducción + significado + ejemplos)
+   ========================================================= */
+.tyWord{
+  cursor: pointer;
+  border-bottom: 1px dotted rgba(100,116,139,.65);
+  border-radius: 6px;
+  padding: 0 1px;
+}
+.tyWord:hover{
+  background: rgba(37,99,235,.10);
+}
+
+.vocabModalTop{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:10px;
+}
+
+.vocabTermCard{
+  background:#f8fafc;
+  border:1px solid #e2e8f0;
+  border-radius:18px;
+  padding:14px 14px 16px;
+  position:relative;
+}
+
+.vocabTermLine{
+  display:flex;
+  align-items:baseline;
+  gap:10px;
+  font-size:16px;
+}
+
+.vocabSentence{
+  margin-top:10px;
+  font-size:15px;
+  line-height:1.55;
+  color:#0f172a;
+  padding-right:54px;
+}
+
+.vocabSpeakBtn{
+  position:absolute;
+  top:12px;
+  right:12px;
+  width:44px;
+  height:44px;
+  border-radius:999px;
+  border:none;
+  background: var(--secondary);
+  color:#fff;
+  font-weight:950;
+  cursor:pointer;
+  box-shadow:0 12px 22px rgba(0,0,0,.18);
+}
+.vocabSpeakBtn:active{ transform: scale(.98); }
+
+.vocabSection{ margin-top:12px; }
+.vocabSection h4{
+  margin:12px 0 6px;
+  font-size:14px;
+  font-weight:950;
+  color:#0b1220;
+}
+
+.vocabMuted{
+  color:#64748b;
+  font-size:13px;
+  font-weight:800;
+}
+
+.vocabMeaning{ font-size:14px; color:#0f172a; }
+
+.vocabExamples{
+  margin:0;
+  padding-left:18px;
+  color:#0f172a;
+}
+.vocabExamples li{ margin:6px 0; }
+
+.vocabMark{
+  background: rgba(37,99,235,.18);
+  border: 1px solid rgba(37,99,235,.18);
+  padding:2px 8px;
+  border-radius:999px;
+  font-weight:950;
+}
+
+@media (max-width: 520px){
+  .vocabSentence{ padding-right:0; }
+  .vocabSpeakBtn{
+    position: static;
+    width: 100%;
+    height: 44px;
+    margin-top: 12px;
+  }
+}
+
+
+/* Teacher Yoguis - Acción vocabulario (selección + clic) */
+.tyVocabBar{
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px dashed rgba(148,163,184,.65);
+  border-radius: 14px;
+  background: rgba(241,245,249,.65);
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+.tyVocabBar .legend{ margin: 0; }
+
+.btn-main:disabled,
+.btn-mini:disabled{
+  opacity: .55;
+  cursor: not-allowed;
+  filter: grayscale(.15);
+}
+
+@media (max-width: 520px){
+  .tyVocabBar{ flex-direction: column; align-items: stretch; }
+}
+
+
+/* ===========================
+   Teacher Yoguis (layout tipo Teacher Poli, usando estilos base de index.html)
+   =========================== */
+
+.tyTopbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+
+.tyBrandMini{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  text-decoration:none;
+  color:#fff;
+}
+
+.tyBrandLogo{
+  width:44px;
+  height:44px;
+  border-radius:14px;
+  border:2px solid var(--secondary);
+  background:#0b1220;
+  padding:6px;
+  box-sizing:border-box;
+}
+
+.tyBrandText{ line-height:1.05; }
+.tyBrandName{ font-weight:950; letter-spacing:.2px; }
+.tyBrandSub{ color:var(--accent); font-weight:900; font-size:.9rem; margin-top:4px; }
+
+.tyTopRight{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.tyHomeLink{
+  color:#fff;
+  text-decoration:none;
+  font-weight:950;
+  padding:8px 12px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.06);
+}
+.tyHomeLink:hover{ background: rgba(255,255,255,.10); }
+
+.tyAvatar{
+  width:38px; height:38px;
+  border-radius:999px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#fff;
+  font-weight:950;
+  border:1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.06);
+}
+
+.tyGradLine{
+  height:2px;
+  border-radius:999px;
+  margin: 12px 0 18px;
+  background: linear-gradient(90deg, rgba(217,70,239,.95), rgba(34,211,238,.95));
+  opacity:.95;
+}
+
+.tyHero{
+  text-align:center;
+  padding: 4px 0 16px;
+}
+.tyHero h1{
+  margin: 0;
+  font-size: 2rem;
+  color:#fff;
+  font-weight: 950;
+  letter-spacing: .2px;
+}
+.tyHero p{
+  margin: 8px 0 0;
+  color: rgba(255,255,255,.78);
+  font-weight: 900;
+}
+
+.tyDashWrap{ position:relative; padding: 6px 0 10px; }
+.tyWave{
+  position:absolute;
+  left:-26px; right:-26px;
+  top: 96px;
+  height: 120px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(217,70,239,.35), rgba(34,211,238,.35));
+  opacity:.28;
+  pointer-events:none;
+}
+
+.tyModuleGrid{
+  position:relative;
+  display:grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+@media (max-width: 980px){
+  .tyModuleGrid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 520px){
+  .tyModuleGrid{ grid-template-columns: 1fr; }
+}
+
+.tyModuleCard{
+  text-decoration:none;
+  text-align:center;
+  padding: 18px 14px;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.tyModuleCard:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 14px 35px rgba(0,0,0,.20);
+}
+
+.tyMIcon{ font-size: 2rem; margin-bottom: 8px; }
+.tyMTitle{ font-weight: 950; font-size: 1.05rem; margin-bottom: 6px; color:#0f172a; }
+.tyMDesc{ color: var(--muted); font-weight: 900; font-size: .9rem; }
+
+.tyFooter{
+  margin-top: 18px;
+  text-align:center;
+  color: rgba(255,255,255,.70);
+  font-weight: 850;
+  font-size: .85rem;
+}
+
+/* Input (estilo Teacher Poli) */
+.tyCenterCard{ padding: 16px; }
+.tySectionLabel{
+  font-weight: 950;
+  color:#0f172a;
+  margin-bottom: 10px;
+}
+.tyCenterWrap{
+  text-align:center;
+  padding: 6px 6px 10px;
+}
+.tyBigIcon{ font-size: 2.2rem; margin: 6px 0 10px; }
+.tyCenterTitle{
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 950;
+}
+.tyCenterSub{
+  margin-top: 10px;
+  color: var(--muted);
+  font-weight: 900;
+}
+
+.tyInputRow{
+  margin: 18px auto 0;
+  max-width: 520px;
+  display:flex;
+  gap:10px;
+  justify-content:center;
+  align-items:stretch;
+}
+.tyInputRow input[type="text"]{
+  flex:1;
+  min-width: 0;
+}
+@media (max-width: 520px){
+  .tyInputRow{ flex-direction: column; }
+}
+
+.tyRangeCenter{
+  max-width: 520px;
+  margin: 14px auto 0;
+}
+
+.tyBigBtn{
+  width: 100%;
+  max-width: 520px;
+  margin-top: 14px;
+}
+
+/* Tabs (Mis contenidos) tipo underline */
+.tySideTabs{
+  justify-content:flex-start;
+  gap:0;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+}
+.tySideTabs .sideTab{
+  border:none;
+  background:transparent;
+  padding: 10px 12px;
+  border-radius: 0;
+  font-weight: 950;
+  color:#0f172a;
+  position:relative;
+  cursor:pointer;
+}
+.tySideTabs .sideTab.active::after{
+  content:"";
+  position:absolute;
+  left:0; right:0;
+  bottom: -9px;
+  height:2px;
+  border-radius:999px;
+  background: linear-gradient(90deg, rgba(217,70,239,.95), rgba(34,211,238,.95));
+}
+
+.tyPageHero{
+  text-align:center;
+  padding: 8px 0 10px;
+}
+.tyPageHero h1{
+  margin:0;
+  color:#fff;
+  font-weight:950;
+}
+.tyPageHero p{
+  margin:8px 0 0;
+  color: rgba(255,255,255,.78);
+  font-weight:900;
+}
+
+
+
+/* =========================
+   Teacher Yoguis — Writing / Speaking / Role Play (Teacher Poli-like layouts)
+   Uses the original UI tokens of index.html (ui.css)
+   ========================= */
+
+.tyInputRowSolo{
+  justify-content:center;
+}
+.tyInputRowSolo input{
+  width: min(560px, 100%);
+  border:2px solid rgba(217,70,239,.35);
+  border-radius: 14px;
+  padding: 14px 14px;
+  font-weight: 950;
+  background:#fff;
+}
+.tyInputRowSolo input:focus{
+  outline:none;
+  border-color: rgba(217,70,239,.70);
+  box-shadow: 0 0 0 4px rgba(217,70,239,.10);
+}
+
+.tyDot{
+  display:inline-block;
+  width:10px;
+  height:10px;
+  border-radius:999px;
+  margin-right:8px;
+  vertical-align:middle;
+}
+.tyDotOpen{ background: rgba(217,70,239,.95); }
+.tyDotDone{ background: rgba(34,211,238,.95); }
+
+.tyItemActive{
+  border-color: rgba(217,70,239,.55) !important;
+  box-shadow: 0 10px 24px rgba(217,70,239,.12);
+}
+
+.tyChatHead{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-bottom: 12px;
+}
+.tyChatTopic{
+  font-weight: 950;
+  font-size: 1.15rem;
+  color:#0f172a;
+}
+.tyChatMeta{
+  margin-top:4px;
+  color: var(--muted);
+  font-weight: 900;
+  font-size: .85rem;
+}
+.tyChatActions{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.tyChatLog{
+  height: 52vh;
+  min-height: 320px;
+  overflow:auto;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 14px;
+}
+
+.tyMsg{ margin-bottom: 12px; }
+.tyMsgLabel{
+  font-size: .78rem;
+  font-weight: 950;
+  color: var(--muted);
+  margin: 0 0 6px 2px;
+}
+.tyMsgBubble{
+  display:inline-block;
+  max-width: 900px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  font-weight: 900;
+  line-height: 1.45;
+}
+.tyMsgUser{ text-align:right; }
+.tyMsgUser .tyMsgBubble{
+  background: rgba(217,70,239,.10);
+  border-color: rgba(217,70,239,.25);
+}
+.tyMsgBot .tyMsgBubble{
+  background: rgba(34,211,238,.08);
+  border-color: rgba(34,211,238,.22);
+}
+
+.tyChatComposer{
+  margin-top: 12px;
+  display:flex;
+  gap:10px;
+  align-items:stretch;
+}
+.tyChatComposer textarea{
+  flex:1;
+  resize: vertical;
+  min-height: 54px;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  padding: 12px 12px;
+  font-weight: 900;
+}
+.tyChatComposerBtns{
+  display:flex;
+  gap:10px;
+  align-items:stretch;
+}
+.tyChatComposerBtns .btn-mini,
+.tyChatComposerBtns .btn-main{
+  height: 54px;
+}
+
+.isListening{
+  border-color: rgba(34,211,238,.55) !important;
+  background: rgba(34,211,238,.12) !important;
+}
+
+/* Role Play scenario grid */
+.tyRoleSection{ margin: 14px 0 18px; }
+.tyRoleSectionTitle{
+  font-weight: 950;
+  color:#0f172a;
+  margin: 8px 0 10px;
+}
+.tyRoleGrid{
+  display:grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (max-width: 980px){
+  .tyRoleGrid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 520px){
+  .tyRoleGrid{ grid-template-columns: 1fr; }
+}
+
+.tyRoleCard{
+  position:relative;
+  border:none;
+  cursor:pointer;
+  padding:0;
+  border-radius: 16px;
+  overflow:hidden;
+  min-height: 92px;
+  box-shadow: 0 10px 26px rgba(0,0,0,.10);
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.tyRoleCard:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 16px 34px rgba(0,0,0,.14);
+}
+.tyRoleOverlay{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:flex-end;
+  padding: 12px;
+  background: linear-gradient(180deg, rgba(0,0,0,.05), rgba(0,0,0,.35));
+}
+.tyRoleTitle{
+  color:#fff;
+  font-weight: 950;
+  text-align:left;
+  line-height:1.15;
+  text-shadow: 0 8px 18px rgba(0,0,0,.35);
+}
+
+/* Background themes per category */
+.tyRoleBgBusiness{
+  background: linear-gradient(135deg, rgba(79,70,229,.85), rgba(217,70,239,.75));
+}
+.tyRoleBgOffer{
+  background: linear-gradient(135deg, rgba(242,139,22,.90), rgba(217,70,239,.70));
+}
+.tyRoleBgTravel{
+  background: linear-gradient(135deg, rgba(34,211,238,.85), rgba(37,99,235,.75));
+}
+.tyRoleBgShopping{
+  background: linear-gradient(135deg, rgba(16,185,129,.85), rgba(34,211,238,.70));
+}
+.tyRoleBgLife{
+  background: linear-gradient(135deg, rgba(244,63,94,.80), rgba(242,139,22,.70));
+}
+
+
+/* ===== Teacher Yoguis: Estado IA ===== */
+.tyIaPill{
+  display:inline-flex;
+  align-items:center;
+  padding:8px 10px;
+  border:1px solid rgba(15,23,42,.14);
+  border-radius:999px;
+  background:#fff;
+  color:var(--muted);
+  font-weight:950;
+  font-size:.82rem;
+  line-height:1;
+  white-space:nowrap;
+}
+.tyIaPill.ok{
+  border-color: rgba(34,197,94,.35);
+  background: rgba(34,197,94,.10);
+  color:#0f172a;
+}
+.tyIaPill.bad{
+  border-color: rgba(239,68,68,.35);
+  background: rgba(239,68,68,.10);
+  color:#7f1d1d;
 }
