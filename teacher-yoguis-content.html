@@ -154,6 +154,8 @@
 
   <script>
     const $ = (s)=>document.querySelector(s);
+    const on = (sel, evt, fn)=>{ const el = $(sel); if(el) el.addEventListener(evt, fn); };
+    const setText = (sel, txt)=>{ const el=$(sel); if(el) el.textContent = txt; };
 
     const DIFF = {
       easy:   {label:'Fácil',       chars: 900,  paras: 2},
@@ -176,6 +178,7 @@
     function renderHistory(){
       const tab = document.querySelector('.sideTab.active')?.dataset.tab || 'open';
       const wrap = $('#history');
+      if(!wrap) return;
       const arr = loadHistory().filter(x => (x.status||'open') === tab);
       if(!arr.length){
         wrap.innerHTML = '<div class="empty">Aún no hay contenidos aquí.</div>';
@@ -1238,8 +1241,8 @@ function renderVocab(data){
         renderHistory();
       });
     });
-    $('#btnPlus').addEventListener('click', ()=>location.href='teacher-yoguis-input.html');
-    $('#btnNew').addEventListener('click', ()=>location.href='teacher-yoguis-input.html');
+    on('#btnPlus','click', ()=>location.href='teacher-yoguis-input.html');
+    on('#btnNew','click', ()=>location.href='teacher-yoguis-input.html');
 
     // tab switch
     document.querySelectorAll('.tab').forEach(t=>{
@@ -1267,8 +1270,8 @@ function renderVocab(data){
     // language toggle
     function setLang(lang){
       currentLang = lang;
-      $('#btnEN').classList.toggle('active', lang==='en');
-      $('#btnES').classList.toggle('active', lang==='es');
+      $('#btnEN')?.classList.toggle('active', lang==='en');
+      $('#btnES')?.classList.toggle('active', lang==='es');
       stopSpeak();
 
       const cfg = DIFF[level] || DIFF.medium;
@@ -1316,21 +1319,22 @@ function renderVocab(data){
           });
       }
     }
-    $('#btnEN').addEventListener('click', ()=>setLang('en'));
-    $('#btnES').addEventListener('click', ()=>setLang('es'));
+    on('#btnEN','click', ()=>setLang('en'));
+    on('#btnES','click', ()=>setLang('es'));
 
     // audio controls
-    $('#btnPlay').addEventListener('click', playSpeak);
-    $('#btnPause').addEventListener('click', togglePause);
-    $('#btnStop').addEventListener('click', stopSpeak);
-    $('#speedSelect').addEventListener('change', ()=>{
+    on('#btnPlay','click', playSpeak);
+    on('#btnPause','click', togglePause);
+    on('#btnStop','click', stopSpeak);
+    on('#speedSelect','change', ()=>{
       // if currently speaking, restart at new speed
       if(speaking){ restartFromCurrent(); }
     });
 
     // fetch content
     async function load(){
-      renderHistory();
+      setText('#loading','Preparando contenido…');
+      try{ renderHistory(); }catch(e){ console.warn('renderHistory error', e); }
 
       const cfg = DIFF[level] || DIFF.medium;
       const wanted = cfg.paras;
@@ -1342,7 +1346,7 @@ function renderVocab(data){
       try{
         if(window.IA && IA.generate){
           
-          $('#loading').textContent = 'Consultando IA…';
+          setText('#loading','Consultando IA…');
           const resp = await IA.generate({topic, levelKey: level});
           const title = resp.title || topic;
 
@@ -1368,6 +1372,7 @@ function renderVocab(data){
             $('#topicTitle').textContent = title;
             $('#topicMeta').textContent = `${cfg.label} · ${wanted} párrafo(s) · IA`;
             setLang('en');
+            $('#loading')?.remove();
             return;
           }
         }
@@ -1375,7 +1380,7 @@ function renderVocab(data){
         console.warn('Worker/IA falló, usando fallback:', err);
       }
 
-      $('#loading').textContent = 'Buscando en Wikipedia…';
+      setText('#loading','Buscando en Wikipedia…');
 
       try{
         const enTitle = await wikiTitle('en', topic) || topic;
@@ -1402,7 +1407,15 @@ function renderVocab(data){
       }catch(e){
         fullText.en = `This is a short lesson about ${topic}. (Offline mode)`;
         fullText.es = `Esta es una lección corta sobre ${topic}. (Modo sin conexión)`;
+        // intentar renderizar algo de inmediato
+        fullParas.en = pickParagraphs(fullText.en, level);
+        fullParas.es = pickParagraphs(fullText.es, level);
         setLang('en');
+        const ld = $('#loading');
+        if(ld){
+          ld.innerHTML = `<b>No se pudo cargar desde IA/Wikipedia.</b><br/><small>Revisa tu conexión o tu API. </small><br/><button class="btn" id="btnRetry" type="button" style="margin-top:10px">Reintentar</button>`;
+          on('#btnRetry','click', ()=>location.reload());
+        }
       }
     }
     load();
