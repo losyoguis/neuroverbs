@@ -136,7 +136,18 @@
     return (full + empty) || "🤍🤍🤍🤍🤍";
   }
 
-  function updateHUD(){
+  
+  // Ajusta el "safe area" superior según la altura real de la barra de puntajes
+  function syncHudSafe(){
+    const bar = document.getElementById("statsBar");
+    if(!bar) return;
+    const h = Math.ceil(bar.getBoundingClientRect().height || 0);
+    if(h > 0){
+      document.documentElement.style.setProperty("--hudSafe", h + "px");
+    }
+  }
+
+function updateHUD(){
     const st = getGame();
     const pending = Number(safeGet(PENDING_XP_KEY)||0);
 
@@ -176,11 +187,17 @@
     if(pendEl) pendEl.textContent = String(Math.round(pending||0));
   
     // KP misiones completadas (mini indicador)
+    const c = countDone();
     const kpMEl = document.getElementById("kpMissionsText");
-    if(kpMEl){
-      const c = countDone();
-      kpMEl.textContent = `${c.done}/${c.total}`;
-    }
+    if(kpMEl) kpMEl.textContent = `${c.done}/${c.total}`;
+
+    // ✅ Estilo "KP terminado" cuando llega a 7/7
+    const isDoneAll = (c.done === c.total);
+    const pill = document.getElementById("kpMiniPill");
+    if(pill) pill.classList.toggle("isDone", isDoneAll);
+
+    const doneMsg = document.getElementById("kpDoneMsg");
+    if(doneMsg) doneMsg.hidden = !isDoneAll;
 }
 
 
@@ -1380,6 +1397,8 @@
   }
 
 function init(){
+    syncHudSafe();
+    window.addEventListener("resize", syncHudSafe, {passive:true});
     renderRoadmap();
     renderThreeCols();
     renderTensesTables();

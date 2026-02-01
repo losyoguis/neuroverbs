@@ -10,6 +10,7 @@ body{
   background: var(--bg);
   margin:0;
   padding:18px;
+  padding-top: calc(var(--hudSafe, 160px) + 28px);
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Noto Sans", sans-serif;
   color:#e5e7eb;
   display:flex;
@@ -647,6 +648,33 @@ details[open].kpAcc > summary .kpAccChevron::before{ content:"▴"; }
   white-space:nowrap;
   border:1px solid rgba(255,255,255,.25);
 }
+
+
+/* ✅ KP completado (pill + mini mensaje) */
+.goalBox{ position: relative; }
+
+.kpMiniPill.isDone{
+  background: rgba(34,197,94,.85);
+  border-color: rgba(34,197,94,.85);
+  color:#05220f;
+  box-shadow: 0 10px 20px rgba(34,197,94,.18);
+}
+
+.kpDoneMsg{
+  position:absolute;
+  right:12px;
+  bottom:10px;
+  font-size:.78rem;
+  font-weight:950;
+  padding:4px 8px;
+  border-radius:999px;
+  background: rgba(34,197,94,.18);
+  border:1px solid rgba(34,197,94,.35);
+  color:#dcfce7;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
 #statsBar .kpMiniPill b{ font-weight:950; }
 
 @media (max-width: 520px){
