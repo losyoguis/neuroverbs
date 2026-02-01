@@ -3122,3 +3122,7 @@ box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);;justify-content:flex-start;text-ali
 }
 .stats.atStart::before{ opacity:0; }
 .stats.atEnd::after{ opacity:0; }
+
+
+/* Ruta del Inglés button */
+.roundbtn.ruta{ border-color: rgba(255,165,0,.35); box-shadow: inset 0 0 0 1px rgba(255,165,0,.18); }
