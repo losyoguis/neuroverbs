@@ -23,71 +23,51 @@
   }
 
 // Ajusta el "safe top" para que la barra fija no tape contenido (varía si la barra cambia de altura)
+function clampNV(n, min, max){
+  return Math.max(min, Math.min(max, n));
+}
+
 function computeTopSafes(){
-  const bar = document.getElementById("statsBar");
+  const root = document.documentElement;
+  const bar  = document.getElementById("statsBar");
   const dock = document.getElementById("kpTopDock");
   if(!bar) return;
 
-  const r = bar.getBoundingClientRect();
+  const safeTop = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--safeTop")) || 0);
   const vh = Math.max(1, window.innerHeight || 1);
 
-  // safeTop viene de :root{ --safeTop: env(safe-area-inset-top) }
-  const safeTop = (parseFloat(getComputedStyle(document.documentElement)
-    .getPropertyValue("--safeTop")) || 0);
+  // Medición estable: usa el bottom real del rect (incluye top + altura)
+  const r = bar.getBoundingClientRect();
+  let statsBottom = Math.round(r.bottom);
 
-  // Evitamos depender de r.top (Safari a veces lo infla en carga inicial).
-  // Tomamos el "top" real desde CSS (stats es FIXED en ui.css).
-  let top = parseFloat(getComputedStyle(bar).top);
-  if(!Number.isFinite(top)) top = safeTop + 12;
-  // guard rail: nunca debería ser absurdo
-  top = Math.max(0, Math.min(Math.round(top), Math.round(safeTop + 90)));
+  // Guard rails: evita un padding enorme si el navegador reporta valores raros
+  const MIN_BOTTOM = Math.round(safeTop + 60);
+  const MAX_BOTTOM = Math.round(safeTop + Math.min(150, Math.round(vh * 0.22) + 20));
 
-  const candidates = [
-    Number.isFinite(r.height) ? r.height : 0,
-    bar.offsetHeight || 0,
-    bar.clientHeight || 0,
-    bar.scrollHeight || 0,
-  ].filter(n => Number.isFinite(n) && n > 0);
+  if(!Number.isFinite(statsBottom) || statsBottom <= 0) statsBottom = MIN_BOTTOM;
+  statsBottom = clampNV(statsBottom, MIN_BOTTOM, MAX_BOTTOM);
 
-  // ✅ Preferimos la menor altura "sensata" para evitar mediciones raras en móviles (iOS/Safari)
-  let statsH = candidates.length ? Math.min(...candidates) : 0;
+  const GAP = 6;
+  const dockTop = statsBottom + GAP;
 
-  const MIN_H = 56; // la barra nunca debería ser menor a esto
-  const MAX_H = Math.min(140, Math.round(vh * 0.22)); // ~22% del viewport
-  statsH = Math.max(MIN_H, Math.min(Math.round(statsH || 0), MAX_H));
+  root.style.setProperty("--statsBottom", `${statsBottom}px`);
+  root.style.setProperty("--dockTop", `${dockTop}px`);
 
-  let statsBottom = Math.max(0, Math.round(top + statsH));
-
-  // Si aún sale sospechoso (demasiado abajo), fallback conservador
-  if(statsBottom > Math.round(vh * 0.28)){
-    // fallback conservador, pero respetando safeTop en móviles
-    const fallback = Math.round(safeTop + Math.min(140, Math.round(vh * 0.18)));
-    statsBottom = Math.max(fallback, Math.min(180, Math.round(vh * 0.22) + Math.round(safeTop)));
+  // Mide el alto del dock para reservar espacio al hacer scroll (tabs + header)
+  let dockH = 0;
+  if(dock){
+    const dr = dock.getBoundingClientRect();
+    dockH = Math.round(dr.height || dock.offsetHeight || dock.scrollHeight || 0);
+    dockH = clampNV(dockH, 120, 420);
   }
 
-  const GAP = 6; // aire entre la barra de puntajes y el encabezado KP
-  const dockTop = Math.max(0, Math.round(statsBottom + GAP));
-
-  document.documentElement.style.setProperty("--statsBottom", statsBottom + "px");
-  document.documentElement.style.setProperty("--dockTop", dockTop + "px");
-
-  // Altura del dock (para anclas/scroll)
-  const dr = dock ? dock.getBoundingClientRect() : null;
-  const dockCandidates = dock ? [
-    (dr && Number.isFinite(dr.height)) ? dr.height : 0,
-    dock.offsetHeight || 0,
-    dock.clientHeight || 0,
-    dock.scrollHeight || 0
-  ].filter(n => Number.isFinite(n) && n > 0) : [];
-
-  let dockH = dockCandidates.length ? Math.min(...dockCandidates) : 0;
-  const MAX_DOCK = Math.min(340, Math.round(vh * 0.55));
-  dockH = Math.max(0, Math.min(Math.round(dockH), MAX_DOCK));
-
-  // Safe para anclajes/scroll: stats + dock + aire
-  const hudSafe = Math.max(0, Math.round(dockTop + dockH + 14));
-  document.documentElement.style.setProperty("--hudSafe", hudSafe + "px");
+  const hudSafe = dockTop + dockH + 14;
+  root.style.setProperty("--hudSafeTop", `${hudSafe}px`);
+  root.style.setProperty("--hudSafe", `${hudSafe}px`);
+  document.body.style.setProperty("--hudSafeTop", `${hudSafe}px`);
+  document.body.style.setProperty("--hudSafe", `${hudSafe}px`);
 }
+
 
   function applyHudSafe(){
     computeTopSafes();

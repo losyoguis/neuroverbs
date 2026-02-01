@@ -31,6 +31,15 @@ body{
   display:block;
 }
 
+/* Override global ui.css padding for pages with floating stats */
+body.has-floating-stats{
+  padding-top: calc(10px + var(--statsBottom, 0px));
+  padding-left: 12px;
+  padding-right: 12px;
+  padding-bottom: 24px;
+}
+
+
 
 .kpApp{
   width: min(1040px, 100%);
