@@ -8,7 +8,8 @@
 
 #nvChatLauncher, #nvChatWidget{
   position: fixed;
-  right: 18px;
+  left: 18px;
+  right: auto;
   bottom: 18px;
   z-index: var(--nv-chat-z);
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
@@ -205,7 +206,8 @@
 
 .nvToast{
   position: fixed;
-  right: 18px;
+  left: 18px;
+  right: auto;
   bottom: 460px;
   z-index: calc(var(--nv-chat-z) + 1);
   padding: 10px 12px;
@@ -223,14 +225,98 @@
 
 @media (max-width: 420px){
   #nvChatWidget{
-    right: 8px;
+    left: 8px;
+    right: auto;
     bottom: 8px;
   }
   #nvChatLauncher{
-    right: 8px;
+    left: 8px;
+    right: auto;
     bottom: 8px;
   }
   .nvToast{
-    right: 8px;
+    left: 8px;
+    right: auto;
   }
 }
+
+/* Rooms panel */
+#nvChatRoomBar{
+  margin-top: 6px;
+  display:flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items:center;
+}
+.nvRoomPill{
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.10);
+  border: 1px solid rgba(255,255,255,.12);
+  color: rgba(255,255,255,.92);
+  display:inline-flex;
+  gap:6px;
+  align-items:center;
+}
+.nvRoomPill b{ color:#ffd08a; font-weight:800; }
+.nvRoomBtn{
+  all: unset;
+  cursor:pointer;
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(0,0,0,.18);
+  border: 1px solid rgba(255,255,255,.12);
+  color:#fff;
+}
+.nvRoomBtn:hover{ background: rgba(255,255,255,.12); }
+
+#nvChatRoomsPanel{
+  display:none;
+  margin: 10px 12px 0;
+  padding: 10px 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+}
+#nvChatRoomsPanel.open{ display:block; }
+.nvRoomGrid{ display:grid; grid-template-columns: 1fr; gap: 10px; }
+.nvRoomCard{
+  padding: 10px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.14);
+}
+.nvRoomCard h4{
+  margin: 0 0 6px;
+  color:#fff;
+  font-size: 12px;
+  letter-spacing:.2px;
+}
+.nvRoomRow{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.nvRoomRow input{
+  flex: 1;
+  min-width: 140px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+  color:#fff;
+  outline:none;
+  font-size: 12px;
+}
+.nvRoomHint{ font-size: 11px; color: rgba(255,255,255,.72); margin-top: 6px; }
+.nvRoomList{ margin-top: 8px; display:flex; flex-wrap:wrap; gap: 6px; }
+.nvRoomTag{
+  all: unset;
+  cursor:pointer;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(255,140,0,.14);
+  border: 1px solid rgba(255,140,0,.20);
+  color:#fff;
+  font-size: 11px;
+}
+.nvRoomTag.active{ background: rgba(0,200,120,.18); border-color: rgba(0,200,120,.22); }
+.nvRoomTag .x{ margin-left:6px; opacity:.8; }

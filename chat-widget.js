@@ -4,7 +4,8 @@
    - Backend recomendado: Cloudflare Worker + KV (CHAT_KV)
 */
 (function(){
-  const CHAT_ROOM = "global";
+  const ROOM_LS_KEY = "nv_chat_room_v1";
+  const ROOMS_LS_KEY = "nv_chat_rooms_v1";
   const DEFAULT_API_BASE = (function(){
     const ls = (localStorage.getItem("NEUROVERBS_API_BASE") || "").trim();
     return (ls ? ls : "https://neuroverbs-api.yoguisindevoz.workers.dev").replace(/\/$/, "");
@@ -26,6 +27,114 @@
     };
   }
 
+  function safeGet(key){
+    try{ return localStorage.getItem(key); }catch(_){ return null; }
+  }
+  function safeSet(key, val){
+    try{ localStorage.setItem(key, val); }catch(_){ }
+  }
+
+  function sanitizeGroup(g){
+    const s = String(g||"").trim();
+    if(!s) return "";
+    // allow: letters, numbers, dash, underscore
+    return s.replace(/\s+/g,"-").replace(/[^a-zA-Z0-9_-]/g,"").slice(0,12);
+  }
+
+  function makeRoomCode(group, code){
+    const g = sanitizeGroup(group);
+    const c = String(code||"").trim().toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,8);
+    if(!g || !c) return "";
+    return `${g}@${c}`;
+  }
+
+  function parseRoomCode(raw){
+    const s = String(raw||"").trim();
+    if(!s) return null;
+    if(s.toLowerCase() === "global") return { room:"global", group:"Global", code:"" };
+    // support "10-2@ABC123" or "10-2 ABC123" or "10-2-ABC123" (best-effort)
+    if(s.includes("@")){
+      const [g,c] = s.split("@");
+      const group = sanitizeGroup(g);
+      const code = String(c||"").trim().toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,8);
+      if(group && code) return { room: makeRoomCode(group, code), group, code };
+    }
+    const parts = s.replace(/\s+/g," ").split(" ");
+    if(parts.length===2){
+      const group = sanitizeGroup(parts[0]);
+      const code = String(parts[1]||"").trim().toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,8);
+      if(group && code) return { room: makeRoomCode(group, code), group, code };
+    }
+    const m = s.match(/^([a-zA-Z0-9_-]{1,12})[-_ ]([A-Za-z0-9]{4,8})$/);
+    if(m){
+      const group = sanitizeGroup(m[1]);
+      const code = String(m[2]||"").trim().toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,8);
+      if(group && code) return { room: makeRoomCode(group, code), group, code };
+    }
+    return null;
+  }
+
+  function readRooms(){
+    try{
+      const raw = safeGet(ROOMS_LS_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    }catch(_){ return []; }
+  }
+  function writeRooms(arr){
+    safeSet(ROOMS_LS_KEY, JSON.stringify(Array.isArray(arr)?arr:[]));
+  }
+
+  function ensureRoomListHasGlobal(){
+    const rooms = readRooms();
+    if(!rooms.some(r=>r && r.room === "global")) rooms.unshift({room:"global", group:"Global", code:""});
+    writeRooms(rooms.slice(0,20));
+  }
+
+  function getCurrentRoom(){
+    const raw = safeGet(ROOM_LS_KEY);
+    const parsed = parseRoomCode(raw);
+    if(parsed) return parsed;
+    return { room:"global", group:"Global", code:"" };
+  }
+
+  function setCurrentRoom(roomObj, {silent=false}={}){
+    if(!roomObj || !roomObj.room) return;
+    safeSet(ROOM_LS_KEY, roomObj.room);
+    // ensure it exists in list
+    const rooms = readRooms();
+    const idx = rooms.findIndex(r=>r && r.room === roomObj.room);
+    if(idx === -1){
+      rooms.push({room: roomObj.room, group: roomObj.group || "", code: roomObj.code || ""});
+      writeRooms(rooms.slice(-20));
+    }
+    state.room = roomObj.room;
+    state.roomMeta = roomObj;
+    if(!silent){
+      refreshRoomUI();
+      resetConversation();
+      if(state.isOpen) poll();
+    }
+  }
+
+  function removeRoom(room){
+    const rooms = readRooms().filter(r=>r && r.room !== room && r.room !== "global");
+    ensureRoomListHasGlobal();
+    writeRooms([{room:"global", group:"Global", code:""}, ...rooms].slice(0,20));
+    if(state.room === room){
+      setCurrentRoom({room:"global", group:"Global", code:""});
+    }else{
+      refreshRoomUI();
+    }
+  }
+
+  function genCode(len=6){
+    const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let out="";
+    for(let i=0;i<len;i++) out += alphabet[Math.floor(Math.random()*alphabet.length)];
+    return out;
+  }
+
   function ensureUI(){
     if ($("nvChatWidget")) return;
 
@@ -45,10 +154,42 @@
         <div id="nvChatTitle">
           <strong>Chat interno</strong>
           <span>⚠️ Solo se puede hablar en <b>inglés</b></span>
+          <div id="nvChatRoomBar">
+            <span class="nvRoomPill" id="nvRoomPill"><b>Room</b>: <span id="nvRoomName">Global</span></span>
+            <button class="nvRoomBtn" id="nvChatRoomsBtn" type="button">Salas</button>
+          </div>
         </div>
         <div class="nvChatBtns">
           <button id="nvChatMinBtn" title="Minimizar">—</button>
           <button id="nvChatCloseBtn" title="Cerrar">×</button>
+        </div>
+      </div>
+
+      <div id="nvChatRoomsPanel" aria-hidden="true">
+        <div class="nvRoomGrid">
+          <div class="nvRoomCard">
+            <h4>Entrar a una sala</h4>
+            <div class="nvRoomRow">
+              <input id="nvJoinRoom" placeholder="Código: 10-2@ABC123" />
+              <button class="nvRoomBtn" id="nvJoinBtn" type="button">Entrar</button>
+            </div>
+            <div class="nvRoomHint">Tip: pega el código que te dio el docente (ej: <b>10-2@ABC123</b>). También sirve un link con <b>?room=...</b>.</div>
+          </div>
+
+          <div class="nvRoomCard">
+            <h4>Docente: crear sala (con código)</h4>
+            <div class="nvRoomRow">
+              <input id="nvTeacherGroup" placeholder="Grupo (ej: 10-2)" />
+              <button class="nvRoomBtn" id="nvCreateBtn" type="button">Crear</button>
+              <button class="nvRoomBtn" id="nvCopyRoomBtn" type="button" style="display:none">Copiar</button>
+            </div>
+            <div class="nvRoomHint" id="nvTeacherOut"></div>
+          </div>
+
+          <div class="nvRoomCard">
+            <h4>Mis salas</h4>
+            <div class="nvRoomList" id="nvRoomList"></div>
+          </div>
         </div>
       </div>
 
@@ -76,6 +217,10 @@
     launcher.querySelector("button").addEventListener("click", ()=> openChat(true));
     $("nvChatCloseBtn").addEventListener("click", ()=> closeChat(true));
     $("nvChatMinBtn").addEventListener("click", ()=> minimizeChat());
+    $("nvChatRoomsBtn").addEventListener("click", toggleRoomsPanel);
+    $("nvJoinBtn").addEventListener("click", joinFromInput);
+    $("nvCreateBtn").addEventListener("click", teacherCreateRoom);
+    $("nvCopyRoomBtn").addEventListener("click", copyTeacherRoom);
 
     const input = $("nvChatInput");
     input.addEventListener("input", ()=>{
@@ -92,6 +237,132 @@
 
     launcher.style.display = "block";
     widget.classList.remove("open");
+
+    // init rooms
+    ensureRoomListHasGlobal();
+    const initial = getCurrentRoom();
+    state.room = initial.room;
+    state.roomMeta = initial;
+    refreshRoomUI();
+  }
+
+  function resetConversation(){
+    const body = $("nvChatBody");
+    if(body) body.innerHTML = `<div id="nvChatSystem">Sala: <b>${escapeHtml(state.roomMeta?.group || "Global")}</b>. Inicia sesión para chatear.</div>`;
+    state.lastTs = 0;
+  }
+
+  function refreshRoomUI(){
+    const rm = state.roomMeta || getCurrentRoom();
+    const name = rm.group || (rm.room === "global" ? "Global" : rm.room);
+    if($("nvRoomName")) $("nvRoomName").textContent = name;
+
+    // list
+    const list = $("nvRoomList");
+    if(list){
+      const rooms = readRooms();
+      list.innerHTML = rooms.map(r=>{
+        const label = (r.room === "global") ? "Global" : (r.group || r.room);
+        const active = (r.room === rm.room);
+        const removable = r.room !== "global";
+        return `<button class="nvRoomTag ${active?"active":""}" data-room="${escapeHtml(r.room)}" type="button">${escapeHtml(label)}${removable?` <span class="x" data-x="1">×</span>`:""}</button>`;
+      }).join("");
+      list.querySelectorAll(".nvRoomTag").forEach(btn=>{
+        btn.addEventListener("click", (e)=>{
+          const room = btn.getAttribute("data-room") || "global";
+          // if click on x -> remove
+          const target = e.target;
+          if(target && target.getAttribute && target.getAttribute("data-x")){
+            removeRoom(room);
+            return;
+          }
+          const parsed = parseRoomCode(room) || {room, group: room==="global"?"Global":room, code:""};
+          setCurrentRoom(parsed);
+        });
+      });
+    }
+  }
+
+  function toggleRoomsPanel(){
+    const p = $("nvChatRoomsPanel");
+    if(!p) return;
+    const open = p.classList.toggle("open");
+    p.setAttribute("aria-hidden", open?"false":"true");
+    if(open) refreshRoomUI();
+  }
+
+  function joinFromInput(){
+    const inp = $("nvJoinRoom");
+    const val = String(inp?.value||"").trim();
+    if(!val){ showToast("Pega un código de sala."); return; }
+    const parsed = parseRoomCode(val);
+    if(!parsed){ showToast("Código inválido. Ej: 10-2@ABC123"); return; }
+    setCurrentRoom(parsed);
+    if(inp) inp.value = "";
+    // close panel
+    const p = $("nvChatRoomsPanel");
+    if(p) { p.classList.remove("open"); p.setAttribute("aria-hidden","true"); }
+    showToast(`Sala: ${parsed.group}`);
+  }
+
+  function teacherCreateRoom(){
+    const gEl = $("nvTeacherGroup");
+    const out = $("nvTeacherOut");
+    const copyBtn = $("nvCopyRoomBtn");
+    const group = sanitizeGroup(gEl?.value || "");
+    if(!group){
+      if(out) out.textContent = "Escribe el grupo (ej: 10-2).";
+      showToast("Falta el grupo.");
+      return;
+    }
+    const code = genCode(6);
+    const room = makeRoomCode(group, code);
+    const link = buildRoomLink(room);
+    state._teacherRoom = {room, group, code, link};
+    if(out) out.innerHTML = `Código de sala: <b>${escapeHtml(room)}</b><br>Link: <span style="opacity:.9">${escapeHtml(link)}</span>`;
+    if(copyBtn) copyBtn.style.display = "inline-flex";
+    setCurrentRoom({room, group, code});
+    showToast("Sala creada ✅");
+  }
+
+  function buildRoomLink(room){
+    try{
+      const u = new URL(window.location.href);
+      u.searchParams.set("room", room);
+      return u.toString();
+    }catch(_){
+      return String(window.location.href).split("#")[0] + (window.location.search?"&":"?") + "room=" + encodeURIComponent(room);
+    }
+  }
+
+  async function copyTeacherRoom(){
+    const tr = state._teacherRoom;
+    if(!tr) return;
+    const txt = `Sala: ${tr.room}\nLink: ${tr.link}`;
+    const ok = await copyText(txt);
+    if(ok) showToast("Copiado ✅");
+  }
+
+  async function copyText(txt){
+    const t = String(txt||"");
+    try{
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        await navigator.clipboard.writeText(t);
+        return true;
+      }
+    }catch(_){ }
+    try{
+      const ta=document.createElement("textarea");
+      ta.value=t;
+      ta.style.position="fixed";
+      ta.style.left="-9999px";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      ta.remove();
+      return true;
+    }catch(_){ }
+    return false;
   }
 
   function autoGrow(ta){
@@ -224,7 +495,7 @@
     }
 
     const payload = {
-      room: CHAT_ROOM,
+      room: state.room || "global",
       text,
       user: profile,
       ts: Date.now()
@@ -259,7 +530,7 @@
     }
 
     try{
-      const data = await apiFetch(`/internal-chat/messages?room=${encodeURIComponent(CHAT_ROOM)}&after=${encodeURIComponent(state.lastTs)}`);
+      const data = await apiFetch(`/internal-chat/messages?room=${encodeURIComponent(state.room || "global")}&after=${encodeURIComponent(state.lastTs)}`);
       const msgs = (data && data.messages) || [];
       if (msgs.length){
         for (const m of msgs) appendMsg(m);
@@ -307,10 +578,28 @@
     started: false,
     timer: null,
     lastTs: 0,
-    hasBackend: false
+    hasBackend: false,
+    room: "global",
+    roomMeta: {room:"global", group:"Global", code:""},
+    _teacherRoom: null
   };
 
   function init(){
+    // join room from URL (?room=10-2@ABC123) — aplica antes de pintar UI
+    try{
+      const params = new URLSearchParams(window.location.search);
+      const r = params.get("room") || params.get("chat_room") || params.get("chatroom");
+      const parsed = parseRoomCode(r);
+      if(parsed){
+        safeSet(ROOM_LS_KEY, parsed.room);
+        const rooms = readRooms();
+        if(!rooms.some(x=>x && x.room === parsed.room)){
+          rooms.push({room: parsed.room, group: parsed.group || "", code: parsed.code || ""});
+          writeRooms(rooms.slice(-20));
+        }
+      }
+    }catch(_){ }
+
     if (document.readyState === "loading"){
       document.addEventListener("DOMContentLoaded", ()=> ensureUI());
     }else{
