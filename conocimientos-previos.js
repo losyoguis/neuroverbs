@@ -29,7 +29,18 @@ function computeTopSafes(){
   if(!bar) return;
 
   const r = bar.getBoundingClientRect();
-  const top = Number.isFinite(r.top) ? r.top : 0;
+  const vh = Math.max(1, window.innerHeight || 1);
+
+  // safeTop viene de :root{ --safeTop: env(safe-area-inset-top) }
+  const safeTop = (parseFloat(getComputedStyle(document.documentElement)
+    .getPropertyValue("--safeTop")) || 0);
+
+  // Evitamos depender de r.top (Safari a veces lo infla en carga inicial).
+  // Tomamos el "top" real desde CSS (stats es FIXED en ui.css).
+  let top = parseFloat(getComputedStyle(bar).top);
+  if(!Number.isFinite(top)) top = safeTop + 12;
+  // guard rail: nunca debería ser absurdo
+  top = Math.max(0, Math.min(Math.round(top), Math.round(safeTop + 90)));
 
   const candidates = [
     Number.isFinite(r.height) ? r.height : 0,
@@ -41,7 +52,6 @@ function computeTopSafes(){
   // ✅ Preferimos la menor altura "sensata" para evitar mediciones raras en móviles (iOS/Safari)
   let statsH = candidates.length ? Math.min(...candidates) : 0;
 
-  const vh = Math.max(1, window.innerHeight || 1);
   const MIN_H = 56; // la barra nunca debería ser menor a esto
   const MAX_H = Math.min(140, Math.round(vh * 0.22)); // ~22% del viewport
   statsH = Math.max(MIN_H, Math.min(Math.round(statsH || 0), MAX_H));
@@ -50,7 +60,9 @@ function computeTopSafes(){
 
   // Si aún sale sospechoso (demasiado abajo), fallback conservador
   if(statsBottom > Math.round(vh * 0.28)){
-    statsBottom = Math.min(120, Math.round(vh * 0.16));
+    // fallback conservador, pero respetando safeTop en móviles
+    const fallback = Math.round(safeTop + Math.min(140, Math.round(vh * 0.18)));
+    statsBottom = Math.max(fallback, Math.min(180, Math.round(vh * 0.22) + Math.round(safeTop)));
   }
 
   const GAP = 6; // aire entre la barra de puntajes y el encabezado KP

@@ -19,7 +19,13 @@ body{
   margin:0;
   /* ✅ Estilo "app": aire lateral, pero sin dejar vacío gigante arriba */
   padding: 16px;
-  padding-top: calc(16px + var(--statsBottom, 0px) + 6px);
+  /*
+    Reservamos espacio SOLO para la barra fija de puntajes.
+    En algunos móviles/navegadores el cálculo del "top" puede inflarse y crear
+    un espacio vacío grande. Por eso dejamos un margen pequeño fijo (+10px)
+    y el JS clampa --statsBottom.
+  */
+  padding-top: calc(10px + var(--statsBottom, 0px));
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Noto Sans", sans-serif;
   color:#e5e7eb;
   display:block;
@@ -700,7 +706,8 @@ details[open].kpAcc > summary .kpAccChevron::before{ content:"▴"; }
   display:flex;
   flex-wrap:wrap;
   gap:10px;
-  margin: 12px 0 16px;
+  /* más compacto: evita que los tabs queden "muy abajo" */
+  margin: 6px 0 10px;
 }
 .kpSectionBtn{
   flex:1 1 180px;
@@ -900,7 +907,8 @@ details[open].kpAcc > summary .kpAccChevron::before{ content:"▴"; }
 @media (max-width: 760px){
   body{
     padding: 12px;
-    padding-top: calc(12px + var(--statsBottom, 0px) + 6px);
+    /* evita el "hueco" grande en móviles */
+    padding-top: calc(10px + var(--statsBottom, 0px));
     padding-bottom: calc(92px + var(--safeBottom));
   }
   .kpBottomTabs{ display:flex; }
@@ -933,7 +941,8 @@ details[open].kpAcc > summary .kpAccChevron::before{ content:"▴"; }
 }
 
 .kpRoundSections{
-  margin-top: 8px;
+  /* más arriba (menos altura del dock) */
+  margin-top: 0px;
   justify-content: center;
 }
 .kpSecBtn{
@@ -959,7 +968,7 @@ details[open].kpAcc > summary .kpAccChevron::before{ content:"▴"; }
 }
 
 .kpRoundHintRow{
-  margin-top: 6px;
+  margin-top: 2px;
 }
 
 /* En pantallas pequeñas, prioriza lectura: permite 2 filas naturales */
