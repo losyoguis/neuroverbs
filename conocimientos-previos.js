@@ -23,14 +23,27 @@
   }
 
   
-  // Ajusta el "safe top" para que la barra fija no tape contenido (varía si la barra hace wrap en 2 líneas)
-  function applyHudSafe(){
+  // Ajusta el "safe top" para que la barra fija no tape contenido (varía si la barra cambia de altura)
+  function computeTopSafes(){
     const bar = document.getElementById("statsBar");
+    const dock = document.getElementById("kpTopDock");
     if(!bar) return;
+
     const r = bar.getBoundingClientRect();
-    // top suele ser 12px; sumamos un margen extra para respirar
-    const safe = Math.max(170, Math.ceil(r.height + r.top + 22));
-    document.documentElement.style.setProperty("--hudSafe", safe + "px");
+    // La barra es fixed (top:12px). Sumamos top + un margen extra para respirar.
+    const statsSafe = Math.max(170, Math.ceil((r.height || 0) + (r.top || 0) + 22));
+    document.documentElement.style.setProperty("--statsSafe", statsSafe + "px");
+
+    const dr = dock ? dock.getBoundingClientRect() : null;
+    const dockH = dr ? (dr.height || 0) : 0;
+
+    // Safe total para anclajes/scroll (barra + dock sticky + respiro)
+    const hudSafe = Math.max(statsSafe + 120, Math.ceil(statsSafe + dockH + 44));
+    document.documentElement.style.setProperty("--hudSafe", hudSafe + "px");
+  }
+
+  function applyHudSafe(){
+    computeTopSafes();
   }
   function onResizeDebounced(){
     let t=null;
@@ -199,12 +212,7 @@ function toast(title, desc){
   
   // Ajusta el "safe area" superior según la altura real de la barra de puntajes
   function syncHudSafe(){
-    const bar = document.getElementById("statsBar");
-    if(!bar) return;
-    const r = bar.getBoundingClientRect();
-    // La barra es fixed (top:12px). Sumamos top + un margen extra para que no tape la introducción.
-    const safe = Math.max(170, Math.ceil((r.height || 0) + (r.top || 0) + 22));
-    document.documentElement.style.setProperty("--hudSafe", safe + "px");
+    computeTopSafes();
   }
 
   // Mantén el espacio superior correcto si cambia el tamaño del menú
