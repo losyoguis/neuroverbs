@@ -3,6 +3,7 @@
 
 :root{
   /* Usa variables de ui.css si existen */
+  --hudSafe: 150px; /* espacio para la barra de puntos fija */
 }
 
 body{
@@ -13,6 +14,10 @@ body{
   color:#e5e7eb;
   display:flex;
   justify-content:center;
+}
+
+body.has-floating-stats{
+  padding-top: calc(var(--hudSafe, 150px) + 12px) !important;
 }
 
 .kpApp{
@@ -27,6 +32,41 @@ body{
   margin-top:6px;
   opacity:.92;
 }
+
+
+/* ===== Nav row (acciones rápidas bajo el título) ===== */
+.kpNavRow{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  margin: 10px 0 16px;
+}
+.kpNavLeft{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+.kpNavRight{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  flex-wrap:wrap;
+}
+.kpPendingChip{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 12px;
+  border-radius:14px;
+  font-weight:900;
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.14);
+  color:#e5e7eb;
+}
+.kpPendingChip b{ color:#fff; }
 
 /* ===== Top bar (sticky) ===== */
 .kpTopBar{

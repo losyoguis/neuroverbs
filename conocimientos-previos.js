@@ -32,6 +32,11 @@
     if(typeof st.dailyXP !== "number") st.dailyXP = Number(st.dailyXP||0);
     if(typeof st.dailyGoal !== "number") st.dailyGoal = Number(st.dailyGoal||200);
     if(!st.lastDailyKey) st.lastDailyKey = todayKey();
+    if(typeof st.streak !== "number") st.streak = Number(st.streak||0);
+    if(typeof st.att !== "number") st.att = Number(st.att||0);
+    if(typeof st.corr !== "number") st.corr = Number(st.corr||0);
+    if(typeof st.freezeTokens !== "number") st.freezeTokens = Number(st.freezeTokens||0);
+    if(typeof st.hearts !== "number") st.hearts = Number((st.hearts ?? 5));
 
     // reset si cambió el día
     const tk = todayKey();
@@ -112,16 +117,63 @@
     updateBadges();
   }
 
+  function computeLevel(totalXP){
+    // Nivel estable: 250 XP por nivel (igual a la app principal)
+    const xpPerLevel = 250;
+    const xp = Number(totalXP||0);
+    const lvl = Math.floor(xp/xpPerLevel) + 1;
+    const into = xp % xpPerLevel;
+    return {lvl, into, xpPerLevel};
+  }
+
+  function heartsString(h, max){
+    const MAX = Number.isFinite(max)?max:5;
+    const hh = Math.max(0, Math.min(MAX, Number(h ?? MAX)));
+    const full = "❤️".repeat(hh);
+    const empty = "🤍".repeat(Math.max(0, MAX - hh));
+    return (full + empty) || "🤍🤍🤍🤍🤍";
+  }
+
   function updateHUD(){
     const st = getGame();
     const pending = Number(safeGet(PENDING_XP_KEY)||0);
-    const elXp = document.getElementById("kpTotalXp");
-    const elDaily = document.getElementById("kpDailyXp");
-    const elPend = document.getElementById("kpPending");
-    if(elXp) elXp.textContent = String(Math.round(st.xp||0));
-    if(elDaily) elDaily.textContent = String(Math.round(st.dailyXP||0));
-    if(elPend) elPend.textContent = String(Math.round(pending||0));
+
+    const streakEl = document.getElementById("streak");
+    if(streakEl) streakEl.textContent = String(Math.round(st.streak||0));
+
+    const xpEl = document.getElementById("xp");
+    if(xpEl) xpEl.textContent = String(Math.round(st.xp||0));
+
+    const att = Number(st.att||0);
+    const corr = Number(st.corr||0);
+    const accPct = att>0 ? Math.max(0, Math.min(100, Math.round((corr/att)*100))) : 100;
+    const accEl = document.getElementById("acc");
+    if(accEl) accEl.textContent = accPct + "%";
+
+    const lvl = computeLevel(st.xp||0);
+    const lvlEl = document.getElementById("level");
+    if(lvlEl) lvlEl.textContent = String(lvl.lvl);
+
+    const heartsEl = document.getElementById("hearts");
+    if(heartsEl) heartsEl.textContent = heartsString(st.hearts, 5);
+
+    const freezeEl = document.getElementById("freeze");
+    if(freezeEl) freezeEl.textContent = String(Math.round(st.freezeTokens||0));
+
+    const tEl = document.getElementById("dailyGoalText");
+    const fill = document.getElementById("dailyGoalFill");
+    const goal = Number(st.dailyGoal||200);
+    const daily = Number(st.dailyXP||0);
+    if(tEl) tEl.textContent = `${Math.min(daily, goal)}/${goal}`;
+    if(fill){
+      const pct = Math.max(0, Math.min(100, Math.round((daily/Math.max(1,goal))*100)));
+      fill.style.width = pct + "%";
+    }
+
+    const pendEl = document.getElementById("kpPending");
+    if(pendEl) pendEl.textContent = String(Math.round(pending||0));
   }
+
 
   const roadmap = [
     {title:"Pronombres personales (Subject)", desc:"I / You / He / She / It / We / They", chips:["mínimo"]},
@@ -475,6 +527,19 @@
     });
   }
 
+  const _attemptCache = {};
+
+  function quizSignature(rootId){
+    const root = document.getElementById(rootId);
+    if(!root) return "";
+    const qEls = Array.from(root.querySelectorAll('.kpQ'));
+    const parts = qEls.map((qEl,i)=>{
+      const checked = qEl.querySelector('input[type=radio]:checked');
+      return checked ? checked.value : '';
+    });
+    return parts.join('|');
+  }
+
   function startQuiz(id){
     if(id === "pronouns_quiz"){
       const qs = pickN(pronouns.map(p=>{
@@ -535,6 +600,11 @@
     };
     const rootId = rootMap[id];
     const r = gradeQuiz(rootId);
+    const sig = quizSignature(rootId);
+    const prevSig = _attemptCache[id] || "";
+    const isNewAttempt = (sig !== prevSig);
+    _attemptCache[id] = sig;
+
     const pass = r.total>0 ? (r.score >= 8) : false;
     const already = isDone(id);
 
@@ -545,6 +615,26 @@
       tenses_quiz: 50,
       linking_quiz: 40
     };
+
+    // ✅ Actualizar métricas globales (barra superior) por intento NUEVO
+    if(isNewAttempt){
+      const st = getGame();
+      st.att = Number(st.att||0) + Number(r.total||0);
+      st.corr = Number(st.corr||0) + Number(r.score||0);
+
+      if(pass){
+        st.streak = Number(st.streak||0) + 1;
+      }else{
+        // Freeze protege la racha si existe
+        if(Number(st.freezeTokens||0) > 0 && Number(st.streak||0) > 0){
+          st.freezeTokens = Math.max(0, Number(st.freezeTokens||0) - 1);
+        }else{
+          st.streak = 0;
+        }
+        st.hearts = Math.max(0, Number((st.hearts ?? 5)) - 1);
+      }
+      setGame(st);
+    }
 
     if(pass && !already){
       const amount = awardById[id] || 30;
