@@ -34,11 +34,19 @@
     const statsSafe = Math.max(170, Math.ceil((r.height || 0) + (r.top || 0) + 22));
     document.documentElement.style.setProperty("--statsSafe", statsSafe + "px");
 
-    const dr = dock ? dock.getBoundingClientRect() : null;
-    const dockH = dr ? (dr.height || 0) : 0;
+    // El dock (encabezado) ahora es fijo. Lo ubicamos debajo de la barra.
+    const dockTop = Math.ceil(statsSafe + 18);
+    document.documentElement.style.setProperty("--dockTop", dockTop + "px");
 
-    // Safe total para anclajes/scroll (barra + dock sticky + respiro)
-    const hudSafe = Math.max(statsSafe + 120, Math.ceil(statsSafe + dockH + 44));
+    // Altura real del dock (puede cambiar con wrap / responsive)
+    const dockH = dock ? Math.ceil(dock.getBoundingClientRect().height || dock.offsetHeight || 0) : 0;
+
+    // Empuja el contenido para que TODO lo dinámico quede por debajo del encabezado fijo
+    const pageTopPad = Math.max(dockTop + dockH + 18, statsSafe + 18);
+    document.documentElement.style.setProperty("--pageTopPad", pageTopPad + "px");
+
+    // Safe total para anclajes/scroll (barra + dock fijo + respiro)
+    const hudSafe = Math.max(pageTopPad + 24, Math.ceil(dockTop + dockH + 44));
     document.documentElement.style.setProperty("--hudSafe", hudSafe + "px");
   }
 
@@ -218,9 +226,11 @@ function toast(title, desc){
   // Mantén el espacio superior correcto si cambia el tamaño del menú
   (function(){
     const bar = document.getElementById("statsBar");
-    if(!bar || typeof ResizeObserver==="undefined") return;
+    const dock = document.getElementById("kpTopDock");
+    if((!bar && !dock) || typeof ResizeObserver==="undefined") return;
     const ro = new ResizeObserver(()=>{ syncHudSafe(); });
-    ro.observe(bar);
+    if(bar) ro.observe(bar);
+    if(dock) ro.observe(dock);
   })();
 
   /* ✅ Menú de puntajes: carrusel horizontal premium (una sola fila) */

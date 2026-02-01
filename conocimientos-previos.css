@@ -5,6 +5,9 @@
   /* Usa variables de ui.css si existen */
   --statsSafe: 240px; /* espacio SOLO para la barra de puntajes fija (dinámico por JS) */
   --hudSafe: 520px;   /* espacio total para anclajes (barra + dock superior) */
+  /* Cuando el encabezado superior está “docked” (fijo), el JS calcula estas dos: */
+  --dockTop: calc(var(--statsSafe, 190px) + 18px);
+  --pageTopPad: calc(var(--statsSafe, 190px) + 18px);
 }
 
 
@@ -12,25 +15,29 @@ body{
   background: var(--bg);
   margin:0;
   padding:18px;
-  padding-top: calc(var(--statsSafe, 190px) + 18px);
+  /* Empuja TODO el contenido debajo de: (barra de puntajes fija + encabezado docked) */
+  padding-top: var(--pageTopPad, calc(var(--statsSafe, 190px) + 18px));
 font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Noto Sans", sans-serif;
   color:#e5e7eb;
   display:flex;
   justify-content:center;
 }
 
-body.has-floating-stats{ padding-top: calc(var(--statsSafe, 190px) + 18px) !important; }
+body.has-floating-stats{ padding-top: var(--pageTopPad, calc(var(--statsSafe, 190px) + 18px)) !important; }
 
-\.kpApp\{
-  width:min\(1040px, 100%\);
-\}
+.kpApp{
+  width: min(1040px, 100%);
+}
 
 .kpTopDock{
-  position: sticky;
-  top: calc(var(--statsSafe, 190px) + 18px);
-  z-index: 160; /* debajo de la barra fija (z=200) */
-  padding-bottom: 10px;
-  margin-bottom: 10px;
+  /* ✅ El encabezado se mantiene SIEMPRE visible, como en la captura */
+  position: fixed;
+  top: var(--dockTop, calc(var(--statsSafe, 190px) + 18px));
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(1040px, calc(100% - 36px));
+  z-index: 190; /* debajo de la barra fija (z=200), encima del contenido */
+  padding-bottom: 12px;
   isolation: isolate;
 }
 
