@@ -1,11 +1,15 @@
-/* NEUROVERBS — Chat interno (English only)
+/* NEUROVERBS — Chat interno (English only) + Salas por curso/grupo + Roles
    - Visible en todas las páginas
    - Requiere usuario logueado (localStorage.user_profile)
-   - Backend recomendado: Cloudflare Worker + KV (CHAT_KV)
+   - Backend: Cloudflare Worker + KV (CHAT_KV)
+   - Docente owner por email: juancarlosbv@iemanueljbetancur.edu.co
 */
 (function(){
-  const ROOM_LS_KEY = "nv_chat_room_v1";
-  const ROOMS_LS_KEY = "nv_chat_rooms_v1";
+  const ROOM_LS_KEY  = "nv_chat_room_v2";
+  const ROOMS_LS_KEY = "nv_chat_rooms_v2";
+
+  const TEACHER_EMAIL = "juancarlosbv@iemanueljbetancur.edu.co".toLowerCase();
+
   const DEFAULT_API_BASE = (function(){
     const ls = (localStorage.getItem("NEUROVERBS_API_BASE") || "").trim();
     return (ls ? ls : "https://neuroverbs-api.yoguisindevoz.workers.dev").replace(/\/$/, "");
@@ -17,6 +21,8 @@
     try{ return JSON.parse(jsonStr); }catch(_){ return null; }
   }
 
+  function normEmail(e){ return String(e||"").trim().toLowerCase(); }
+
   function getProfile(){
     const p = safeParse(localStorage.getItem("user_profile") || "");
     if (!p || typeof p !== "object") return null;
@@ -25,6 +31,11 @@
       email: p.email || p.correo || "",
       picture: p.picture || p.foto || ""
     };
+  }
+
+  function isTeacher(profile){
+    const e = normEmail(profile?.email);
+    return !!e && e === TEACHER_EMAIL;
   }
 
   function safeGet(key){
@@ -37,7 +48,6 @@
   function sanitizeGroup(g){
     const s = String(g||"").trim();
     if(!s) return "";
-    // allow: letters, numbers, dash, underscore
     return s.replace(/\s+/g,"-").replace(/[^a-zA-Z0-9_-]/g,"").slice(0,12);
   }
 
@@ -52,7 +62,6 @@
     const s = String(raw||"").trim();
     if(!s) return null;
     if(s.toLowerCase() === "global") return { room:"global", group:"Global", code:"" };
-    // support "10-2@ABC123" or "10-2 ABC123" or "10-2-ABC123" (best-effort)
     if(s.includes("@")){
       const [g,c] = s.split("@");
       const group = sanitizeGroup(g);
@@ -88,7 +97,7 @@
   function ensureRoomListHasGlobal(){
     const rooms = readRooms();
     if(!rooms.some(r=>r && r.room === "global")) rooms.unshift({room:"global", group:"Global", code:""});
-    writeRooms(rooms.slice(0,20));
+    writeRooms(rooms.slice(0,30));
   }
 
   function getCurrentRoom(){
@@ -100,27 +109,32 @@
 
   function setCurrentRoom(roomObj, {silent=false}={}){
     if(!roomObj || !roomObj.room) return;
+
+    // persist
     safeSet(ROOM_LS_KEY, roomObj.room);
-    // ensure it exists in list
+
+    // ensure list includes
     const rooms = readRooms();
     const idx = rooms.findIndex(r=>r && r.room === roomObj.room);
     if(idx === -1){
       rooms.push({room: roomObj.room, group: roomObj.group || "", code: roomObj.code || ""});
-      writeRooms(rooms.slice(-20));
+      writeRooms(rooms.slice(-30));
     }
+
     state.room = roomObj.room;
     state.roomMeta = roomObj;
+
     if(!silent){
       refreshRoomUI();
       resetConversation();
+      syncRoomAccess(); // async, but ok
       if(state.isOpen) poll();
     }
   }
 
   function removeRoom(room){
     const rooms = readRooms().filter(r=>r && r.room !== room && r.room !== "global");
-    ensureRoomListHasGlobal();
-    writeRooms([{room:"global", group:"Global", code:""}, ...rooms].slice(0,20));
+    writeRooms([{room:"global", group:"Global", code:""}, ...rooms].slice(0,30));
     if(state.room === room){
       setCurrentRoom({room:"global", group:"Global", code:""});
     }else{
@@ -133,6 +147,10 @@
     let out="";
     for(let i=0;i<len;i++) out += alphabet[Math.floor(Math.random()*alphabet.length)];
     return out;
+  }
+
+  function canModerate(){
+    return state.role === "owner" || state.role === "moderator";
   }
 
   function ensureUI(){
@@ -156,7 +174,9 @@
           <span>⚠️ Solo se puede hablar en <b>inglés</b></span>
           <div id="nvChatRoomBar">
             <span class="nvRoomPill" id="nvRoomPill"><b>Room</b>: <span id="nvRoomName">Global</span></span>
+            <span class="nvRoomPill" id="nvRolePill" style="display:none"><b>Role</b>: <span id="nvRoleName">member</span></span>
             <button class="nvRoomBtn" id="nvChatRoomsBtn" type="button">Salas</button>
+            <button class="nvRoomBtn" id="nvChatAdminBtn" type="button" style="display:none">Admin</button>
           </div>
         </div>
         <div class="nvChatBtns">
@@ -167,13 +187,14 @@
 
       <div id="nvChatRoomsPanel" aria-hidden="true">
         <div class="nvRoomGrid">
+
           <div class="nvRoomCard">
             <h4>Entrar a una sala</h4>
             <div class="nvRoomRow">
               <input id="nvJoinRoom" placeholder="Código: 10-2@ABC123" />
               <button class="nvRoomBtn" id="nvJoinBtn" type="button">Entrar</button>
             </div>
-            <div class="nvRoomHint">Tip: pega el código que te dio el docente (ej: <b>10-2@ABC123</b>). También sirve un link con <b>?room=...</b>.</div>
+            <div class="nvRoomHint">Tip: pega el código que te dio el docente (ej: <b>10-2@ABC123</b>).</div>
           </div>
 
           <div class="nvRoomCard">
@@ -186,10 +207,49 @@
             <div class="nvRoomHint" id="nvTeacherOut"></div>
           </div>
 
+          <div class="nvRoomCard" id="nvAdminCard" style="display:none">
+            <h4>Admin de sala</h4>
+            <div class="nvRoomHint" style="margin-bottom:8px">Solo <b>docente/moderador</b> puede bloquear, silenciar o borrar.</div>
+
+            <div class="nvRoomRow" style="justify-content:space-between">
+              <label style="display:flex; gap:8px; align-items:center; font-size:12px; color:rgba(255,255,255,.85)">
+                <input type="checkbox" id="nvRoomLock" />
+                Sala bloqueada (requiere código)
+              </label>
+              <button class="nvRoomBtn" id="nvSaveLockBtn" type="button">Guardar</button>
+            </div>
+
+            <div class="nvRoomRow">
+              <input id="nvModEmail" placeholder="moderator@email.com" />
+              <button class="nvRoomBtn" id="nvAddModBtn" type="button">+Mod</button>
+              <button class="nvRoomBtn" id="nvRemModBtn" type="button">-Mod</button>
+            </div>
+
+            <div class="nvRoomRow">
+              <input id="nvTargetEmail" placeholder="estudiante@email.com" />
+              <select id="nvMuteMinutes" style="flex:1; min-width:120px">
+                <option value="10">Mute 10m</option>
+                <option value="60" selected>Mute 1h</option>
+                <option value="240">Mute 4h</option>
+                <option value="1440">Mute 24h</option>
+              </select>
+              <button class="nvRoomBtn" id="nvMuteBtn" type="button">Mute</button>
+              <button class="nvRoomBtn" id="nvUnmuteBtn" type="button">Unmute</button>
+            </div>
+
+            <div class="nvRoomRow">
+              <button class="nvRoomBtn" id="nvBanBtn" type="button" style="flex:1">Ban</button>
+              <button class="nvRoomBtn" id="nvUnbanBtn" type="button" style="flex:1">Unban</button>
+            </div>
+
+            <div class="nvRoomHint" id="nvAdminOut"></div>
+          </div>
+
           <div class="nvRoomCard">
             <h4>Mis salas</h4>
             <div class="nvRoomList" id="nvRoomList"></div>
           </div>
+
         </div>
       </div>
 
@@ -217,10 +277,21 @@
     launcher.querySelector("button").addEventListener("click", ()=> openChat(true));
     $("nvChatCloseBtn").addEventListener("click", ()=> closeChat(true));
     $("nvChatMinBtn").addEventListener("click", ()=> minimizeChat());
-    $("nvChatRoomsBtn").addEventListener("click", toggleRoomsPanel);
+
+    $("nvChatRoomsBtn").addEventListener("click", ()=> toggleRoomsPanel());
+    $("nvChatAdminBtn").addEventListener("click", ()=> toggleRoomsPanel(true));
+
     $("nvJoinBtn").addEventListener("click", joinFromInput);
     $("nvCreateBtn").addEventListener("click", teacherCreateRoom);
     $("nvCopyRoomBtn").addEventListener("click", copyTeacherRoom);
+
+    $("nvSaveLockBtn").addEventListener("click", saveLock);
+    $("nvAddModBtn").addEventListener("click", ()=> modAction("add_mod"));
+    $("nvRemModBtn").addEventListener("click", ()=> modAction("remove_mod"));
+    $("nvMuteBtn").addEventListener("click", ()=> modAction("mute"));
+    $("nvUnmuteBtn").addEventListener("click", ()=> modAction("unmute"));
+    $("nvBanBtn").addEventListener("click", ()=> modAction("ban"));
+    $("nvUnbanBtn").addEventListener("click", ()=> modAction("unban"));
 
     const input = $("nvChatInput");
     input.addEventListener("input", ()=>{
@@ -235,6 +306,7 @@
     });
     $("nvChatSend").addEventListener("click", sendCurrent);
 
+    // default closed
     launcher.style.display = "block";
     widget.classList.remove("open");
 
@@ -244,6 +316,7 @@
     state.room = initial.room;
     state.roomMeta = initial;
     refreshRoomUI();
+    syncRoomAccess();
   }
 
   function resetConversation(){
@@ -256,6 +329,28 @@
     const rm = state.roomMeta || getCurrentRoom();
     const name = rm.group || (rm.room === "global" ? "Global" : rm.room);
     if($("nvRoomName")) $("nvRoomName").textContent = name;
+
+    // Role pill
+    const rolePill = $("nvRolePill");
+    const roleName = $("nvRoleName");
+    if(rolePill && roleName){
+      roleName.textContent = state.role || "member";
+      rolePill.style.display = state.role ? "inline-flex" : "none";
+    }
+
+    // Admin button
+    const adminBtn = $("nvChatAdminBtn");
+    if(adminBtn){
+      adminBtn.style.display = canModerate() ? "inline-flex" : "none";
+    }
+
+    // Admin card
+    const adminCard = $("nvAdminCard");
+    if(adminCard){
+      adminCard.style.display = canModerate() ? "block" : "none";
+      const lock = $("nvRoomLock");
+      if(lock) lock.checked = !!state.roomAccess?.locked;
+    }
 
     // list
     const list = $("nvRoomList");
@@ -270,7 +365,6 @@
       list.querySelectorAll(".nvRoomTag").forEach(btn=>{
         btn.addEventListener("click", (e)=>{
           const room = btn.getAttribute("data-room") || "global";
-          // if click on x -> remove
           const target = e.target;
           if(target && target.getAttribute && target.getAttribute("data-x")){
             removeRoom(room);
@@ -283,44 +377,84 @@
     }
   }
 
-  function toggleRoomsPanel(){
+  function toggleRoomsPanel(forceOpenAdmin=false){
     const p = $("nvChatRoomsPanel");
     if(!p) return;
     const open = p.classList.toggle("open");
     p.setAttribute("aria-hidden", open?"false":"true");
-    if(open) refreshRoomUI();
+    if(open){
+      refreshRoomUI();
+      if(forceOpenAdmin && $("nvAdminCard")){
+        $("nvAdminCard").scrollIntoView({behavior:"smooth", block:"start"});
+      }
+    }
   }
 
-  function joinFromInput(){
+  async function joinFromInput(){
     const inp = $("nvJoinRoom");
     const val = String(inp?.value||"").trim();
     if(!val){ showToast("Pega un código de sala."); return; }
+
     const parsed = parseRoomCode(val);
     if(!parsed){ showToast("Código inválido. Ej: 10-2@ABC123"); return; }
+
+    const ok = await joinRoomBackend(parsed);
+    if(!ok) return;
+
     setCurrentRoom(parsed);
     if(inp) inp.value = "";
-    // close panel
     const p = $("nvChatRoomsPanel");
     if(p) { p.classList.remove("open"); p.setAttribute("aria-hidden","true"); }
     showToast(`Sala: ${parsed.group}`);
   }
 
-  function teacherCreateRoom(){
-    const gEl = $("nvTeacherGroup");
+  async function teacherCreateRoom(){
+    const profile = getProfile();
     const out = $("nvTeacherOut");
     const copyBtn = $("nvCopyRoomBtn");
+    if(!profile){
+      showToast("Inicia sesión para crear una sala.");
+      if(out) out.textContent = "Inicia sesión primero.";
+      return;
+    }
+    if(!isTeacher(profile)){
+      showToast("Solo el docente puede crear salas.");
+      if(out) out.textContent = "Solo el docente (modo clase) puede crear salas.";
+      return;
+    }
+
+    const gEl = $("nvTeacherGroup");
     const group = sanitizeGroup(gEl?.value || "");
     if(!group){
       if(out) out.textContent = "Escribe el grupo (ej: 10-2).";
       showToast("Falta el grupo.");
       return;
     }
+
     const code = genCode(6);
     const room = makeRoomCode(group, code);
     const link = buildRoomLink(room);
+
+    // Create on backend (locked by default)
+    try{
+      const res = await apiFetch("/internal-chat/room/create", {method:"POST", body:{
+        group, code, actor: profile
+      }});
+      state.roomAccess = res.meta || {locked:true};
+      state.role = "owner";
+    }catch(err){
+      console.error(err);
+      showToast("No se pudo crear la sala (backend).");
+      if(out) out.textContent = "Error creando sala. Revisa Worker + KV.";
+      return;
+    }
+
     state._teacherRoom = {room, group, code, link};
     if(out) out.innerHTML = `Código de sala: <b>${escapeHtml(room)}</b><br>Link: <span style="opacity:.9">${escapeHtml(link)}</span>`;
     if(copyBtn) copyBtn.style.display = "inline-flex";
+
+    // join & set room
+    await joinRoomBackend({room, group, code});
     setCurrentRoom({room, group, code});
     showToast("Sala creada ✅");
   }
@@ -379,25 +513,22 @@
     showToast._to = setTimeout(()=> t.classList.remove("show"), 2600);
   }
 
-  const SP = ["que", "de", "la", "el", "en", "y", "a", "los", "del", "se", "las", "por", "un", "para", "con", "no", "una", "su", "al", "lo", "como", "mas", "pero", "sus", "ya", "o", "este", "si", "porque", "esta", "entre", "cuando", "muy", "sin", "sobre", "tambien", "me", "hasta", "hay", "donde", "quien", "desde", "todo", "nos", "durante", "todos", "uno", "les", "ni", "contra", "otros", "ese", "eso", "ante", "ellos", "esto", "mi", "antes", "algunos", "unos", "yo", "otro", "otras", "otra", "tanto", "esa", "estos", "mucho", "quienes", "nada", "muchos", "cual", "cada", "hacer", "fue", "son", "ser", "tener", "tengo", "tienes", "tiene", "tienen", "estoy", "estas", "esta", "estamos", "estan"];
-  const EN = ["the", "and", "to", "of", "in", "for", "on", "with", "as", "at", "from", "by", "this", "that", "it", "is", "are", "was", "were", "be", "been", "have", "has", "had", "do", "did", "does", "i", "you", "he", "she", "we", "they", "my", "your", "his", "her", "our", "their", "not", "but", "because", "so", "if", "then", "when", "where", "what", "who", "how", "can", "could", "will", "would", "should", "there", "here", "about", "into", "over", "after", "before", "also", "just", "like", "really", "very"];
-
+  // Language filter (simple heuristic)
+  // Regla: solo inglés. Bloquea señales fuertes de español.
   function isEnglishLikely(text){
     const s = (text || "").trim();
-    if (!s) return false;
-    if (s.length <= 4 && /^[a-zA-Z]+$/.test(s)) return true;
+    if(!s) return false;
+
+    // Señales fuertes de español
     if (/[ñáéíóúü¿¡]/i.test(s)) return false;
 
-    const tokens = s.toLowerCase().replace(/[^a-zA-Z'\s]/g," ").split(/\s+/).filter(Boolean);
-    if (tokens.length < 2) return true;
+    const t = s.toLowerCase();
 
-    let spHits = 0, enHits = 0;
-    for (const w of tokens){
-      if (SP.includes(w)) spHits++;
-      if (EN.includes(w)) enHits++;
-    }
+    // Si hay muchas palabras comunes en español y ninguna común en inglés, lo marcamos como NO.
+    const hasSpanish = /\b(que|de|la|el|en|y|por|para|con|porque|cuando|pero|sin|sobre|tambien|también|mas|más|muy|donde|quien|quién|esto|esta|estos|estas|una|un|los|las|del|al|me|mi|tu|su)\b/.test(t);
+    const hasEnglish = /\b(the|and|to|of|in|for|with|is|are|was|were|be|been|have|has|had|do|did|does|i|you|we|they|he|she|it|because|when|where|what|who|how|can|could|will|would|should|this|that)\b/.test(t);
 
-    if (spHits >= 2 && enHits === 0) return false;
+    if(hasSpanish && !hasEnglish) return false;
     return true;
   }
 
@@ -435,28 +566,64 @@
     }catch(_){ return ""; }
   }
 
+  function removeMessageById(mid){
+    const el = document.querySelector(`.nvMsg[data-mid="${CSS.escape(mid)}"]`);
+    if(el) el.remove();
+  }
+
   function appendMsg(msg){
     const body = $("nvChatBody");
     if (!body) return;
-    const sys = $("nvChatSystem");
-    if (sys) sys.remove();
+
+    // Event: delete
+    if(msg && msg.type === "delete" && msg.target_id){
+      removeMessageById(msg.target_id);
+      // small system line
+      const sys = document.createElement("div");
+      sys.className = "nvSystemLine";
+      sys.textContent = "🧹 A message was removed by a moderator.";
+      body.appendChild(sys);
+      body.scrollTop = body.scrollHeight;
+      return;
+    }
+
+    const sys0 = $("nvChatSystem");
+    if (sys0) sys0.remove();
 
     const profile = getProfile();
-    const isMe = profile && msg.email && profile.email && msg.email === profile.email;
+    const isMe = profile && msg.email && profile.email && normEmail(msg.email) === normEmail(profile.email);
 
     const wrap = document.createElement("div");
     wrap.className = "nvMsg" + (isMe ? " me" : "");
+    if(msg.id) wrap.dataset.mid = msg.id;
+
     const pic = msg.picture ? `<img class="pic" src="${escapeHtml(msg.picture)}" alt="">` : `<div class="pic"></div>`;
+    const delBtn = (canModerate() && msg.id && msg.type === "chat") ? `<button class="nvDelBtn" data-del="${escapeHtml(msg.id)}" title="Delete">🗑</button>` : "";
+    const text = msg.deleted ? "[deleted]" : (msg.text || "");
+
     wrap.innerHTML = `
       ${pic}
       <div class="bubble">
-        <div class="meta">${escapeHtml(msg.name || "Usuario")} • ${fmtTime(msg.ts)}</div>
-        <div class="text">${escapeHtml(msg.text)}</div>
+        <div class="meta">
+          <span>${escapeHtml(msg.name || "Usuario")} • ${fmtTime(msg.ts)}</span>
+          ${delBtn}
+        </div>
+        <div class="text">${escapeHtml(text)}</div>
       </div>
     `;
     body.appendChild(wrap);
 
-    while (body.children.length > 260) body.removeChild(body.firstElementChild);
+    // bind delete
+    const btn = wrap.querySelector(".nvDelBtn");
+    if(btn){
+      btn.addEventListener("click", async ()=>{
+        const mid = btn.getAttribute("data-del");
+        if(!mid) return;
+        await moderateDelete(mid);
+      });
+    }
+
+    while (body.children.length > 280) body.removeChild(body.firstElementChild);
     body.scrollTop = body.scrollHeight;
   }
 
@@ -478,6 +645,152 @@
     return data;
   }
 
+  async function joinRoomBackend(roomObj){
+    const profile = getProfile();
+    if(!profile){
+      showToast("Inicia sesión para entrar al chat.");
+      return false;
+    }
+
+    // global doesn't need join
+    if(roomObj.room === "global"){
+      state.role = "member";
+      state.roomAccess = {locked:false};
+      refreshRoomUI();
+      return true;
+    }
+
+    try{
+      const res = await apiFetch("/internal-chat/room/join", {method:"POST", body:{
+        room: roomObj.room,
+        code: roomObj.code || "",
+        actor: profile
+      }});
+      state.roomAccess = res.meta || {locked:true};
+      state.role = res.role || "member";
+      refreshRoomUI();
+      return true;
+    }catch(err){
+      console.error(err);
+      showToast(String(err.message || "No se pudo entrar a la sala."));
+      return false;
+    }
+  }
+
+  async function syncRoomAccess(){
+    const profile = getProfile();
+    if(!profile){
+      state.role = "";
+      state.roomAccess = null;
+      refreshRoomUI();
+      return;
+    }
+
+    // try fetch meta/role (GET) — not blocking
+    const room = state.room || "global";
+    const code = state.roomMeta?.code || "";
+    try{
+      const res = await apiFetch(`/internal-chat/room/meta?room=${encodeURIComponent(room)}&code=${encodeURIComponent(code)}&email=${encodeURIComponent(profile.email||"")}`);
+      state.roomAccess = res.meta || state.roomAccess;
+      state.role = res.role || state.role || "member";
+      refreshRoomUI();
+    }catch(_){
+      // fallback: attempt join for non-global
+      if(room !== "global"){
+        joinRoomBackend({room, group: state.roomMeta?.group||"", code});
+      }else{
+        state.role = "member";
+        state.roomAccess = {locked:false};
+      }
+      refreshRoomUI();
+    }
+  }
+
+  async function moderateDelete(messageId){
+    if(!canModerate()){ showToast("No autorizado."); return; }
+    const profile = getProfile();
+    if(!profile) return;
+
+    try{
+      await apiFetch("/internal-chat/moderate", {method:"POST", body:{
+        room: state.room || "global",
+        code: state.roomMeta?.code || "",
+        action: "delete",
+        message_id: messageId,
+        actor: profile
+      }});
+      // remove locally
+      removeMessageById(messageId);
+      showToast("Deleted ✅");
+    }catch(err){
+      console.error(err);
+      showToast(String(err.message || "No se pudo borrar."));
+    }
+  }
+
+  async function saveLock(){
+    if(!canModerate()){ showToast("No autorizado."); return; }
+    const profile = getProfile();
+    if(!profile) return;
+    const lockEl = $("nvRoomLock");
+    const locked = !!lockEl?.checked;
+
+    try{
+      const res = await apiFetch("/internal-chat/moderate", {method:"POST", body:{
+        room: state.room || "global",
+        code: state.roomMeta?.code || "",
+        action: "set_lock",
+        locked,
+        actor: profile
+      }});
+      state.roomAccess = res.meta || state.roomAccess;
+      showToast("Guardado ✅");
+      refreshRoomUI();
+    }catch(err){
+      console.error(err);
+      showToast(String(err.message || "Error guardando."));
+    }
+  }
+
+  async function modAction(action){
+    if(!canModerate()){ showToast("No autorizado."); return; }
+    const profile = getProfile();
+    if(!profile) return;
+
+    const target = $("nvTargetEmail")?.value?.trim() || $("nvModEmail")?.value?.trim() || "";
+    const out = $("nvAdminOut");
+    const minutes = Number($("nvMuteMinutes")?.value || 60) || 60;
+
+    const body = {
+      room: state.room || "global",
+      code: state.roomMeta?.code || "",
+      action,
+      actor: profile
+    };
+
+    if(action === "add_mod" || action === "remove_mod"){
+      const e = $("nvModEmail")?.value?.trim() || "";
+      body.target_email = e;
+    }else if(action === "mute"){
+      body.target_email = target;
+      body.minutes = minutes;
+    }else if(action === "unmute" || action === "ban" || action === "unban"){
+      body.target_email = target;
+    }
+
+    try{
+      const res = await apiFetch("/internal-chat/moderate", {method:"POST", body});
+      if(res && res.meta) state.roomAccess = res.meta;
+      if(out) out.textContent = "✅ Actualizado.";
+      showToast("Listo ✅");
+      refreshRoomUI();
+    }catch(err){
+      console.error(err);
+      if(out) out.textContent = "❌ " + String(err.message || "Error");
+      showToast(String(err.message || "Error"));
+    }
+  }
+
   async function sendCurrent(){
     if (!canSend()) return;
     const text = ($("nvChatInput").value || "").trim();
@@ -494,8 +807,15 @@
       return;
     }
 
+    // ensure joined/role if non-global
+    if(state.room !== "global" && !state.roomAccess){
+      const ok = await joinRoomBackend(state.roomMeta);
+      if(!ok) return;
+    }
+
     const payload = {
       room: state.room || "global",
+      code: state.roomMeta?.code || "",
       text,
       user: profile,
       ts: Date.now()
@@ -512,7 +832,7 @@
       if (res && res.message && res.message.ts) state.lastTs = Math.max(state.lastTs, res.message.ts);
     }catch(err){
       console.error(err);
-      showToast("No se pudo enviar. Revisa la configuración del chat.");
+      showToast(String(err.message || "No se pudo enviar."));
       if ($("nvChatBody") && $("nvChatBody").children.length === 0){
         renderSystem("Chat no disponible. Configura el backend (Worker + KV) o verifica el dominio permitido.");
       }
@@ -529,14 +849,20 @@
       return;
     }
 
+    const room = state.room || "global";
+    const code = state.roomMeta?.code || "";
+
     try{
-      const data = await apiFetch(`/internal-chat/messages?room=${encodeURIComponent(state.room || "global")}&after=${encodeURIComponent(state.lastTs)}`);
+      const data = await apiFetch(`/internal-chat/messages?room=${encodeURIComponent(room)}&after=${encodeURIComponent(state.lastTs)}&code=${encodeURIComponent(code)}`);
       const msgs = (data && data.messages) || [];
       if (msgs.length){
         for (const m of msgs) appendMsg(m);
         state.lastTs = Math.max(state.lastTs, ...msgs.map(m=>m.ts||0));
       }
       state.hasBackend = true;
+      // occasional meta refresh
+      state._metaTick = (state._metaTick || 0) + 1;
+      if(state._metaTick % 6 === 0) syncRoomAccess();
     }catch(err){
       state.hasBackend = false;
       console.warn("chat poll error", err);
@@ -564,10 +890,13 @@
         clearInterval(state.timer);
         state.timer = null;
         if ($("nvChatWidget")){
-          // reset UI state
           const open = state.isOpen;
+          // reset role/meta
+          state.role = "";
+          state.roomAccess = null;
           ensureUI();
           if (open) openChat(false);
+          syncRoomAccess();
         }
       }
     });
@@ -581,7 +910,10 @@
     hasBackend: false,
     room: "global",
     roomMeta: {room:"global", group:"Global", code:""},
-    _teacherRoom: null
+    _teacherRoom: null,
+    role: "",
+    roomAccess: null,
+    _metaTick: 0
   };
 
   function init(){
@@ -595,7 +927,7 @@
         const rooms = readRooms();
         if(!rooms.some(x=>x && x.room === parsed.room)){
           rooms.push({room: parsed.room, group: parsed.group || "", code: parsed.code || ""});
-          writeRooms(rooms.slice(-20));
+          writeRooms(rooms.slice(-30));
         }
       }
     }catch(_){ }
