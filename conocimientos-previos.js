@@ -322,6 +322,61 @@ function toast(title, desc){
     window.addEventListener("resize", ()=>requestAnimationFrame(refresh), {passive:true});
   }
 
+  // Lee un CSS var (px) como número
+  function cssVarPx(name){
+    try{
+      const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+      const n = parseFloat(v);
+      return Number.isFinite(n) ? n : 0;
+    }catch(_){ return 0; }
+  }
+
+  // Modo compacto automático para el encabezado fijo (solo afecta la zona superior)
+  // - En pantallas pequeñas, cuando el usuario baja, se reduce el alto del dock
+  // - Mantiene siempre visibles los botones 1–4
+  function initDockCompactMode(){
+    const dock = document.getElementById("kpTopDock");
+    if(!dock) return;
+
+    let compact = false;
+    const onY  = 140; // activa
+    const offY = 90;  // desactiva (histeresis)
+
+    const prefers = () => (window.innerWidth < 980 || window.innerHeight < 760);
+
+    const apply = (next)=>{
+      if(next === compact) return;
+
+      // Compensa el cambio de padding-top (pageTopPad) para evitar saltos bruscos
+      const oldPad = cssVarPx("--pageTopPad") || parseFloat(getComputedStyle(document.body).paddingTop) || 0;
+
+      compact = next;
+      dock.classList.toggle("isCompact", next);
+      document.body.classList.toggle("kpDockCompact", next);
+
+      requestAnimationFrame(()=>{
+        syncHudSafe();
+        const newPad = cssVarPx("--pageTopPad") || parseFloat(getComputedStyle(document.body).paddingTop) || 0;
+        const diff = Math.round(newPad - oldPad);
+        if(Math.abs(diff) > 2){
+          try{ window.scrollBy({ top: diff, left: 0, behavior: "auto" }); }
+          catch(_){ window.scrollBy(0, diff); }
+        }
+      });
+    };
+
+    const evaluate = ()=>{
+      const y = window.scrollY || document.documentElement.scrollTop || 0;
+      if(!prefers()) return apply(false);
+      const want = compact ? (y > offY) : (y > onY);
+      apply(want);
+    };
+
+    window.addEventListener("scroll", evaluate, {passive:true});
+    window.addEventListener("resize", evaluate, {passive:true});
+    setTimeout(evaluate, 0);
+  }
+
 
 function updateHUD(){
     const st = getGame();
@@ -1585,6 +1640,7 @@ function updateHUD(){
 function init(){
     syncHudSafe();
     initStatsCarousel();
+    initDockCompactMode();
     // Recalcula espacio superior cuando el menú termina de layout (fonts / resize / overflow)
     requestAnimationFrame(syncHudSafe);
     setTimeout(syncHudSafe, 80);

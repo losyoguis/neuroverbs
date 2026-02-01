@@ -56,6 +56,58 @@ body.has-floating-stats{ padding-top: var(--pageTopPad, calc(var(--statsSafe, 19
   pointer-events:none;
 }
 
+/* ===== Dock compacto (auto) =====
+   En pantallas pequeñas, cuando el usuario baja, el encabezado se compacta
+   para no ocupar tanto alto, sin perder los botones 1–4.
+*/
+.kpTopDock{ transition: padding .18s ease, transform .18s ease; }
+.kpTopDock .kpBrand,
+.kpTopDock .kpNavRow,
+.kpTopDock .kpNotice,
+.kpTopDock .kpSectionNav{ transition: margin .18s ease, padding .18s ease, opacity .18s ease; }
+
+.kpTopDock.isCompact{
+  padding-bottom: 8px;
+}
+.kpTopDock.isCompact::before{
+  top:-10px;
+  border-radius: 20px;
+}
+.kpTopDock.isCompact .kpBrand{ margin: 2px 0 8px; }
+.kpTopDock.isCompact .brand h1{ font-size: 1.55rem; }
+.kpTopDock.isCompact .brand .brandTag{ margin-top: 2px; font-size: 0.95rem; }
+.kpTopDock.isCompact .subtitle{ display:none; }
+
+.kpTopDock.isCompact .kpNavRow{ margin: 6px 0 10px; gap: 8px; }
+.kpTopDock.isCompact .kpPendingChip{ padding: 8px 10px; border-radius: 12px; }
+.kpTopDock.isCompact .roundbtn{ padding: 10px 12px; border-radius: 16px; }
+.kpTopDock.isCompact .roundbtn.mini{ padding: 8px 10px; }
+
+/* El objetivo se mantiene, pero en 2 líneas para ahorrar espacio */
+.kpTopDock.isCompact .kpNotice{
+  padding: 10px 12px;
+  margin: 6px 0 10px;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.kpTopDock.isCompact .kpSectionNav{ margin: 8px 0 10px; gap: 8px; }
+.kpTopDock.isCompact .kpSectionBtn{
+  padding: 10px 10px;
+  border-radius: 14px;
+  font-size: 0.96rem;
+}
+
+@media (max-width: 520px){
+  .kpTopDock.isCompact .brand h1{ font-size: 1.35rem; }
+  .kpTopDock.isCompact .roundbtn{ min-height: 40px; }
+  .kpTopDock.isCompact .kpSectionBtn{ padding: 10px 8px; }
+}
+
 
 
 .kpBrand{ margin: 6px 0 14px; }
