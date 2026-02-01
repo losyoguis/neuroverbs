@@ -2,32 +2,24 @@
 /* Diseño: menos saturación, más aire, acordeones y menú de puntajes sticky */
 
 :root{
-  /* Usa variables de ui.css si existen */
-  /* ⚠️ Importante:
-     NO pongas un padding-top grande por defecto, porque puede "engañar" el cálculo
-     inicial de alturas (antes de que cargue ui.css). El JS calcula valores reales.
-  */
-  --statsSafe: 0px;  /* debajo de la barra de puntajes (calculado por JS) */
-  --pageTopPad: 0px; /* padding-top extra aplicado al body (calculado por JS) */
-  --hudSafe: 0px;    /* safe para scroll/anclas (calculado por JS) */
+  /* Medidas calculadas por JS (para convivir con la barra de puntajes FIXED de ui.css) */
+  --statsBottom: 0px;   /* bottom del menú de puntajes en viewport px */
+  --dockTop: 0px;       /* top sticky del encabezado KP (debajo del stats) */
+  --hudSafe: 0px;       /* safe para anclas/scroll (stats + dock) */
+  --safeBottom: env(safe-area-inset-bottom, 0px);
 }
-
 
 body{
   background: var(--bg);
   margin:0;
-  padding:18px;
-  /* Empuja el contenido SOLO cuando el JS calcula el alto real.
-     (evita el "vacío" gigante inicial)
-  */
-  padding-top: calc(18px + var(--pageTopPad, 0px));
+  /* ✅ Estilo "app": aire lateral, pero sin dejar vacío gigante arriba */
+  padding: 16px;
+  padding-top: calc(16px + var(--statsBottom, 0px) + 10px);
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Noto Sans", sans-serif;
   color:#e5e7eb;
-  /* Sticky funciona más estable sin flex en body */
   display:block;
 }
 
-body.has-floating-stats{ padding-top: calc(18px + var(--pageTopPad, 0px)) !important; }
 
 .kpApp{
   width: min(1040px, 100%);
@@ -37,7 +29,7 @@ body.has-floating-stats{ padding-top: calc(18px + var(--pageTopPad, 0px)) !impor
 .kpTopDock{
   /* ✅ Encabezado SIEMPRE visible: sticky justo debajo del menú de puntajes */
   position: sticky;
-  top: var(--statsSafe, 0px);
+  top: var(--dockTop, 0px);
   z-index: 190; /* debajo de la barra fija (z=200), encima del contenido */
   padding-bottom: 12px;
   isolation: isolate;
@@ -819,4 +811,66 @@ details[open].kpAcc > summary .kpAccChevron::before{ content:"▴"; }
   0%{ filter: drop-shadow(0 0 0 rgba(0,0,0,0)); }
   50%{ filter: drop-shadow(0 8px 10px rgba(0,0,0,.25)); }
   100%{ filter: drop-shadow(0 0 0 rgba(0,0,0,0)); }
+}
+
+
+/* ===========================
+   ✅ Bottom tabs (solo móvil)
+   =========================== */
+.kpBottomTabs{
+  display:none;
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(12px + var(--safeBottom));
+  width: min(520px, calc(100% - 20px));
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 999px;
+  background: rgba(11,18,32,.72);
+  border: 1px solid rgba(255,255,255,.12);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 18px 40px rgba(0,0,0,.45);
+  z-index: 220;
+  justify-content: space-between;
+  align-items: center;
+}
+.kpBottomTabs .kpTabBtn{
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.08);
+  color: #e5e7eb;
+  font-weight: 900;
+  font-size: 1.05rem;
+  cursor: pointer;
+}
+.kpBottomTabs .kpTabBtn.isActive{
+  background: linear-gradient(135deg, rgba(245,158,11,.28), rgba(168,85,247,.22));
+  border-color: rgba(245,158,11,.55);
+  box-shadow: 0 10px 22px rgba(0,0,0,.35);
+}
+@media (max-width: 760px){
+  body{
+    padding: 12px;
+    padding-top: calc(12px + var(--statsBottom, 0px) + 8px);
+    padding-bottom: calc(92px + var(--safeBottom));
+  }
+  .kpBottomTabs{ display:flex; }
+  .kpApp{ width: 100%; }
+  .kpTopDock{ padding-bottom: 10px; }
+  .kpTopDock::before{ border-radius: 18px; }
+  .kpNavRow{ flex-wrap: wrap; gap: 10px; }
+  .kpNavLeft{ width:100%; flex-wrap: wrap; gap: 10px; }
+  .kpNavRight{ width:100%; display:flex; justify-content:flex-end; }
+  .kpSectionNav{
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 2px;
+  }
+  .kpSectionBtn{ flex: 0 0 auto; min-width: 150px; text-align:center; }
+  .kpCard{ border-radius: 18px; }
+  .kpTable{ font-size: .92rem; }
 }

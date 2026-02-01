@@ -29,23 +29,25 @@
     const dock = document.getElementById("kpTopDock");
     if(!bar) return;
 
-    // ✅ Medición simple y estable (la barra de puntajes es FIXED)
+    // Barra de puntajes es FIXED (ui.css). Medimos su bottom real en viewport.
     const r = bar.getBoundingClientRect();
-    const statsBottom = Math.max(0, Math.ceil(r.bottom || (r.top + r.height) || 0));
+    const statsTop = Math.max(0, Math.floor(r.top || 0));
+    const statsH = Math.max(0, Math.ceil(r.height || bar.offsetHeight || 0));
+    let statsBottom = statsTop + statsH;
 
-    // Safe top: justo debajo de la barra + aire
-    const statsSafe = Math.max(96, statsBottom + 14);
-    document.documentElement.style.setProperty("--statsSafe", statsSafe + "px");
+    // ✅ Clamp de seguridad (evita valores raros si el CSS aún no cargó)
+    if(!Number.isFinite(statsBottom) || statsBottom < 0) statsBottom = 0;
+    if(statsBottom > 320) statsBottom = 320;
 
-    // ✅ En esta página el encabezado KP es STICKY (no fixed), por eso
-    // solo necesitamos empujar el contenido debajo de la barra de puntajes.
-    const bodyBase = 18;
-    const pageTopPad = Math.max(0, statsSafe - bodyBase);
-    document.documentElement.style.setProperty("--pageTopPad", pageTopPad + "px");
+    const dockTop = Math.max(0, Math.ceil(statsBottom + 12));
 
-    // Safe para anclajes/scroll: barra + altura del dock sticky
+    document.documentElement.style.setProperty("--statsBottom", statsBottom + "px");
+    document.documentElement.style.setProperty("--dockTop", dockTop + "px");
+
     const dockH = dock ? Math.ceil(dock.getBoundingClientRect().height || dock.offsetHeight || 0) : 0;
-    const hudSafe = Math.max(0, Math.ceil(statsSafe + dockH + 22));
+
+    // Safe para anclajes/scroll: stats + dock + aire
+    const hudSafe = Math.max(0, Math.ceil(dockTop + dockH + 18));
     document.documentElement.style.setProperty("--hudSafe", hudSafe + "px");
   }
 
@@ -56,7 +58,12 @@
     let t=null;
     return function(){
       if(t) clearTimeout(t);
-      t=setTimeout(()=>{ applyHudSafe(); }, 120);
+      t=setTimeout(()=>{ applyHudSafe();
+    setupBottomTabs();
+    // Re-medición corta para evitar 'vacíos' si el CSS/fuentes cargan tarde
+    requestAnimationFrame(()=>{ applyHudSafe(); });
+    setTimeout(()=>{ applyHudSafe(); }, 350);
+    setTimeout(()=>{ applyHudSafe(); }, 1000); }, 120);
     };
   }
   const _onResize = onResizeDebounced();
@@ -1686,7 +1693,62 @@ function init(){
 
   // Boot
   if(document.readyState === "loading"){
-    document.addEventListener("DOMContentLoaded", init, {once:true});
+    
+  function setupBottomTabs(){
+    const tabs = document.getElementById("kpBottomTabs");
+    if(!tabs) return;
+    const btns = Array.from(tabs.querySelectorAll(".kpTabBtn"));
+    const mainAccs = Array.from(document.querySelectorAll("details.kpMainAcc"));
+    function setActive(hash){
+      btns.forEach(b=> b.classList.toggle("isActive", (b.getAttribute("data-jump")||"")===hash));
+    }
+    function openAndScroll(hash){
+      const id = (hash||"").replace("#","");
+      const target = document.getElementById(id);
+      if(!target) return;
+
+      // Si apunta a un <details>, lo abrimos y cerramos los demás
+      if(target.tagName && target.tagName.toLowerCase()==="details"){
+        mainAccs.forEach(d=>{ if(d!==target) d.open=false; });
+        target.open = true;
+      }
+
+      const safe = hudSafePx() || 0;
+      const y = target.getBoundingClientRect().top + window.scrollY - (safe + 12);
+      window.scrollTo({ top: Math.max(0,y), behavior: "smooth" });
+      setActive("#"+id);
+    }
+    btns.forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const hash = btn.getAttribute("data-jump");
+        if(hash) openAndScroll(hash);
+      });
+    });
+
+    // Activo inicial
+    if(location.hash && btns.some(b=>b.getAttribute("data-jump")===location.hash)){
+      setActive(location.hash);
+    }else{
+      setActive("#pronombres");
+    }
+
+    // Activo al hacer scroll (simple)
+    const watch = ["#pronombres","#verbos","#tenses","#linking"].map(h=>document.querySelector(h)).filter(Boolean);
+    function onScroll(){
+      const safe = hudSafePx() || 0;
+      const pos = window.scrollY + safe + 30;
+      let current = "#pronombres";
+      for(const el of watch){
+        const top = el.getBoundingClientRect().top + window.scrollY;
+        if(top <= pos) current = "#"+el.id;
+      }
+      setActive(current);
+    }
+    window.addEventListener("scroll", ()=>{ window.requestAnimationFrame(onScroll); }, {passive:true});
+    onScroll();
+  }
+
+document.addEventListener("DOMContentLoaded", init, {once:true});
   }else{
     init();
   }
