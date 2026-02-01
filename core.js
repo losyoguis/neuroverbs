@@ -5775,6 +5775,19 @@ function loadState(){
     }
   }
 
+
+  // ✅ XP externo pendiente (ej. Conocimientos previos)
+  // Si se sumó XP fuera de esta página, guardamos el delta para sincronizarlo a Sheets
+  // cuando haya sesión (idToken). Para que actualizarStats() lo envíe como delta,
+  // ajustamos __lastXpSynced por detrás del XP actual.
+  try{
+    const __pendingKey = "yoguis_xp_pending_delta_v1";
+    const __p = Number(safeLSGet(__pendingKey) || 0);
+    if(__p > 0 && window.__lastXpSynced === null){
+      window.__lastXpSynced = Math.max(0, xp - __p);
+    }
+  }catch(_){}
+
   regenHearts();
   actualizarStats();
   updateGamificationUI();
@@ -6999,7 +7012,17 @@ try{
       if(delta > 0){
         __lastXpSynced = xp;
         queueXpDelta(idToken, delta);
-        if(!window.__lbDebounce){
+        
+        // ✅ Consumir (reducir) XP pendiente externo si existe
+        try{
+          const __pendingKey = "yoguis_xp_pending_delta_v1";
+          const __p = Number(safeLSGet(__pendingKey) || 0);
+          if(__p > 0){
+            const __left = Math.max(0, __p - delta);
+            safeLSSet(__pendingKey, String(__left));
+          }
+        }catch(_){}
+if(!window.__lbDebounce){
           window.__lbDebounce = setTimeout(()=>{ window.__lbDebounce=null; cargarLeaderboard(50); }, 1200);
         }
       }
