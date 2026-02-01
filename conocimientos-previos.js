@@ -22,34 +22,60 @@
     return `${y}-${m}-${day}`;
   }
 
-  
-  // Ajusta el "safe top" para que la barra fija no tape contenido (varía si la barra cambia de altura)
-  function computeTopSafes(){
-    const bar = document.getElementById("statsBar");
-    const dock = document.getElementById("kpTopDock");
-    if(!bar) return;
+// Ajusta el "safe top" para que la barra fija no tape contenido (varía si la barra cambia de altura)
+function computeTopSafes(){
+  const bar = document.getElementById("statsBar");
+  const dock = document.getElementById("kpTopDock");
+  if(!bar) return;
 
-    // Barra de puntajes es FIXED (ui.css). Medimos su bottom real en viewport.
-    const r = bar.getBoundingClientRect();
-    const statsTop = Math.max(0, Math.floor(r.top || 0));
-    const statsH = Math.max(0, Math.ceil(r.height || bar.offsetHeight || 0));
-    let statsBottom = statsTop + statsH;
+  const r = bar.getBoundingClientRect();
+  const top = Number.isFinite(r.top) ? r.top : 0;
 
-    // ✅ Clamp de seguridad (evita valores raros si el CSS aún no cargó)
-    if(!Number.isFinite(statsBottom) || statsBottom < 0) statsBottom = 0;
-    if(statsBottom > 320) statsBottom = 320;
+  const candidates = [
+    Number.isFinite(r.height) ? r.height : 0,
+    bar.offsetHeight || 0,
+    bar.clientHeight || 0,
+    bar.scrollHeight || 0,
+  ].filter(n => Number.isFinite(n) && n > 0);
 
-    const dockTop = Math.max(0, Math.ceil(statsBottom + 12));
+  // ✅ Preferimos la menor altura "sensata" para evitar mediciones raras en móviles (iOS/Safari)
+  let statsH = candidates.length ? Math.min(...candidates) : 0;
 
-    document.documentElement.style.setProperty("--statsBottom", statsBottom + "px");
-    document.documentElement.style.setProperty("--dockTop", dockTop + "px");
+  const vh = Math.max(1, window.innerHeight || 1);
+  const MIN_H = 56; // la barra nunca debería ser menor a esto
+  const MAX_H = Math.min(140, Math.round(vh * 0.22)); // ~22% del viewport
+  statsH = Math.max(MIN_H, Math.min(Math.round(statsH || 0), MAX_H));
 
-    const dockH = dock ? Math.ceil(dock.getBoundingClientRect().height || dock.offsetHeight || 0) : 0;
+  let statsBottom = Math.max(0, Math.round(top + statsH));
 
-    // Safe para anclajes/scroll: stats + dock + aire
-    const hudSafe = Math.max(0, Math.ceil(dockTop + dockH + 18));
-    document.documentElement.style.setProperty("--hudSafe", hudSafe + "px");
+  // Si aún sale sospechoso (demasiado abajo), fallback conservador
+  if(statsBottom > Math.round(vh * 0.28)){
+    statsBottom = Math.min(120, Math.round(vh * 0.16));
   }
+
+  const GAP = 6; // aire entre la barra de puntajes y el encabezado KP
+  const dockTop = Math.max(0, Math.round(statsBottom + GAP));
+
+  document.documentElement.style.setProperty("--statsBottom", statsBottom + "px");
+  document.documentElement.style.setProperty("--dockTop", dockTop + "px");
+
+  // Altura del dock (para anclas/scroll)
+  const dr = dock ? dock.getBoundingClientRect() : null;
+  const dockCandidates = dock ? [
+    (dr && Number.isFinite(dr.height)) ? dr.height : 0,
+    dock.offsetHeight || 0,
+    dock.clientHeight || 0,
+    dock.scrollHeight || 0
+  ].filter(n => Number.isFinite(n) && n > 0) : [];
+
+  let dockH = dockCandidates.length ? Math.min(...dockCandidates) : 0;
+  const MAX_DOCK = Math.min(340, Math.round(vh * 0.55));
+  dockH = Math.max(0, Math.min(Math.round(dockH), MAX_DOCK));
+
+  // Safe para anclajes/scroll: stats + dock + aire
+  const hudSafe = Math.max(0, Math.round(dockTop + dockH + 14));
+  document.documentElement.style.setProperty("--hudSafe", hudSafe + "px");
+}
 
   function applyHudSafe(){
     computeTopSafes();
