@@ -1467,23 +1467,33 @@ function updateHUD(){
   }
 
   async function loadRegularVerbs(){
+    // Prefer inline JSON (works even when fetch is blocked)
     try{
-      const r = await fetch("assets/kp_regular_verbs.json", {cache:"force-cache"});
-      if(!r.ok) throw new Error("HTTP "+r.status);
-      __regList = await r.json();
-      renderRegularVerbs("");
+      const inline = document.getElementById("kpRegData");
+      if(inline && (inline.textContent||"").trim().length){
+        __regList = JSON.parse(inline.textContent);
+        renderRegularVerbs("");
+      }else{
+        const r = await fetch("assets/kp_regular_verbs.json", {cache:"force-cache"});
+        if(!r.ok) throw new Error("HTTP "+r.status);
+        __regList = await r.json();
+        renderRegularVerbs("");
+      }
     }catch(_){
       // no-op
     }
     const inp = document.getElementById("kpRegSearch");
     const btn = document.getElementById("kpRegClear");
-    if(inp){
-      inp.addEventListener("input", ()=> renderRegularVerbs(inp.value));
+    if(inp && !inp.dataset.bound){
+      inp.dataset.bound="1";
+      inp.addEventListener("input", ()=>renderRegularVerbs(inp.value||""));
     }
-    if(btn){
+    if(btn && !btn.dataset.bound){
+      btn.dataset.bound="1";
       btn.addEventListener("click", ()=>{
         if(inp) inp.value="";
         renderRegularVerbs("");
+        if(inp) inp.focus();
       });
     }
   }

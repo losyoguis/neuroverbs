@@ -969,3 +969,30 @@ details[open].kpAcc > summary .kpAccChevron::before{ content:"▴"; }
   .kpRoundSections{ gap: 8px; }
   .kpSecBtn{ flex: 1 1 auto; }
 }
+
+
+/* --- KP NAV: ensure active color always visible (like index.html) --- */
+.kpRoundSections .kpSecBtn.active,
+.kpRoundSections .kpSecBtn.isActive{
+  background: var(--secondary) !important;
+  color: #0b1220 !important;
+  border-color: var(--secondary) !important;
+}
+/* Type headings inside tables */
+.kpTypeTitle{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  padding:10px 14px;
+  margin: 10px 0 8px;
+  border-radius: 999px;
+  background: rgba(242,139,22,.22);
+  border: 1px solid rgba(242,139,22,.55);
+  color: #fff;
+  font-weight: 950;
+  letter-spacing: .2px;
+}
+.kpTypeTitle2{
+  background: rgba(67, 97, 238, .18);
+  border-color: rgba(67, 97, 238, .45);
+}
