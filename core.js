@@ -5224,8 +5224,69 @@ function pinStatsBar(){
   bar.style.transform = "translateX(-50%)";
   bar.style.zIndex = "900";
   bar.style.width = "min(1120px, calc(100% - 40px))";
+  initStatsCarousel();
   updateHudSafe();
 }
+
+/* ✅ Menú de puntajes: carrusel horizontal premium (una sola fila) */
+function initStatsCarousel(){
+  const bar = document.getElementById("statsBar");
+  if(!bar) return;
+
+  const refresh = ()=>{
+    const scrollable = (bar.scrollWidth - bar.clientWidth) > 2;
+    bar.classList.toggle("isScrollable", scrollable);
+    if(!scrollable){
+      bar.classList.remove("atStart","atEnd");
+      return;
+    }
+    bar.classList.toggle("atStart", bar.scrollLeft <= 1);
+    bar.classList.toggle("atEnd", bar.scrollLeft >= (bar.scrollWidth - bar.clientWidth - 1));
+  };
+
+  const onWheel = (e)=>{
+    if(!bar.classList.contains("isScrollable")) return;
+    if(Math.abs(e.deltaY) > Math.abs(e.deltaX)){
+      bar.scrollLeft += e.deltaY;
+      e.preventDefault();
+      refresh();
+    }
+  };
+
+  let dragging=false, startX=0, startLeft=0;
+  const onDown=(e)=>{
+    if(e.pointerType==="mouse" && e.button!==0) return;
+    if(!bar.classList.contains("isScrollable")) return;
+    dragging=true;
+    startX=e.clientX;
+    startLeft=bar.scrollLeft;
+    bar.classList.add("isDragging");
+    try{ bar.setPointerCapture(e.pointerId); }catch(_){}
+  };
+  const onMove=(e)=>{
+    if(!dragging) return;
+    const dx=e.clientX-startX;
+    bar.scrollLeft=startLeft - dx;
+    refresh();
+  };
+  const onUp=()=>{
+    dragging=false;
+    bar.classList.remove("isDragging");
+    refresh();
+  };
+
+  bar.addEventListener("scroll", ()=>requestAnimationFrame(refresh), {passive:true});
+  bar.addEventListener("wheel", onWheel, {passive:false});
+  bar.addEventListener("pointerdown", onDown, {passive:true});
+  bar.addEventListener("pointermove", onMove, {passive:true});
+  bar.addEventListener("pointerup", onUp, {passive:true});
+  bar.addEventListener("pointercancel", onUp, {passive:true});
+
+  refresh();
+  setTimeout(refresh, 50);
+  window.addEventListener("resize", ()=>requestAnimationFrame(refresh), {passive:true});
+}
+
 
 /* ===========================
    ✅ SONIDOS

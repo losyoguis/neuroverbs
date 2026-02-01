@@ -207,6 +207,75 @@ function toast(title, desc){
     document.documentElement.style.setProperty("--hudSafe", safe + "px");
   }
 
+  /* ✅ Menú de puntajes: carrusel horizontal premium (una sola fila) */
+  function initStatsCarousel(){
+    const bar = document.getElementById("statsBar");
+    if(!bar) return;
+
+    // Estado scrollable + fades
+    const refresh = ()=>{
+      const scrollable = (bar.scrollWidth - bar.clientWidth) > 2;
+      bar.classList.toggle("isScrollable", scrollable);
+      if(!scrollable){
+        bar.classList.remove("atStart","atEnd");
+        return;
+      }
+      bar.classList.toggle("atStart", bar.scrollLeft <= 1);
+      bar.classList.toggle("atEnd", bar.scrollLeft >= (bar.scrollWidth - bar.clientWidth - 1));
+    };
+
+    // Wheel vertical -> horizontal (sin shift) cuando haya overflow
+    const onWheel = (e)=>{
+      if(!bar.classList.contains("isScrollable")) return;
+      if(Math.abs(e.deltaY) > Math.abs(e.deltaX)){
+        bar.scrollLeft += e.deltaY;
+        e.preventDefault();
+        refresh();
+      }
+    };
+
+    // Drag con mouse / touchpad (pointer)
+    let dragging = false;
+    let startX = 0;
+    let startLeft = 0;
+
+    const onDown = (e)=>{
+      // Solo click izquierdo si es mouse
+      if(e.pointerType === "mouse" && e.button !== 0) return;
+      if(!bar.classList.contains("isScrollable")) return;
+      dragging = true;
+      startX = e.clientX;
+      startLeft = bar.scrollLeft;
+      bar.classList.add("isDragging");
+      try{ bar.setPointerCapture(e.pointerId); }catch(_){}
+    };
+    const onMove = (e)=>{
+      if(!dragging) return;
+      const dx = e.clientX - startX;
+      bar.scrollLeft = startLeft - dx;
+      refresh();
+    };
+    const onUp = ()=>{
+      dragging = false;
+      bar.classList.remove("isDragging");
+      refresh();
+    };
+
+    bar.addEventListener("scroll", ()=>{ requestAnimationFrame(refresh); }, {passive:true});
+    bar.addEventListener("wheel", onWheel, {passive:false});
+    bar.addEventListener("pointerdown", onDown, {passive:true});
+    bar.addEventListener("pointermove", onMove, {passive:true});
+    bar.addEventListener("pointerup", onUp, {passive:true});
+    bar.addEventListener("pointercancel", onUp, {passive:true});
+
+    // Primera medición
+    refresh();
+    // Re-medir luego del render
+    setTimeout(refresh, 50);
+    window.addEventListener("resize", ()=>requestAnimationFrame(refresh), {passive:true});
+  }
+
+
 function updateHUD(){
     const st = getGame();
     const pending = Number(safeGet(PENDING_XP_KEY)||0);
@@ -1468,6 +1537,7 @@ function updateHUD(){
 
 function init(){
     syncHudSafe();
+    initStatsCarousel();
     window.addEventListener("resize", (typeof _onResize==="function"?_onResize:syncHudSafe), {passive:true});
     renderRoadmap();
     renderThreeCols();

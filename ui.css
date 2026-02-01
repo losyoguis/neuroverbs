@@ -110,6 +110,7 @@
       -webkit-overflow-scrolling: touch;
       scroll-snap-type: x mandatory;
       touch-action: pan-x;
+      cursor: grab;
     }
 
     /* Ocultar barra de scroll (mantiene el swipe) */
@@ -922,6 +923,7 @@ input{
       border-radius:14px;
       background:rgba(255,255,255,.18);
       border:1px solid rgba(11,18,32,.15);
+      flex: 0 0 auto;
     }
     .statBox .stat-value{font-size:1.15rem;}
     .statBox .stat-label{font-size:.68rem;}
@@ -3024,3 +3026,37 @@ box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);;justify-content:flex-start;text-ali
   0%,100%{ transform: scale(1); }
   50%{ transform: scale(1.08); }
 }
+
+
+
+    /* ✅✅✅ Premium: indicadores de scroll (fade) + drag */
+    .stats.isScrollable::before,
+    .stats.isScrollable::after{
+      content:"";
+      position:absolute;
+      top:0; bottom:0;
+      width:34px;
+      pointer-events:none;
+      opacity:1;
+      transition: opacity .2s ease;
+      border-radius:18px;
+      z-index: 1;
+    }
+    .stats.isScrollable::before{
+      left:0;
+      background: linear-gradient(90deg, rgba(15,23,42,.38), rgba(15,23,42,0));
+      border-top-right-radius:0;
+      border-bottom-right-radius:0;
+    }
+    .stats.isScrollable::after{
+      right:0;
+      background: linear-gradient(270deg, rgba(15,23,42,.38), rgba(15,23,42,0));
+      border-top-left-radius:0;
+      border-bottom-left-radius:0;
+    }
+    .stats.isScrollable.atStart::before{ opacity:0; }
+    .stats.isScrollable.atEnd::after{ opacity:0; }
+
+    .stats.isDragging{ cursor: grabbing; }
+    .stats.isScrollable{ scroll-snap-type: x proximity; }
+    .statBox{ scroll-snap-align: start; }
