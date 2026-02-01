@@ -1612,6 +1612,16 @@ function updateHUD(){
     }
 
 
+    function syncBottomTabs(hash){
+      const tabs = document.getElementById("kpBottomTabs");
+      if(!tabs) return;
+      const btns = Array.from(tabs.querySelectorAll(".kpTabBtn"));
+      btns.forEach(b=>{
+        const h = (b.getAttribute("data-jump")||"").trim();
+        b.classList.toggle("isActive", h===hash);
+      });
+    }
+
     function closeOthers(current){
       mainAccs.forEach(d=>{ if(d!==current) d.open = false; });
     }
@@ -1634,6 +1644,7 @@ function updateHUD(){
 
     function openSection(sectionId, activityId){
       setActiveSection(sectionId);
+      syncBottomTabs("#"+sectionId);
       const el = document.getElementById(sectionId);
       if(!el) return;
 
@@ -1654,10 +1665,14 @@ function updateHUD(){
       }, 60);
     }
 
-    // Cierra otras secciones principales cuando una se abre
+    // Cierra otras secciones principales cuando una se abre + sincroniza activo
     mainAccs.forEach(d=>{
       d.addEventListener("toggle", ()=>{
-        if(d.open) closeOthers(d);
+        if(d.open){
+          closeOthers(d);
+          setActiveSection(d.id);
+          syncBottomTabs("#"+d.id);
+        }
       });
     });
 
@@ -1705,8 +1720,86 @@ function updateHUD(){
     window.addEventListener("hashchange", openFromHash, {passive:true});
     openFromHash();
 
+    // Activo automático por scroll: resalta el botón 1-4 y el tab móvil según la sección visible
+    (function(){
+      const watch = Array.from(document.querySelectorAll("details.kpMainAcc")).filter(d=>d.id);
+      if(!watch.length) return;
+      let lastId = "";
+      function pick(){
+        if(typeof syncHudSafe === "function"){ try{ syncHudSafe(); }catch(_){ } }
+        const safe = hudSafePx() || 0;
+        const posY = (window.scrollY || 0) + safe + 24;
+        let current = watch[0].id;
+        for(const el of watch){
+          const top = el.getBoundingClientRect().top + (window.scrollY || 0);
+          if(top <= posY) current = el.id;
+        }
+        if(current !== lastId){
+          lastId = current;
+          setActiveSection(current);
+          syncBottomTabs("#"+current);
+        }
+      }
+      const onScroll = ()=>{ window.requestAnimationFrame(pick); };
+      window.addEventListener("scroll", onScroll, {passive:true});
+      window.addEventListener("resize", onScroll, {passive:true});
+      setTimeout(pick, 60);
+    })();
+
     // Exponer helper por si otra parte lo necesita
     window.NVKP_openSection = openSection;
+  }
+
+
+  function setupBottomTabs(){
+    // Inicializa una sola vez (esta función se invoca en resize, así que usamos un guard)
+    if(window.__NVKP_bottomTabsInit) return;
+    window.__NVKP_bottomTabsInit = true;
+
+    const tabs = document.getElementById("kpBottomTabs");
+    if(!tabs) return;
+    const btns = Array.from(tabs.querySelectorAll(".kpTabBtn"));
+
+    function setActive(hash){
+      btns.forEach(b=>{
+        const h = (b.getAttribute("data-jump")||"").trim();
+        b.classList.toggle("isActive", h===hash);
+      });
+    }
+
+    function openAndScroll(hash){
+      const id = (hash||"").replace("#","");
+      if(!id) return;
+
+      // Usa la misma navegación del header (mantiene acordeones y botones sincronizados)
+      if(typeof window.NVKP_openSection === "function"){
+        window.NVKP_openSection(id);
+        setActive("#"+id);
+        return;
+      }
+
+      // Fallback simple
+      const target = document.getElementById(id);
+      if(!target) return;
+      const safe = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--hudSafe")) || 0);
+      const y = target.getBoundingClientRect().top + window.scrollY - (safe + 12);
+      window.scrollTo({ top: Math.max(0,y), behavior: "smooth" });
+      setActive("#"+id);
+    }
+
+    btns.forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const hash = btn.getAttribute("data-jump");
+        if(hash) openAndScroll(hash);
+      });
+    });
+
+    // Estado inicial
+    if(location.hash && btns.some(b=>(b.getAttribute("data-jump")||"")===location.hash)){
+      setActive(location.hash);
+    }else{
+      setActive("#pronombres");
+    }
   }
 
 function init(){
@@ -1724,6 +1817,7 @@ function init(){
 
 
     setupAccordionNav();
+    setupBottomTabs();
     // Propuesta A + B
     setupTabs();
     setupClassMode();
@@ -1731,79 +1825,10 @@ function init(){
     setStudentHUD();
   }
 
+  
   // Boot
   if(document.readyState === "loading"){
-    
-  function setupBottomTabs(){
-    const tabs = document.getElementById("kpBottomTabs");
-    if(!tabs) return;
-    const btns = Array.from(tabs.querySelectorAll(".kpTabBtn"));
-    const mainAccs = Array.from(document.querySelectorAll("details.kpMainAcc"));
-    function setActive(hash){
-      btns.forEach(b=> b.classList.toggle("isActive", (b.getAttribute("data-jump")||"")===hash));
-    }
-    function openAndScroll(hash){
-      const id = (hash||"").replace("#","");
-      if(!id) return;
-
-      // ✅ Usar la misma navegación del header (openSection) para mantener todo sincronizado
-      if(typeof window.NVKP_openSection === "function"){
-        window.NVKP_openSection(id);
-        setActive("#"+id);
-        return;
-      }
-
-      // Fallback (por si no existe el helper)
-      const target = document.getElementById(id);
-      if(!target) return;
-
-      if(target.tagName && target.tagName.toLowerCase()==="details"){
-        mainAccs.forEach(d=>{ if(d!==target) d.open=false; });
-        target.open = true;
-      }
-
-      const safe = hudSafePx() || 0;
-      const y = target.getBoundingClientRect().top + window.scrollY - (safe + 12);
-      window.scrollTo({ top: Math.max(0,y), behavior: "smooth" });
-      setActive("#"+id);
-    }
-
-      const safe = hudSafePx() || 0;
-      const y = target.getBoundingClientRect().top + window.scrollY - (safe + 12);
-      window.scrollTo({ top: Math.max(0,y), behavior: "smooth" });
-      setActive("#"+id);
-    }
-    btns.forEach(btn=>{
-      btn.addEventListener("click", ()=>{
-        const hash = btn.getAttribute("data-jump");
-        if(hash) openAndScroll(hash);
-      });
-    });
-
-    // Activo inicial
-    if(location.hash && btns.some(b=>b.getAttribute("data-jump")===location.hash)){
-      setActive(location.hash);
-    }else{
-      setActive("#pronombres");
-    }
-
-    // Activo al hacer scroll (simple)
-    const watch = ["#pronombres","#verbos","#tenses","#linking"].map(h=>document.querySelector(h)).filter(Boolean);
-    function onScroll(){
-      const safe = hudSafePx() || 0;
-      const pos = window.scrollY + safe + 30;
-      let current = "#pronombres";
-      for(const el of watch){
-        const top = el.getBoundingClientRect().top + window.scrollY;
-        if(top <= pos) current = "#"+el.id;
-      }
-      setActive(current);
-    }
-    window.addEventListener("scroll", ()=>{ window.requestAnimationFrame(onScroll); }, {passive:true});
-    onScroll();
-  }
-
-document.addEventListener("DOMContentLoaded", init, {once:true});
+    document.addEventListener("DOMContentLoaded", init, {once:true});
   }else{
     init();
   }
