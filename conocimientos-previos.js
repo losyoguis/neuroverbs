@@ -29,36 +29,23 @@
     const dock = document.getElementById("kpTopDock");
     if(!bar) return;
 
-    // ⚠️ Medición robusta: a veces DOMContentLoaded corre antes de que ui.css
-    // termine de fijar la barra. Por eso usamos (top CSS + altura) cuando está disponible.
+    // ✅ Medición simple y estable (la barra de puntajes es FIXED)
     const r = bar.getBoundingClientRect();
-    const cs = getComputedStyle(bar);
-    const cssTop = parseFloat(cs.top);
-    const barTop = Number.isFinite(cssTop) ? cssTop : (r.top || 0);
-    const barH = Math.ceil(r.height || bar.offsetHeight || 0);
-    const statsBottom = Math.max(0, Math.ceil(barTop + barH));
+    const statsBottom = Math.max(0, Math.ceil(r.bottom || (r.top + r.height) || 0));
 
-    // Safe top: justo debajo de la barra de puntajes + aire
+    // Safe top: justo debajo de la barra + aire
     const statsSafe = Math.max(96, statsBottom + 14);
     document.documentElement.style.setProperty("--statsSafe", statsSafe + "px");
 
-    // Dock pegado debajo del menú de puntajes
-    const dockTop = Math.max(0, statsBottom + 10);
-    document.documentElement.style.setProperty("--dockTop", dockTop + "px");
-
-    // Altura real del dock (depende de responsive/wrap)
-    const dockH = dock ? Math.ceil(dock.getBoundingClientRect().height || dock.offsetHeight || 0) : 0;
-
-    // 🔒 Safe total real (barra + dock + aire)
-    const safeTotal = Math.max(statsSafe, dockTop + dockH + 16);
-
-    // El CSS ya suma 18px base al body (padding). Aquí guardamos SOLO el extra.
+    // ✅ En esta página el encabezado KP es STICKY (no fixed), por eso
+    // solo necesitamos empujar el contenido debajo de la barra de puntajes.
     const bodyBase = 18;
-    const pageTopPad = Math.max(0, safeTotal - bodyBase);
+    const pageTopPad = Math.max(0, statsSafe - bodyBase);
     document.documentElement.style.setProperty("--pageTopPad", pageTopPad + "px");
 
-    // Safe para anclajes/scroll (siempre en píxeles reales desde arriba)
-    const hudSafe = Math.max(0, Math.ceil(safeTotal + 24));
+    // Safe para anclajes/scroll: barra + altura del dock sticky
+    const dockH = dock ? Math.ceil(dock.getBoundingClientRect().height || dock.offsetHeight || 0) : 0;
+    const hudSafe = Math.max(0, Math.ceil(statsSafe + dockH + 22));
     document.documentElement.style.setProperty("--hudSafe", hudSafe + "px");
   }
 

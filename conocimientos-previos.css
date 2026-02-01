@@ -8,8 +8,7 @@
      inicial de alturas (antes de que cargue ui.css). El JS calcula valores reales.
   */
   --statsSafe: 0px;  /* debajo de la barra de puntajes (calculado por JS) */
-  --dockTop: 0px;    /* top del encabezado dock (calculado por JS) */
-  --pageTopPad: 0px; /* padding-top total aplicado al body (calculado por JS) */
+  --pageTopPad: 0px; /* padding-top extra aplicado al body (calculado por JS) */
   --hudSafe: 0px;    /* safe para scroll/anclas (calculado por JS) */
 }
 
@@ -22,25 +21,23 @@ body{
      (evita el "vacío" gigante inicial)
   */
   padding-top: calc(18px + var(--pageTopPad, 0px));
-font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Noto Sans", sans-serif;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Noto Sans", sans-serif;
   color:#e5e7eb;
-  display:flex;
-  justify-content:center;
+  /* Sticky funciona más estable sin flex en body */
+  display:block;
 }
 
 body.has-floating-stats{ padding-top: calc(18px + var(--pageTopPad, 0px)) !important; }
 
 .kpApp{
   width: min(1040px, 100%);
+  margin: 0 auto;
 }
 
 .kpTopDock{
-  /* ✅ El encabezado se mantiene SIEMPRE visible, como en la captura */
-  position: fixed;
-  top: var(--dockTop, 0px);
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(1040px, calc(100% - 36px));
+  /* ✅ Encabezado SIEMPRE visible: sticky justo debajo del menú de puntajes */
+  position: sticky;
+  top: var(--statsSafe, 0px);
   z-index: 190; /* debajo de la barra fija (z=200), encima del contenido */
   padding-bottom: 12px;
   isolation: isolate;
@@ -50,8 +47,8 @@ body.has-floating-stats{ padding-top: calc(18px + var(--pageTopPad, 0px)) !impor
 .kpTopDock::before{
   content:"";
   position:absolute;
-  left:-18px; right:-18px;
-  top:-12px; bottom:0;
+  left:0; right:0;
+  top:-10px; bottom:0;
   z-index:-1;
   background: linear-gradient(180deg, rgba(11,18,32,.88), rgba(11,18,32,.72));
   border-radius: 22px;

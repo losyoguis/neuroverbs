@@ -10,7 +10,6 @@
 <link href="conocimientos-previos.css" rel="stylesheet"/>
 <link href="assets/favicon.png" rel="icon" sizes="64x64" type="image/png"/>
 <link href="assets/apple-touch-icon.png" rel="apple-touch-icon" sizes="180x180"/>
-  <link rel="stylesheet" href="chat-widget.css">
 </head>
 <body class="has-floating-stats">
 
@@ -47,8 +46,8 @@
 <div class="kpNavRow" aria-label="Acciones rápidas">
   <div class="kpNavLeft">
     <a class="roundbtn" href="index.html" title="Volver a la app">← Volver</a>
-    <a class="roundbtn ebook" href="assets/conocimientos-previos.pdf" target="_blank" rel="noopener" title="Abrir el PDF original">Ver PDF 📄</a>
-    <a class="roundbtn teacher" href="#docente" title="Modo clase (Docente)">Modo clase 🧑‍🏫</a>
+    <button class="roundbtn ebook" data-open="pdf" type="button" title="Ver el PDF dentro de la página">Ver PDF 📄</button>
+    <button class="roundbtn teacher" data-open="docente" type="button" title="Modo clase (Docente)">Modo clase 🧑‍🏫</button>
   </div>
   <div class="kpNavRight">
     <span class="kpPendingChip" title="XP pendiente de sincronizar con la app principal">Pendiente sync: <b id="kpPending">0</b></span>
@@ -67,10 +66,14 @@
 </div>
 </div>
 <div class="kpContent">
-<details class="kpCard kpAcc" id="pdf" open="">
+<details class="kpCard kpAcc" id="pdf">
 <summary><span class="kpAccTitle">Documento original (PDF)</span><span class="kpAccMeta">Documento original</span><span aria-hidden="true" class="kpAccChevron"></span></summary>
 <div class="kpAccBody">
 <p class="kpText">Aquí está el PDF “tal cual” (literal). Puedes leerlo primero y luego hacer las actividades para sumar XP.</p>
+<div class="kpActActions" style="justify-content:flex-start;gap:10px;margin:10px 0 14px;">
+  <a class="roundbtn mini" href="assets/conocimientos-previos.pdf" target="_blank" rel="noopener" title="Abrir el PDF en una pestaña nueva">Abrir en pestaña nueva</a>
+  <button class="roundbtn mini" data-open="misiones" type="button" title="Ir a las misiones">Ir a misiones</button>
+</div>
 <div class="kpPdfWrap">
 <iframe class="kpPdfFrame" loading="lazy" src="assets/conocimientos-previos.pdf#view=FitH" title="Conocimientos previos (PDF)"></iframe>
 </div>
@@ -536,6 +539,5 @@ NVKP1...." rows="7"></textarea>
 </details></div></details></div>
 </div>
 <script src="conocimientos-previos.js"></script>
-  <script src="chat-widget.js" defer></script>
 </body>
 </html>
