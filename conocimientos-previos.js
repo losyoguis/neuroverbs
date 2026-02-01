@@ -6,6 +6,7 @@
   const GAME_KEY = "yoguis_neuro_gamification_v1";
   const PENDING_XP_KEY = "yoguis_xp_pending_delta_v1";
   const AWARD_KEY = "yoguis_neuro_preknowledge_awards_v1";
+  const KP_BADGE_KEY = "yoguis_kp_badge_v1";
 
   function safeGet(key){
     try{ return localStorage.getItem(key); }catch(_){ return null; }
@@ -71,7 +72,48 @@
     return {ok:true, xp:st.xp, pending};
   }
 
-  function toast(title, desc){
+  
+  function launchConfetti(){
+    const host = document.getElementById("kpConfetti") || (function(){
+      const d=document.createElement("div");
+      d.id="kpConfetti"; d.className="kpConfetti";
+      document.body.appendChild(d);
+      return d;
+    })();
+
+    // limpiar restos
+    host.innerHTML = "";
+
+    const colors = ["#f59e0b","#fb7185","#a78bfa","#22c55e","#38bdf8","#f97316"];
+    const pieces = 28;
+    const w = window.innerWidth || 1200;
+
+    for(let i=0;i<pieces;i++){
+      const p=document.createElement("div");
+      p.className="c";
+      const left = Math.random()*w;
+      const delay = Math.random()*0.18;
+      const size = 8 + Math.random()*10;
+      p.style.left = left+"px";
+      p.style.width = size+"px";
+      p.style.height = size+"px";
+      p.style.animationDelay = delay+"s";
+      p.style.background = colors[i % colors.length];
+      host.appendChild(p);
+    }
+    // auto limpiar después
+    setTimeout(()=>{ host.innerHTML=""; }, 2200);
+  }
+
+  function markKpBadgeDone(){
+    // guarda una insignia persistente (para mostrar en index.html)
+    const exists = safeGet(KP_BADGE_KEY);
+    if(exists) return false;
+    safeSet(KP_BADGE_KEY, JSON.stringify({ done:true, at: Date.now() }));
+    return true;
+  }
+
+function toast(title, desc){
     const el = document.createElement("div");
     el.style.position="fixed";
     el.style.left="50%";
@@ -198,6 +240,16 @@ function updateHUD(){
 
     const doneMsg = document.getElementById("kpDoneMsg");
     if(doneMsg) doneMsg.hidden = !isDoneAll;
+
+    // ✅ Badge + confetti solo la primera vez que alcanzas 7/7
+    if(isDoneAll){
+      const isFirst = markKpBadgeDone();
+      if(isFirst){
+        // micro celebración
+        launchConfetti();
+        toast("✅ KP terminado", "¡Conocimientos previos completados!");
+      }
+    }
 }
 
 

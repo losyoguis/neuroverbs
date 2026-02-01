@@ -110,7 +110,7 @@
 <div class="roundrow">
 <button class="roundbtn" data-help="Guía rápida: cómo usar la app paso a paso." onclick="abrirInstrucciones()" title="Guía rápida: cómo usar la app paso a paso." type="button">INSTRUCCIONES 📌</button>
 <button class="roundbtn ebook" data-help="Abre el e-book (Canva) dentro de la app." onclick="abrirEbook()" title="Abre el e-book (Canva) dentro de la app." type="button">E-BOOK 📚</button>
-<button class="roundbtn kp" data-help="Conocimientos previos: pronombres, verbos, tiempos y conectores para empezar." onclick="window.location.href='conocimientos-previos.html'" title="Conocimientos previos" type="button">CONOCIMIENTOS PREVIOS 🧠</button>
+<button class="roundbtn kp" data-help="Conocimientos previos: pronombres, verbos, tiempos y conectores para empezar." onclick="window.location.href='conocimientos-previos.html'" title="Conocimientos previos" type="button">CONOCIMIENTOS PREVIOS 🧠 <span class="kpBtnBadge isPulse" id="kpBtnBadge" hidden>KP ✅</span></button>
 <button class="roundbtn kp teacher" data-help="Modo clase (Docente): genera código y pega evidencias NVKP." onclick="window.location.href='conocimientos-previos.html#docente'" title="Modo clase" type="button">MODO CLASE 🧑‍🏫</button>
 <button class="roundbtn review" data-help="Review: repasa y gana XP extra con retos." onclick="abrirReview()" title="Review: repasa y gana XP extra con retos." type="button">REVIEW 🧩</button>
 </div>
@@ -394,6 +394,29 @@
   <a href="verbs.html" style="display:none">verbs</a>
   <a href="verbs2.html" style="display:none">verbs2</a>
   <a href="mjb.html" style="display:none">mjb</a>
+
+<script>
+  // Mostrar insignia KP si el estudiante ya completó 7/7
+  (function(){
+    const KP_BADGE_KEY = "yoguis_kp_badge_v1";
+    function safeGet(k){ try{ return localStorage.getItem(k);}catch(e){ return null; } }
+    function show(){
+      const badge = document.getElementById("kpBtnBadge");
+      if(!badge) return;
+      const raw = safeGet(KP_BADGE_KEY);
+      if(raw){
+        badge.hidden = false;
+      }else{
+        badge.hidden = true;
+      }
+    }
+    window.addEventListener("DOMContentLoaded", show);
+    // por si vuelve desde KP sin recargar duro
+    window.addEventListener("pageshow", show);
+    window.addEventListener("storage", show);
+  })();
+</script>
+
 </body>
 
 </html>

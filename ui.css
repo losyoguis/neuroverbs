@@ -2996,3 +2996,31 @@ box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);;justify-content:flex-start;text-ali
 
 /* Extra: botón Modo clase */
 .roundbtn.teacher{ background: rgba(59,130,246,.20); border: 1px solid rgba(59,130,246,.35); }
+
+/* KP badge on buttons (index) */
+.roundbtn.kp{ position: relative; }
+.kpBtnBadge{
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  background: rgba(34,197,94,.22);
+  border: 1px solid rgba(34,197,94,.55);
+  color: #b7ffd1;
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+}
+.kpBtnBadge.isPulse{
+  animation: kpPulse 1.2s ease-in-out infinite;
+}
+@keyframes kpPulse{
+  0%,100%{ transform: scale(1); }
+  50%{ transform: scale(1.08); }
+}
