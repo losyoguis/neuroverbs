@@ -543,6 +543,17 @@ details[open].kpAcc > summary .kpAccChevron::before{ content:"▴"; }
 .kpSectionBtn:hover{ background: rgba(255,255,255,.10); }
 .kpSectionBtn:active{ transform: translateY(1px); }
 
+.kpSectionBtn.isActive,
+.kpSectionBtn[aria-current="true"]{
+  background: rgba(56,189,248,.16);
+  border-color: rgba(56,189,248,.40);
+  box-shadow: 0 0 0 2px rgba(56,189,248,.12) inset;
+}
+.kpSectionBtn:focus-visible{
+  outline: 2px solid rgba(56,189,248,.55);
+  outline-offset: 2px;
+}
+
 .kpSectionH3{
   margin: 14px 0 8px;
   font-size: 15px;

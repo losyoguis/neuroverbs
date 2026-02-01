@@ -474,8 +474,6 @@
       });
     });
   }
-    });
-  }
 
   function startQuiz(id){
     if(id === "pronouns_quiz"){
@@ -1171,6 +1169,20 @@
     // Solo cierra entre secciones principales (1-4)
     const mainAccs = Array.from(document.querySelectorAll("details.kpMainAcc"));
 
+    const sectionNavBtns = Array.from(document.querySelectorAll(".kpSectionNav .kpSectionBtn"));
+
+    function setActiveSection(mainId){
+      sectionNavBtns.forEach(btn=>{
+        const href = (btn.getAttribute("href")||"").trim();
+        const id = href.startsWith("#") ? href.slice(1) : href;
+        const isActive = (id === mainId);
+        btn.classList.toggle("isActive", isActive);
+        if(isActive) btn.setAttribute("aria-current","true");
+        else btn.removeAttribute("aria-current");
+      });
+    }
+
+
     function closeOthers(current){
       mainAccs.forEach(d=>{ if(d!==current) d.open = false; });
     }
@@ -1192,6 +1204,7 @@
     }
 
     function openSection(sectionId, activityId){
+      setActiveSection(sectionId);
       const el = document.getElementById(sectionId);
       if(!el) return;
 
@@ -1227,12 +1240,31 @@
       });
     });
 
+    // Botones 1-4 tipo "tabs": abre la sección y cierra las otras sin salto brusco
+    sectionNavBtns.forEach(btn=>{
+      btn.addEventListener("click", (ev)=>{
+        const href = (btn.getAttribute("href")||"").trim();
+        if(!href.startsWith("#")) return;
+        ev.preventDefault();
+        const id = href.slice(1);
+        // Actualiza la URL sin disparar hashchange (evita doble scroll)
+        try{ history.replaceState(null, "", "#"+id); }catch(_){ location.hash = id; }
+        openSection(id);
+      });
+    });
+
+
     // Abre por hash (links)
     function openFromHash(){
       const id = (location.hash || "").replace("#","").trim();
       if(!id) return;
       const el = document.getElementById(id);
       if(!el) return;
+
+      // Resalta la pestaña principal (1-4) cuando el hash apunta a un elemento interno
+      const main = (el.tagName === "DETAILS" && el.classList.contains("kpMainAcc")) ? el : el.closest("details.kpMainAcc");
+      if(main && main.id) setActiveSection(main.id);
+      else setActiveSection("");
 
       const detailsEl = (el.tagName === "DETAILS") ? el : el.closest("details");
       if(detailsEl){
