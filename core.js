@@ -479,7 +479,24 @@ let __NY_VERBS_DB__ = null;
 let __NY_VERBS_DB_READY__ = false;
 
 async function loadVerbsDbFromVerbsHtml(){
+  // Preferimos cargar desde JSON (más ligero y cacheable).
+  // Si falla, hacemos fallback al método antiguo (extraer VERBS_DB desde verbs.html).
   try{
+    // 1) JSON
+    try{
+      const r = await fetch("assets/verbs_db.json", { cache: "no-store" });
+      if(r.ok){
+        const db = await r.json();
+        __NY_VERBS_DB__ = db;
+        __NY_VERBS_DB_READY__ = Array.isArray(__NY_VERBS_DB__) && __NY_VERBS_DB__.length > 0;
+        if(__NY_VERBS_DB_READY__) __nyNormalizeVerbsDb(__NY_VERBS_DB__);
+        return { ok: __NY_VERBS_DB_READY__, count: (__NY_VERBS_DB__||[]).length, source:"json" };
+      }
+    }catch(_jsonErr){
+      // seguimos al fallback
+    }
+
+    // 2) Fallback: verbs.html -> const VERBS_DB = [...]
     const res = await fetch("verbs.html", { cache: "no-store" });
     if(!res.ok) return { ok:false, count:0 };
 
@@ -487,7 +504,6 @@ async function loadVerbsDbFromVerbsHtml(){
     const m = txt.match(/const\s+VERBS_DB\s*=\s*(\[[\s\S]*?\n\s*\]);/);
     if(!m) return { ok:false, count:0 };
 
-    // Evaluamos el array JS (misma origin, archivo controlado por nosotros)
     __NY_VERBS_DB__ = (new Function("return " + m[1]))();
     __NY_VERBS_DB_READY__ = Array.isArray(__NY_VERBS_DB__) && __NY_VERBS_DB__.length > 0;
 
@@ -495,12 +511,13 @@ async function loadVerbsDbFromVerbsHtml(){
       __nyNormalizeVerbsDb(__NY_VERBS_DB__);
     }
 
-    return { ok: __NY_VERBS_DB_READY__, count: (__NY_VERBS_DB__||[]).length };
+    return { ok: __NY_VERBS_DB_READY__, count: (__NY_VERBS_DB__||[]).length, source:"verbs.html" };
   }catch(e){
     __NY_VERBS_DB_READY__ = false;
     return { ok:false, count:0, error: String(e?.message || e) };
   }
 }
+
 
 
 async function loadVerbsDbFromVerbs2Html() {
