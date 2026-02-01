@@ -461,15 +461,19 @@
   function updateBadges(){
     const ids = ["roadmap_check","pronouns_quiz","thirdperson_quiz","have_quiz","tenses_quiz","linking_quiz","writing_challenge"];
     ids.forEach((id)=>{
-      const badge = document.getElementById(`badge_${id}`);
-      if(!badge) return;
-      if(isDone(id)){
-        badge.textContent = "Completada ✅";
-        badge.classList.add("done");
-      }else{
-        badge.textContent = "Disponible";
-        badge.classList.remove("done");
-      }
+      const nodes = document.querySelectorAll(`.kpBadge[data-badge="${id}"]`);
+      if(!nodes || !nodes.length) return;
+      nodes.forEach((badge)=>{
+        if(isDone(id)){
+          badge.textContent = "Completada ✅";
+          badge.classList.add("done");
+        }else{
+          badge.textContent = "Disponible";
+          badge.classList.remove("done");
+        }
+      });
+    });
+  }
     });
   }
 
@@ -1162,7 +1166,89 @@
     });
   }
 
-  function init(){
+  
+  function setupAccordionNav(){
+    // Solo cierra entre secciones principales (1-4)
+    const mainAccs = Array.from(document.querySelectorAll("details.kpMainAcc"));
+
+    function closeOthers(current){
+      mainAccs.forEach(d=>{ if(d!==current) d.open = false; });
+    }
+
+    function openDetailsChain(detailsEl){
+      // Abre el acordeón objetivo y también sus padres (por ejemplo #extras)
+      const chain = [];
+      let cur = detailsEl;
+      while(cur){
+        if(cur.tagName === "DETAILS") chain.push(cur);
+        cur = cur.parentElement;
+      }
+      chain.reverse().forEach(d=>{
+        d.open = true;
+        if(d.classList && d.classList.contains("kpMainAcc")){
+          closeOthers(d);
+        }
+      });
+    }
+
+    function openSection(sectionId, activityId){
+      const el = document.getElementById(sectionId);
+      if(!el) return;
+
+      const detailsEl = (el.tagName === "DETAILS") ? el : el.closest("details");
+      if(detailsEl){
+        openDetailsChain(detailsEl);
+      }
+
+      // Si buscan actividad dentro de la sección, baja directo
+      let target = null;
+      if(activityId){
+        const scope = detailsEl || el;
+        target = scope.querySelector(`[data-activity="${activityId}"]`);
+      }
+
+      setTimeout(()=>{
+        (target || el).scrollIntoView({behavior:"smooth", block:"start"});
+      }, 60);
+    }
+
+    // Cierra otras secciones principales cuando una se abre
+    mainAccs.forEach(d=>{
+      d.addEventListener("toggle", ()=>{
+        if(d.open) closeOthers(d);
+      });
+    });
+
+    // Botones que abren secciones
+    document.querySelectorAll("[data-open]").forEach(btn=>{
+      btn.addEventListener("click", (ev)=>{
+        ev.preventDefault();
+        openSection(btn.getAttribute("data-open"), btn.getAttribute("data-open-activity"));
+      });
+    });
+
+    // Abre por hash (links)
+    function openFromHash(){
+      const id = (location.hash || "").replace("#","").trim();
+      if(!id) return;
+      const el = document.getElementById(id);
+      if(!el) return;
+
+      const detailsEl = (el.tagName === "DETAILS") ? el : el.closest("details");
+      if(detailsEl){
+        openDetailsChain(detailsEl);
+      }
+
+      setTimeout(()=> el.scrollIntoView({behavior:"smooth", block:"start"}), 50);
+    }
+    window.addEventListener("hashchange", openFromHash, {passive:true});
+    openFromHash();
+
+    // Exponer helper por si otra parte lo necesita
+    window.NVKP_openSection = openSection;
+  }
+
+function init(){
     renderRoadmap();
     renderThreeCols();
     renderTensesTables();
@@ -1171,6 +1257,8 @@
     updateBadges();
     bind();
 
+
+    setupAccordionNav();
     // Propuesta A + B
     setupTabs();
     setupClassMode();
