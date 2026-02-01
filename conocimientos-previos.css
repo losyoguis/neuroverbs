@@ -7,6 +7,11 @@
   --dockTop: 0px;       /* top sticky del encabezado KP (debajo del stats) */
   --hudSafe: 0px;       /* safe para anclas/scroll (stats + dock) */
   --safeBottom: env(safe-area-inset-bottom, 0px);
+
+  /* Paleta (heredada de ui.css) */
+  --kpOrange: var(--orange, #F28B16);
+  --kpPurple: var(--purple, #65116B);
+  --kpBlue: var(--blue, #2563eb);
 }
 
 body{
@@ -297,10 +302,40 @@ details.kpDetails,
 details.kpSubAcc{
   scroll-margin-top: calc(var(--hudSafe, 360px) + 24px);
 }
+/* ===== Títulos dentro de tarjetas =====
+   El usuario pidió: "títulos importantes" con fondo naranja.
+   Usamos h2 como título principal de sección dentro de acordeones.
+*/
 .kpCard h2{
-  margin:0 0 8px;
+  margin: 2px 0 10px;
   font-size: 18px;
   letter-spacing:.2px;
+  font-weight: 950;
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+
+  background: linear-gradient(180deg, rgba(242,139,22,1), rgba(242,139,22,.88));
+  color:#0b1220;
+  padding: 10px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(0,0,0,.18);
+  box-shadow: 0 10px 18px rgba(0,0,0,.25);
+}
+
+/* Subtítulos dentro de tarjetas: color de paleta (azul) */
+.kpCard h3{
+  margin: 10px 0 10px;
+  font-size: 15px;
+  font-weight: 950;
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  padding: 8px 12px;
+  border-radius: 14px;
+  background: rgba(37, 99, 235, .22);
+  border: 1px solid rgba(37, 99, 235, .35);
+  color: rgba(255,255,255,.95);
 }
 .kpText{
   font-weight: 540;
@@ -327,15 +362,25 @@ details.kpSubAcc{
   font-size: 18px;
   font-weight: 950;
   letter-spacing: .2px;
+  /* ✅ Título importante con fondo naranja */
+  display:inline-flex;
+  align-items:center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(242,139,22,1), rgba(242,139,22,.88));
+  color:#0b1220;
+  border: 1px solid rgba(0,0,0,.18);
+  box-shadow: 0 10px 18px rgba(0,0,0,.22);
 }
 .kpAccMeta{
   margin-left:auto;
   font-size:12px;
   padding: 6px 10px;
   border-radius:999px;
-  background: rgba(255,255,255,.08);
-  border: 1px solid rgba(255,255,255,.14);
-  color: rgba(255,255,255,.92);
+  /* ✅ Subtítulo: otro color acorde a paleta (azul) */
+  background: rgba(37, 99, 235, .20);
+  border: 1px solid rgba(37, 99, 235, .36);
+  color: rgba(255,255,255,.94);
   font-weight: 850;
   white-space:nowrap;
 }
