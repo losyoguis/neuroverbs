@@ -5,6 +5,11 @@
    - Docente owner por email: juancarlosbv@iemanueljbetancur.edu.co
 */
 (function(){
+  // 🔕 Chat desactivado temporalmente (maquetación en progreso).
+  // Para reactivarlo más adelante, cambia CHAT_DISABLED a false.
+  const CHAT_DISABLED = true;
+  if(CHAT_DISABLED) return;
+
   const ROOM_LS_KEY  = "nv_chat_room_v2";
   const ROOMS_LS_KEY = "nv_chat_rooms_v2";
 

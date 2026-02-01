@@ -29,27 +29,36 @@
     const dock = document.getElementById("kpTopDock");
     if(!bar) return;
 
+    // ⚠️ Medición robusta: a veces DOMContentLoaded corre antes de que ui.css
+    // termine de fijar la barra. Por eso usamos (top CSS + altura) cuando está disponible.
     const r = bar.getBoundingClientRect();
-    const statsTop = Math.max(0, Math.ceil(r.top || 0));
-    const statsBottom = Math.max(statsTop, Math.ceil((r.bottom != null ? r.bottom : (statsTop + (r.height||0)))));
+    const cs = getComputedStyle(bar);
+    const cssTop = parseFloat(cs.top);
+    const barTop = Number.isFinite(cssTop) ? cssTop : (r.top || 0);
+    const barH = Math.ceil(r.height || bar.offsetHeight || 0);
+    const statsBottom = Math.max(0, Math.ceil(barTop + barH));
 
-    // ✅ Safe top: justo debajo de la barra de puntajes + un poco de aire
-    const statsSafe = Math.max(120, statsBottom + 12);
+    // Safe top: justo debajo de la barra de puntajes + aire
+    const statsSafe = Math.max(96, statsBottom + 14);
     document.documentElement.style.setProperty("--statsSafe", statsSafe + "px");
 
-    // ✅ Dock (encabezado) "pegado" debajo de la barra (evita que quede a mitad de pantalla)
+    // Dock pegado debajo del menú de puntajes
     const dockTop = Math.max(0, statsBottom + 10);
     document.documentElement.style.setProperty("--dockTop", dockTop + "px");
 
-    // Altura real del dock (depende del wrap/responsive)
+    // Altura real del dock (depende de responsive/wrap)
     const dockH = dock ? Math.ceil(dock.getBoundingClientRect().height || dock.offsetHeight || 0) : 0;
 
-    // Empuja el contenido para que TODO lo dinámico quede por debajo de barra + dock
-    const pageTopPad = Math.max(dockTop + dockH + 16, statsSafe + 12);
+    // 🔒 Safe total real (barra + dock + aire)
+    const safeTotal = Math.max(statsSafe, dockTop + dockH + 16);
+
+    // El CSS ya suma 18px base al body (padding). Aquí guardamos SOLO el extra.
+    const bodyBase = 18;
+    const pageTopPad = Math.max(0, safeTotal - bodyBase);
     document.documentElement.style.setProperty("--pageTopPad", pageTopPad + "px");
 
-    // Safe total para anclajes/scroll (barra + dock + respiro)
-    const hudSafe = Math.max(pageTopPad + 24, Math.ceil(dockTop + dockH + 34));
+    // Safe para anclajes/scroll (siempre en píxeles reales desde arriba)
+    const hudSafe = Math.max(0, Math.ceil(safeTotal + 24));
     document.documentElement.style.setProperty("--hudSafe", hudSafe + "px");
   }
 
@@ -224,6 +233,17 @@ function toast(title, desc){
   // Ajusta el "safe area" superior según la altura real de la barra de puntajes
   function syncHudSafe(){
     computeTopSafes();
+  }
+
+  // Re-mide varias veces para evitar el bug de "vacío" arriba (cuando ui.css o fonts terminan de aplicar)
+  function kickHUD(){
+    syncHudSafe();
+    requestAnimationFrame(()=>{
+      syncHudSafe();
+      requestAnimationFrame(syncHudSafe);
+    });
+    [60, 120, 220, 420, 800, 1200].forEach(ms=>setTimeout(syncHudSafe, ms));
+    window.addEventListener("load", ()=>setTimeout(syncHudSafe, 40), {once:true});
   }
 
   // Mantén el espacio superior correcto si cambia el tamaño del menú
@@ -1656,14 +1676,9 @@ function updateHUD(){
   }
 
 function init(){
-    syncHudSafe();
+    kickHUD();
     initStatsCarousel();
     initDockCompactMode();
-    // Recalcula espacio superior cuando el menú termina de layout (fonts / resize / overflow)
-    requestAnimationFrame(syncHudSafe);
-    setTimeout(syncHudSafe, 80);
-    setTimeout(syncHudSafe, 350);
-    window.addEventListener("load", ()=>setTimeout(syncHudSafe, 30), {once:true});
     window.addEventListener("resize", (typeof _onResize==="function"?_onResize:syncHudSafe), {passive:true});
     renderRoadmap();
     renderThreeCols();

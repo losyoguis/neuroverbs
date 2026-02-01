@@ -3,11 +3,14 @@
 
 :root{
   /* Usa variables de ui.css si existen */
-  --statsSafe: 240px; /* espacio SOLO para la barra de puntajes fija (dinámico por JS) */
-  --hudSafe: 520px;   /* espacio total para anclajes (barra + dock superior) */
-  /* Cuando el encabezado superior está “docked” (fijo), el JS calcula estas dos: */
-  --dockTop: calc(var(--statsSafe, 190px) + 18px);
-  --pageTopPad: calc(var(--statsSafe, 190px) + 18px);
+  /* ⚠️ Importante:
+     NO pongas un padding-top grande por defecto, porque puede "engañar" el cálculo
+     inicial de alturas (antes de que cargue ui.css). El JS calcula valores reales.
+  */
+  --statsSafe: 0px;  /* debajo de la barra de puntajes (calculado por JS) */
+  --dockTop: 0px;    /* top del encabezado dock (calculado por JS) */
+  --pageTopPad: 0px; /* padding-top total aplicado al body (calculado por JS) */
+  --hudSafe: 0px;    /* safe para scroll/anclas (calculado por JS) */
 }
 
 
@@ -15,15 +18,17 @@ body{
   background: var(--bg);
   margin:0;
   padding:18px;
-  /* Empuja TODO el contenido debajo de: (barra de puntajes fija + encabezado docked) */
-  padding-top: var(--pageTopPad, calc(var(--statsSafe, 190px) + 18px));
+  /* Empuja el contenido SOLO cuando el JS calcula el alto real.
+     (evita el "vacío" gigante inicial)
+  */
+  padding-top: calc(18px + var(--pageTopPad, 0px));
 font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Noto Sans", sans-serif;
   color:#e5e7eb;
   display:flex;
   justify-content:center;
 }
 
-body.has-floating-stats{ padding-top: var(--pageTopPad, calc(var(--statsSafe, 190px) + 18px)) !important; }
+body.has-floating-stats{ padding-top: calc(18px + var(--pageTopPad, 0px)) !important; }
 
 .kpApp{
   width: min(1040px, 100%);
@@ -32,7 +37,7 @@ body.has-floating-stats{ padding-top: var(--pageTopPad, calc(var(--statsSafe, 19
 .kpTopDock{
   /* ✅ El encabezado se mantiene SIEMPRE visible, como en la captura */
   position: fixed;
-  top: var(--dockTop, calc(var(--statsSafe, 190px) + 18px));
+  top: var(--dockTop, 0px);
   left: 50%;
   transform: translateX(-50%);
   width: min(1040px, calc(100% - 36px));
