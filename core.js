@@ -5233,6 +5233,25 @@ function initStatsCarousel(){
   const bar = document.getElementById("statsBar");
   if(!bar) return;
 
+
+  const prevBtn = bar.querySelector(".statsNavBtn.left");
+  const nextBtn = bar.querySelector(".statsNavBtn.right");
+  const scrollAmt = ()=>Math.max(240, Math.floor(bar.clientWidth * 0.60));
+  if(prevBtn && !prevBtn.dataset.bound){
+    prevBtn.dataset.bound = "1";
+    prevBtn.addEventListener("click", ()=>{
+      bar.scrollBy({ left: -scrollAmt(), behavior: "smooth" });
+      setTimeout(()=>{ try{ refresh(); }catch(_){} }, 90);
+    });
+  }
+  if(nextBtn && !nextBtn.dataset.bound){
+    nextBtn.dataset.bound = "1";
+    nextBtn.addEventListener("click", ()=>{
+      bar.scrollBy({ left:  scrollAmt(), behavior: "smooth" });
+      setTimeout(()=>{ try{ refresh(); }catch(_){} }, 90);
+    });
+  }
+
   const refresh = ()=>{
     const scrollable = (bar.scrollWidth - bar.clientWidth) > 2;
     bar.classList.toggle("isScrollable", scrollable);
@@ -5242,6 +5261,9 @@ function initStatsCarousel(){
     }
     bar.classList.toggle("atStart", bar.scrollLeft <= 1);
     bar.classList.toggle("atEnd", bar.scrollLeft >= (bar.scrollWidth - bar.clientWidth - 1));
+
+    if(prevBtn) prevBtn.disabled = (!scrollable || bar.scrollLeft <= 1);
+    if(nextBtn) nextBtn.disabled = (!scrollable || bar.scrollLeft >= (bar.scrollWidth - bar.clientWidth - 1));
   };
 
   const onWheel = (e)=>{
@@ -5284,7 +5306,9 @@ function initStatsCarousel(){
 
   refresh();
   setTimeout(refresh, 50);
-  window.addEventListener("resize", ()=>requestAnimationFrame(refresh), {passive:true});
+  try{ updateHudSafe(); }catch(_){}
+  setTimeout(()=>{ try{ updateHudSafe(); }catch(_){} }, 120);
+  window.addEventListener("resize", ()=>{ requestAnimationFrame(refresh); try{ updateHudSafe(); }catch(_){} }, {passive:true});
 }
 
 

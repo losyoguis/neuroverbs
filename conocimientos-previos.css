@@ -3,7 +3,7 @@
 
 :root{
   /* Usa variables de ui.css si existen */
-  --hudSafe: 190px; /* espacio para la barra de puntos fija (dinámico por JS) */}
+  --hudSafe: 240px; /* espacio para la barra de puntos fija (dinámico por JS) */}
 
 body{
   background: var(--bg);

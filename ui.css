@@ -3060,3 +3060,65 @@ box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);;justify-content:flex-start;text-ali
     .stats.isDragging{ cursor: grabbing; }
     .stats.isScrollable{ scroll-snap-type: x proximity; }
     .statBox{ scroll-snap-align: start; }
+
+
+/* ===========================
+   ✅ Stats bar: Flechas (premium)
+   =========================== */
+.stats.isScrollable{
+  padding-left: 56px !important;
+  padding-right: 56px !important;
+}
+.stats .statsNavBtn{
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.35);
+  background: rgba(255,255,255,.18);
+  color: #0b1220;
+  font-weight: 900;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(0,0,0,.25);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  user-select: none;
+  z-index: 3;
+}
+.stats.isScrollable .statsNavBtn{ display: inline-flex; }
+.stats .statsNavBtn.left{ left: 10px; }
+.stats .statsNavBtn.right{ right: 10px; }
+
+.stats.atStart .statsNavBtn.left{ opacity:.35; pointer-events:none; }
+.stats.atEnd .statsNavBtn.right{ opacity:.35; pointer-events:none; }
+
+/* Fades laterales (solo si hay overflow) */
+.stats::before,
+.stats::after{
+  content:"";
+  position:absolute;
+  top:0;
+  width:56px;
+  height:100%;
+  pointer-events:none;
+  opacity:0;
+  transition: opacity .15s ease;
+  z-index:2;
+}
+.stats.isScrollable::before{
+  left:0;
+  opacity:1;
+  background: linear-gradient(90deg, rgba(255,255,255,.35), rgba(255,255,255,0));
+}
+.stats.isScrollable::after{
+  right:0;
+  opacity:1;
+  background: linear-gradient(270deg, rgba(255,255,255,.35), rgba(255,255,255,0));
+}
+.stats.atStart::before{ opacity:0; }
+.stats.atEnd::after{ opacity:0; }

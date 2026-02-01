@@ -207,10 +207,34 @@ function toast(title, desc){
     document.documentElement.style.setProperty("--hudSafe", safe + "px");
   }
 
+  // Mantén el espacio superior correcto si cambia el tamaño del menú
+  (function(){
+    const bar = document.getElementById("statsBar");
+    if(!bar || typeof ResizeObserver==="undefined") return;
+    const ro = new ResizeObserver(()=>{ syncHudSafe(); });
+    ro.observe(bar);
+  })();
+
   /* ✅ Menú de puntajes: carrusel horizontal premium (una sola fila) */
   function initStatsCarousel(){
     const bar = document.getElementById("statsBar");
     if(!bar) return;
+
+
+    const prevBtn = bar.querySelector(".statsNavBtn.left");
+    const nextBtn = bar.querySelector(".statsNavBtn.right");
+    const scrollAmt = ()=>Math.max(240, Math.floor(bar.clientWidth * 0.60));
+
+    const bindOnce = (btn, dir)=>{
+      if(!btn || btn.dataset.bound) return;
+      btn.dataset.bound = "1";
+      btn.addEventListener("click", ()=>{
+        bar.scrollBy({ left: dir * scrollAmt(), behavior: "smooth" });
+        setTimeout(()=>{ try{ refresh(); }catch(_){} }, 90);
+      });
+    };
+    bindOnce(prevBtn, -1);
+    bindOnce(nextBtn,  1);
 
     // Estado scrollable + fades
     const refresh = ()=>{
@@ -222,6 +246,11 @@ function toast(title, desc){
       }
       bar.classList.toggle("atStart", bar.scrollLeft <= 1);
       bar.classList.toggle("atEnd", bar.scrollLeft >= (bar.scrollWidth - bar.clientWidth - 1));
+
+      const prevBtn = bar.querySelector(".statsNavBtn.left");
+      const nextBtn = bar.querySelector(".statsNavBtn.right");
+      if(prevBtn) prevBtn.disabled = (!scrollable || bar.scrollLeft <= 1);
+      if(nextBtn) nextBtn.disabled = (!scrollable || bar.scrollLeft >= (bar.scrollWidth - bar.clientWidth - 1));
     };
 
     // Wheel vertical -> horizontal (sin shift) cuando haya overflow
@@ -1538,6 +1567,11 @@ function updateHUD(){
 function init(){
     syncHudSafe();
     initStatsCarousel();
+    // Recalcula espacio superior cuando el menú termina de layout (fonts / resize / overflow)
+    requestAnimationFrame(syncHudSafe);
+    setTimeout(syncHudSafe, 80);
+    setTimeout(syncHudSafe, 350);
+    window.addEventListener("load", ()=>setTimeout(syncHudSafe, 30), {once:true});
     window.addEventListener("resize", (typeof _onResize==="function"?_onResize:syncHudSafe), {passive:true});
     renderRoadmap();
     renderThreeCols();
