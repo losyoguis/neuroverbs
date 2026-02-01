@@ -459,7 +459,7 @@
   }
 
   function updateBadges(){
-    const ids = ["pronouns_quiz","thirdperson_quiz","have_quiz","tenses_quiz","linking_quiz"];
+    const ids = ["roadmap_check","pronouns_quiz","thirdperson_quiz","have_quiz","tenses_quiz","linking_quiz","writing_challenge"];
     ids.forEach((id)=>{
       const badge = document.getElementById(`badge_${id}`);
       if(!badge) return;
@@ -557,7 +557,488 @@
     updateHUD();
   }
 
+  
+
   // =========================
+  // Propuesta A + B extras
+  // =========================
+  function qsParam(name){
+    try{
+      const u = new URL(window.location.href);
+      return u.searchParams.get(name) || "";
+    }catch(_){
+      return "";
+    }
+  }
+  function base64UrlEncode(str){
+    const b64 = btoa(unescape(encodeURIComponent(str)));
+    return b64.replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  }
+  function base64UrlDecode(b64url){
+    let b64 = String(b64url||"").replace(/-/g,'+').replace(/_/g,'/');
+    while(b64.length % 4) b64 += '=';
+    const s = decodeURIComponent(escape(atob(b64)));
+    return s;
+  }
+  async function copyText(txt){
+    const t = String(txt||"");
+    try{
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        await navigator.clipboard.writeText(t);
+        toast("Copiado ✅", "Listo para pegar");
+        return true;
+      }
+    }catch(_){}
+    try{
+      const ta=document.createElement("textarea");
+      ta.value=t;
+      ta.style.position="fixed";
+      ta.style.left="-9999px";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      ta.remove();
+      toast("Copiado ✅", "Listo para pegar");
+      return true;
+    }catch(_){}
+    return false;
+  }
+
+  function getUserProfile(){
+    try{
+      const raw = safeGet("user_profile");
+      if(!raw) return null;
+      return JSON.parse(raw);
+    }catch(_){
+      return null;
+    }
+  }
+  function getStudentIdentity(){
+    const p = getUserProfile();
+    const savedName = safeGet("kp_student_name_v1");
+    const savedEmail = safeGet("kp_student_email_v1");
+    let name = (p && (p.name || p.fullName)) || savedName || "";
+    let email = (p && (p.email || p.mail)) || savedEmail || "";
+    return {name, email};
+  }
+  function ensureStudentName(){
+    const id = getStudentIdentity();
+    if(id.name) return id;
+    const asked = prompt("Escribe tu nombre (para la evidencia NVKP):") || "";
+    const clean = asked.trim();
+    if(clean){
+      safeSet("kp_student_name_v1", clean);
+      return {name:clean, email:id.email||""};
+    }
+    return {name:"", email:id.email||""};
+  }
+
+  function getClassCode(){
+    const fromUrl = qsParam("class");
+    const saved = safeGet("kp_class_code_v1") || "";
+    return (fromUrl || saved || "").trim();
+  }
+  function setClassCode(code){
+    const c = String(code||"").trim();
+    safeSet("kp_class_code_v1", c);
+    return c;
+  }
+
+  function computeKPXP(){
+    const a = getAwards();
+    let sum = 0;
+    if(a && a.done){
+      Object.keys(a.done).forEach((k)=>{
+        const meta = a.done[k] || {};
+        if(typeof meta.xp === "number") sum += meta.xp;
+      });
+    }
+    return sum;
+  }
+  function countDone(){
+    const ids = ["roadmap_check","pronouns_quiz","thirdperson_quiz","have_quiz","tenses_quiz","linking_quiz","writing_challenge"];
+    let done = 0;
+    ids.forEach(id=>{ if(isDone(id)) done++; });
+    return {done, total:ids.length};
+  }
+
+  function setStudentHUD(){
+    const id = getStudentIdentity();
+    const nameEl = document.getElementById("kpStudentName");
+    const classEl = document.getElementById("kpStudentClass");
+    const compEl = document.getElementById("kpCompletion");
+    if(nameEl) nameEl.textContent = id.name || "—";
+    const cc = getClassCode();
+    if(classEl) classEl.textContent = cc || "—";
+    const c = countDone();
+    if(compEl) compEl.textContent = `${c.done}/${c.total}`;
+  }
+
+  function setupTabs(){
+    const tabs = Array.from(document.querySelectorAll(".kpTab"));
+    const panes = Array.from(document.querySelectorAll(".kpTabPane"));
+    function activate(which){
+      tabs.forEach(t=>{
+        const on = t.getAttribute("data-tab")===which;
+        t.classList.toggle("active", on);
+        t.setAttribute("aria-selected", on ? "true" : "false");
+      });
+      panes.forEach(p=>{
+        const on = p.getAttribute("data-pane")===which;
+        p.classList.toggle("hidden", !on);
+      });
+    }
+    tabs.forEach(t=>{
+      t.addEventListener("click", ()=>{
+        activate(t.getAttribute("data-tab"));
+      });
+    });
+
+    // Auto: si viene con #docente o #teacher, abre Docente
+    const h = String(window.location.hash||"").toLowerCase();
+    if(h.includes("docente") || h.includes("teacher")){
+      activate("teacher");
+      const sec = document.getElementById("docente");
+      if(sec) sec.scrollIntoView({behavior:"smooth", block:"start"});
+    }else{
+      activate("student");
+    }
+  }
+
+  function generateEvidence(){
+    const ident = ensureStudentName();
+    const cc = getClassCode();
+    const c = countDone();
+    const payload = {
+      v: 1,
+      app: "NEUROVERBS_KP",
+      name: ident.name || "",
+      email: ident.email || "",
+      class: cc || "",
+      xp_kp: computeKPXP(),
+      activities_done: c.done,
+      activities_total: c.total,
+      completed: (c.done >= c.total),
+      ts: Date.now()
+    };
+    const code = "NVKP1." + base64UrlEncode(JSON.stringify(payload));
+    return code;
+  }
+
+  function parseEvidence(line){
+    const s = String(line||"").trim();
+    if(!s) return null;
+    const clean = s.replace(/^NVKP1\./i, "");
+    try{
+      const jsonStr = base64UrlDecode(clean);
+      const obj = JSON.parse(jsonStr);
+      if(obj && obj.app === "NEUROVERBS_KP") return obj;
+    }catch(_){}
+    return null;
+  }
+
+  function formatDate(ts){
+    try{
+      const d = new Date(ts);
+      const y=d.getFullYear();
+      const m=String(d.getMonth()+1).padStart(2,"0");
+      const day=String(d.getDate()).padStart(2,"0");
+      const hh=String(d.getHours()).padStart(2,"0");
+      const mm=String(d.getMinutes()).padStart(2,"0");
+      return `${y}-${m}-${day} ${hh}:${mm}`;
+    }catch(_){
+      return "";
+    }
+  }
+
+  function renderTeacherTable(items){
+    const tbody = document.querySelector("#kpTeacherTable tbody");
+    if(!tbody) return;
+    tbody.innerHTML = "";
+    (items||[]).forEach((it, idx)=>{
+      const tr = document.createElement("tr");
+      const done = Number(it.activities_done||0);
+      const total = Number(it.activities_total||0);
+      tr.innerHTML = `
+        <td>${idx+1}</td>
+        <td><b>${escapeHtml(it.name||"")}</b></td>
+        <td>${escapeHtml(it.class||"")}</td>
+        <td>${escapeHtml(String(it.xp_kp||0))}</td>
+        <td>${escapeHtml(`${done}/${total}`)}</td>
+        <td>${it.completed ? "✅" : "—"}</td>
+        <td>${escapeHtml(formatDate(it.ts))}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function exportCsv(items){
+    const rows = [
+      ["name","email","class","xp_kp","activities_done","activities_total","completed","timestamp"]
+    ];
+    (items||[]).forEach(it=>{
+      rows.push([
+        it.name||"",
+        it.email||"",
+        it.class||"",
+        String(it.xp_kp||0),
+        String(it.activities_done||0),
+        String(it.activities_total||0),
+        it.completed ? "1" : "0",
+        formatDate(it.ts)
+      ]);
+    });
+    const csv = rows.map(r=>r.map(x=>{
+      const v=String(x).replace(/"/g,'""');
+      return `"${v}"`;
+    }).join(",")).join("\n");
+
+    const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "neuroverbs_conocimientos_previos_clase.csv";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{ try{ URL.revokeObjectURL(a.href); a.remove(); }catch(_){ } }, 300);
+  }
+
+  function setupClassMode(){
+    const classFromUrl = qsParam("class");
+    if(classFromUrl){
+      setClassCode(classFromUrl);
+    }
+
+    const inpClass = document.getElementById("kpClassCode");
+    const btnSave = document.getElementById("kpSaveClass");
+    if(inpClass) inpClass.value = getClassCode();
+    if(btnSave){
+      btnSave.addEventListener("click", ()=>{
+        const code = setClassCode(inpClass ? inpClass.value : "");
+        toast("Clase guardada", code ? `Código: ${code}` : "Sin código");
+        setStudentHUD();
+      });
+    }
+
+    const btnGen = document.getElementById("kpGenEvidence");
+    const btnCopy = document.getElementById("kpCopyEvidence");
+    const box = document.getElementById("kpEvidenceBox");
+    if(btnGen){
+      btnGen.addEventListener("click", ()=>{
+        const code = generateEvidence();
+        if(box) box.value = code;
+        setStudentHUD();
+      });
+    }
+    if(btnCopy){
+      btnCopy.addEventListener("click", ()=>{
+        if(!box) return;
+        copyText(box.value);
+      });
+    }
+
+    // Teacher: code + link
+    const tClass = document.getElementById("kpTeacherClass");
+    const btnNew = document.getElementById("kpNewClass");
+    const linkBox = document.getElementById("kpStudentLink");
+    const btnCopyLink = document.getElementById("kpCopyLink");
+
+    function makeClassCode(){
+      const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      let out="";
+      for(let i=0;i<6;i++) out += alphabet[Math.floor(Math.random()*alphabet.length)];
+      return out;
+    }
+    function updateLink(code){
+      const base = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, "/") + "conocimientos-previos.html";
+      const url = `${base}?class=${encodeURIComponent(code)}`;
+      if(linkBox) linkBox.value = url;
+      return url;
+    }
+    if(btnNew){
+      btnNew.addEventListener("click", ()=>{
+        const typed = (tClass && tClass.value || "").trim();
+        const code = typed || makeClassCode();
+        if(tClass) tClass.value = code;
+        updateLink(code);
+        toast("Código de clase", code);
+      });
+    }
+    if(btnCopyLink){
+      btnCopyLink.addEventListener("click", ()=>{
+        if(!linkBox) return;
+        copyText(linkBox.value);
+      });
+    }
+
+    // Teacher: paste evidences
+    const paste = document.getElementById("kpEvidencePaste");
+    const btnLoad = document.getElementById("kpLoadEvidence");
+    const btnClear = document.getElementById("kpClearEvidence");
+    const btnCsv = document.getElementById("kpExportCsv");
+
+    let teacherItems = [];
+
+    function loadFromPaste(){
+      const lines = (paste ? paste.value : "").split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+      const parsed = [];
+      lines.forEach(line=>{
+        const obj = parseEvidence(line);
+        if(obj && obj.name){
+          parsed.push(obj);
+        }
+      });
+      // de-dup by (name+class+ts)
+      const key = (o)=>`${o.name}__${o.class}__${o.ts}`;
+      const seen = new Set();
+      teacherItems = parsed.filter(o=>{
+        const k=key(o);
+        if(seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      }).sort((a,b)=> (b.ts||0)-(a.ts||0));
+      renderTeacherTable(teacherItems);
+      toast("Tablero actualizado", `${teacherItems.length} evidencias cargadas`);
+    }
+
+    if(btnLoad){
+      btnLoad.addEventListener("click", loadFromPaste);
+    }
+    if(btnClear){
+      btnClear.addEventListener("click", ()=>{
+        if(paste) paste.value="";
+        teacherItems = [];
+        renderTeacherTable([]);
+      });
+    }
+    if(btnCsv){
+      btnCsv.addEventListener("click", ()=>{
+        exportCsv(teacherItems);
+      });
+    }
+
+    // Pre-fill link if teacher typed before
+    const preset = safeGet("kp_teacher_class_v1") || "";
+    if(preset && tClass && !tClass.value){
+      tClass.value = preset;
+      updateLink(preset);
+    }
+    if(tClass){
+      tClass.addEventListener("input", ()=>{
+        const code = (tClass.value||"").trim();
+        safeSet("kp_teacher_class_v1", code);
+        if(code) updateLink(code);
+      });
+    }
+
+    // Student info initial
+    setStudentHUD();
+  }
+
+  // Regular verbs: load JSON and render searchable table
+  let __regList = [];
+  function renderRegularVerbs(filter){
+    const tbody = document.querySelector("#kpRegTable tbody");
+    if(!tbody) return;
+    const q = String(filter||"").trim().toLowerCase();
+    const list = (__regList||[]).filter(x=>{
+      if(!q) return true;
+      return String(x.v1||"").toLowerCase().includes(q)
+        || String(x.v2||"").toLowerCase().includes(q)
+        || String(x.v3||"").toLowerCase().includes(q)
+        || String(x.es||"").toLowerCase().includes(q);
+    });
+    tbody.innerHTML = list.map(x=>`
+      <tr>
+        <td>${x.n}</td>
+        <td><b>${escapeHtml(x.v1)}</b></td>
+        <td>${escapeHtml(x.v2)}</td>
+        <td>${escapeHtml(x.v3)}</td>
+        <td>${escapeHtml(x.es)}</td>
+      </tr>
+    `).join("");
+  }
+
+  async function loadRegularVerbs(){
+    try{
+      const r = await fetch("assets/kp_regular_verbs.json", {cache:"force-cache"});
+      if(!r.ok) throw new Error("HTTP "+r.status);
+      __regList = await r.json();
+      renderRegularVerbs("");
+    }catch(_){
+      // no-op
+    }
+    const inp = document.getElementById("kpRegSearch");
+    const btn = document.getElementById("kpRegClear");
+    if(inp){
+      inp.addEventListener("input", ()=> renderRegularVerbs(inp.value));
+    }
+    if(btn){
+      btn.addEventListener("click", ()=>{
+        if(inp) inp.value="";
+        renderRegularVerbs("");
+      });
+    }
+  }
+
+  function checkChecklist(id){
+    if(id !== "roadmap_check") return;
+    const already = isDone(id);
+    const box = document.getElementById("chk_roadmap_check");
+    if(!box){
+      setResult(id, `<span style="color:var(--error)">No se encontró el checklist.</span>`);
+      return;
+    }
+    const checked = Array.from(box.querySelectorAll("input[type='checkbox']")).filter(x=>x.checked).length;
+    if(checked < 4){
+      setResult(id, `<span style="color:var(--error)">Te faltan ${4-checked} casillas para completar.</span>`);
+      return;
+    }
+    if(!already){
+      const amount = 20;
+      awardXP(amount, "Checklist completado");
+      markDone(id, {checked, xp:amount});
+      setResult(id, `<span style="color:var(--success)">✅ Checklist completado • Premio: +${amount} XP</span>`);
+    }else{
+      setResult(id, `<span style="color:var(--success)">✅ Checklist ya reclamado.</span>`);
+    }
+    setStudentHUD();
+  }
+
+  function checkWriting(id){
+    if(id !== "writing_challenge") return;
+    const already = isDone(id);
+    const ta = document.getElementById("txt_writing_challenge");
+    const txt = (ta ? ta.value : "").trim();
+    const minLen = 120;
+    const linking = ["and","but","because","so","then","however","therefore","also","moreover","besides","although","while","when","after","before","first","next","finally"];
+    const low = txt.toLowerCase();
+    const used = linking.filter(w=> new RegExp(`\\b${w}\\b`,"i").test(low));
+    const distinct = Array.from(new Set(used));
+    const sentenceCount = txt.split(/[.!?]+/).map(s=>s.trim()).filter(Boolean).length;
+    if(txt.length < minLen){
+      setResult(id, `<span style="color:var(--error)">Necesitas mínimo ${minLen} caracteres.</span>`);
+      return;
+    }
+    if(sentenceCount < 3){
+      setResult(id, `<span style="color:var(--error)">Escribe al menos 3 oraciones (separadas por punto).</span>`);
+      return;
+    }
+    if(distinct.length < 2){
+      setResult(id, `<span style="color:var(--error)">Usa al menos 2 conectores (and, but, because, so, then...).</span>`);
+      return;
+    }
+    if(!already){
+      const amount = 60;
+      awardXP(amount, "Mini Writing completado");
+      markDone(id, {sentences:sentenceCount, linking:distinct, xp:amount});
+      setResult(id, `<span style="color:var(--success)">✅ ¡Muy bien! Conectores usados: <b>${escapeHtml(distinct.join(", "))}</b> • Premio: +${amount} XP</span>`);
+    }else{
+      setResult(id, `<span style="color:var(--success)">✅ Actividad ya reclamada.</span>`);
+    }
+    setStudentHUD();
+  }
+
+// =========================
   // EVENTS
   // =========================
   function bind(){
@@ -567,8 +1048,11 @@
       const action = btn.getAttribute("data-action");
       const target = btn.getAttribute("data-target");
       if(!action || !target) return;
+
       if(action === "start") startQuiz(target);
       if(action === "check") checkQuiz(target);
+      if(action === "checklist") checkChecklist(target);
+      if(action === "checkwriting") checkWriting(target);
     });
   }
 
@@ -580,6 +1064,12 @@
     updateHUD();
     updateBadges();
     bind();
+
+    // Propuesta A + B
+    setupTabs();
+    setupClassMode();
+    loadRegularVerbs();
+    setStudentHUD();
   }
 
   // Boot

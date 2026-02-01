@@ -198,3 +198,115 @@ body{
   height: 78vh;
   border:0;
 }
+
+
+/* === Propuesta B: Modo clase (Docente) === */
+.kpTabs{
+  display:flex; gap:8px;
+  margin:-2px 0 14px;
+  padding:6px;
+  border-radius:16px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(148,163,184,.18);
+}
+.kpTab{
+  flex:1;
+  border:0;
+  border-radius:12px;
+  padding:10px 12px;
+  font-weight:950;
+  cursor:pointer;
+  color:#cbd5e1;
+  background: rgba(0,0,0,.18);
+}
+.kpTab:hover{ filter:brightness(1.08); }
+.kpTab.active{
+  background: rgba(59,130,246,.20);
+  border: 1px solid rgba(59,130,246,.35);
+  color:#ffffff;
+}
+.kpTabPane.hidden{ display:none; }
+
+.kpRow{
+  display:flex; gap:10px; flex-wrap:wrap;
+  align-items:center;
+  margin:10px 0;
+}
+.kpInput{
+  flex:1;
+  min-width:220px;
+  border-radius:12px;
+  border:1px solid rgba(148,163,184,.22);
+  background: rgba(0,0,0,.20);
+  color:#e5e7eb;
+  padding:10px 12px;
+  font-weight:800;
+  outline:none;
+}
+.kpInput:focus{
+  border-color: rgba(59,130,246,.55);
+  box-shadow: 0 0 0 3px rgba(59,130,246,.15);
+}
+
+.kpTextarea{
+  width:100%;
+  border-radius:14px;
+  border:1px solid rgba(148,163,184,.22);
+  background: rgba(0,0,0,.20);
+  color:#e5e7eb;
+  padding:10px 12px;
+  font-weight:800;
+  outline:none;
+  margin-top:8px;
+}
+.kpTextarea:focus{
+  border-color: rgba(16,185,129,.55);
+  box-shadow: 0 0 0 3px rgba(16,185,129,.15);
+}
+
+.kpMini{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  padding:10px 12px;
+  border-radius:14px;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(148,163,184,.16);
+  margin-top:8px;
+}
+.kpMini b{ color:#fff; }
+
+.kpHint{
+  color:#cbd5e1;
+  font-size:12px;
+  font-weight:800;
+  margin-top:6px;
+  opacity:.92;
+}
+
+.kpChecklist{
+  display:grid;
+  grid-template-columns: 1fr;
+  gap:8px;
+  margin-top:10px;
+}
+.kpChecklist label{
+  display:flex; gap:10px;
+  align-items:flex-start;
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid rgba(148,163,184,.14);
+  background: rgba(255,255,255,.04);
+  font-weight:850;
+  color:#e5e7eb;
+}
+.kpChecklist input{ margin-top:2px; transform:scale(1.15); }
+
+.roundbtn.teacher{
+  background: rgba(59,130,246,.20);
+  border: 1px solid rgba(59,130,246,.35);
+}
+.roundbtn.danger{
+  background: rgba(239,68,68,.18);
+  border: 1px solid rgba(239,68,68,.35);
+}

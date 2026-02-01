@@ -35,6 +35,7 @@
         </div>
       </div>
       <a class="roundbtn ebook" href="assets/conocimientos-previos.pdf" target="_blank" rel="noopener" title="Abrir el PDF original">Ver PDF 📄</a>
+      <a class="roundbtn teacher" href="#docente" title="Modo clase (Docente)">Modo clase 🧑‍🏫</a>
     </div>
 
     <div class="kpNotice">
@@ -49,10 +50,114 @@
           Reto en este entrenamiento: <b>verbos regulares + irregulares</b>. Para dominar la app, recorre esta ruta:
         </p>
         <div class="kpRoadmap" id="kpRoadmap"></div>
+        <div class="kpActivity" data-activity="roadmap_check">
+          <div class="kpActTop">
+            <h3>Actividad 0 • Checklist de arranque (gana XP)</h3>
+            <span class="kpBadge" id="badge_roadmap_check">Disponible</span>
+          </div>
+          <div class="kpText">Marca al menos <b>4</b> casillas y luego presiona “Confirmar”.</div>
+          <div class="kpChecklist" id="chk_roadmap_check">
+            <label><input type="checkbox" /> Sé los pronombres (I/You/He/She/It/We/They)</label>
+            <label><input type="checkbox" /> Entiendo la regla de 3ª persona (-s)</label>
+            <label><input type="checkbox" /> Sé qué es verbo regular vs irregular</label>
+            <label><input type="checkbox" /> Distingo HAVE = haber / tener / have to</label>
+            <label><input type="checkbox" /> Reconozco Present / Past / Present Perfect</label>
+            <label><input type="checkbox" /> Conozco conectores (and, but, because...)</label>
+          </div>
+          <div class="kpActActions">
+            <button class="roundbtn" type="button" data-action="checklist" data-target="roadmap_check">Confirmar</button>
+          </div>
+          <div class="kpResult" id="res_roadmap_check"></div>
+        </div>
+
         <div class="kpMini">
           💡 Tip: si todavía confundes <b>V1/V2/V3</b> y el uso de <b>have/has</b>, realiza primero la actividad “Have: Haber vs Tener”.
         </div>
       </section>
+
+
+      <section class="kpCard" id="docente">
+        <div class="kpTabs" role="tablist" aria-label="Modo estudiante o docente">
+          <button class="kpTab active" type="button" role="tab" aria-selected="true" data-tab="student">Estudiante</button>
+          <button class="kpTab" type="button" role="tab" aria-selected="false" data-tab="teacher">Docente</button>
+        </div>
+
+        <div class="kpTabPane" data-pane="student">
+          <h2>Modo Estudiante</h2>
+          <p class="kpText">
+            Si tu docente te dio un <b>código de clase</b>, pégalo aquí para asociar tu evidencia.
+            Luego genera tu <b>código NVKP</b> y envíaselo al docente.
+          </p>
+
+          <div class="kpRow">
+            <input class="kpInput" id="kpClassCode" placeholder="Código de clase (opcional)" autocomplete="off" />
+            <button class="roundbtn" id="kpSaveClass" type="button">Guardar</button>
+          </div>
+
+          <div class="kpMini">
+            <div><b>Nombre:</b> <span id="kpStudentName">—</span></div>
+            <div><b>Clase:</b> <span id="kpStudentClass">—</span></div>
+            <div><b>Actividades:</b> <span id="kpCompletion">0/0</span></div>
+          </div>
+
+          <div class="kpActActions">
+            <button class="roundbtn" id="kpGenEvidence" type="button">Generar evidencia NVKP</button>
+            <button class="roundbtn review" id="kpCopyEvidence" type="button">Copiar</button>
+          </div>
+
+          <textarea class="kpTextarea" id="kpEvidenceBox" rows="5" readonly placeholder="Aquí aparecerá tu código de evidencia (NVKP)…"></textarea>
+          <div class="kpHint">Envíale este código a tu docente (WhatsApp o el medio que usen en clase).</div>
+        </div>
+
+        <div class="kpTabPane hidden" data-pane="teacher">
+          <h2>Modo Docente</h2>
+          <p class="kpText">
+            Genera un <b>código de clase</b> y comparte el link. Luego, pega aquí los códigos <b>NVKP</b> que te envíen.
+            Esto funciona <b>sin servidor</b> (ideal para GitHub Pages).
+          </p>
+
+          <div class="kpSplit">
+            <div>
+              <h3>1) Código de clase</h3>
+              <div class="kpRow">
+                <input class="kpInput" id="kpTeacherClass" placeholder="Ej: 10-2 (o 10°2)" autocomplete="off" />
+                <button class="roundbtn" id="kpNewClass" type="button">Generar</button>
+              </div>
+              <div class="kpRow">
+                <input class="kpInput" id="kpStudentLink" readonly />
+                <button class="roundbtn review" id="kpCopyLink" type="button">Copiar link</button>
+              </div>
+              <div class="kpHint">El estudiante abre el link y luego genera su evidencia NVKP.</div>
+            </div>
+
+            <div>
+              <h3>2) Evidencias NVKP (1 por línea)</h3>
+              <textarea class="kpTextarea" id="kpEvidencePaste" rows="6" placeholder="Pega aquí 1 código NVKP por línea…"></textarea>
+              <div class="kpActActions">
+                <button class="roundbtn" id="kpLoadEvidence" type="button">Cargar</button>
+                <button class="roundbtn danger" id="kpClearEvidence" type="button">Limpiar</button>
+              </div>
+            </div>
+          </div>
+
+          <h3>3) Tablero</h3>
+          <div class="kpScroll">
+            <table class="kpTable" id="kpTeacherTable">
+              <thead>
+                <tr>
+                  <th>#</th><th>Nombre</th><th>Clase</th><th>XP KP</th><th>Actividades</th><th>Completó</th><th>Fecha</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+
+          <div class="kpActActions">
+            <button class="roundbtn" id="kpExportCsv" type="button">Descargar CSV</button>
+          </div>
+        </div>
+      </section>
+
 
       <section class="kpCard">
         <h2>1. Pronombres</h2>
@@ -234,6 +339,29 @@
         <div class="kpMini">Nota: el PDF muestra ejemplos de 3 columnas (V1/V2/V3) y su equivalente en español con “haber”.</div>
       </section>
 
+
+      <section class="kpCard" id="kpRegularVerbs">
+        <h2>2.5 Lista literal de verbos regulares (109)</h2>
+        <p class="kpText">Lista extraída del PDF. Puedes buscar por inglés o español.</p>
+
+        <div class="kpRow">
+          <input class="kpInput" id="kpRegSearch" placeholder="Buscar: accept / aceptar / played / ..." autocomplete="off" />
+          <button class="roundbtn" id="kpRegClear" type="button">Limpiar</button>
+        </div>
+
+        <div class="kpScroll">
+          <table class="kpTable" id="kpRegTable">
+            <thead>
+              <tr><th>#</th><th>V1</th><th>V2</th><th>V3</th><th>Español</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="kpHint">Tip: en verbos regulares, V2 y V3 suelen ser iguales (-ed). En caso de dudas, revisa el PDF.</div>
+      </section>
+
+
       <section class="kpCard">
         <h2>3. Tenses</h2>
         <p class="kpText">
@@ -309,6 +437,19 @@
           </div>
           <div class="kpResult" id="res_linking_quiz"></div>
         </div>
+        <div class="kpActivity" data-activity="writing_challenge">
+          <div class="kpActTop">
+            <h3>Actividad final • Mini Writing (gana XP)</h3>
+            <span class="kpBadge" id="badge_writing_challenge">Disponible</span>
+          </div>
+          <div class="kpText">Escribe <b>3 oraciones</b> (mín. 120 caracteres) usando al menos <b>2 conectores</b> (and, but, because, so, then, however…).</div>
+          <textarea class="kpTextarea" id="txt_writing_challenge" rows="5" placeholder="Ej: I study every day, and I practice verbs. But sometimes I forget, so I review again..."></textarea>
+          <div class="kpActActions">
+            <button class="roundbtn review" type="button" data-action="checkwriting" data-target="writing_challenge">Revisar y reclamar XP</button>
+          </div>
+          <div class="kpResult" id="res_writing_challenge"></div>
+        </div>
+
 
       </section>
 
