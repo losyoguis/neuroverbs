@@ -1045,3 +1045,38 @@ details[open].kpAcc > summary .kpAccChevron::before{ content:"▴"; }
   }
 }
 
+
+
+/* ===== KP Top nav row: Volver + secciones en UNA sola fila ===== */
+.kpTopNavRow{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex-wrap:nowrap;           /* ✅ todo en una fila */
+  justify-content:space-between;
+  margin: 8px 0 10px;
+}
+.kpTopNavRow .kpBackBtn{
+  flex:0 0 auto;
+  white-space:nowrap;
+}
+.kpTopTabs{
+  flex:1 1 auto;
+  display:flex;
+  gap:10px;
+  align-items:center;
+  justify-content:center;
+  flex-wrap:nowrap;           /* ✅ tabs en una fila */
+  overflow-x:auto;            /* si no cabe en móvil, scroll horizontal */
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+.kpTopTabs::-webkit-scrollbar{ display:none; }
+.kpTopTabs .roundbtn{ white-space:nowrap; }
+
+/* En pantallas pequeñas, se prioriza el scroll horizontal de tabs */
+@media (max-width: 760px){
+  .kpTopNavRow{ gap:10px; }
+  .kpTopTabs{ justify-content:flex-start; }
+}
