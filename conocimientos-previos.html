@@ -36,15 +36,38 @@
       </div>
       <a class="roundbtn ebook" href="assets/conocimientos-previos.pdf" target="_blank" rel="noopener" title="Abrir el PDF original">Ver PDF 📄</a>
       <a class="roundbtn teacher" href="#docente" title="Modo clase (Docente)">Modo clase 🧑‍🏫</a>
-    </div>
+    
+
+
+
+
+      <section class="kpCard kpPdfCard" id="pdf">
+        <h2>Documento original (PDF)</h2>
+        <p class="kpText">Aquí está el PDF “tal cual” (literal). Puedes leerlo primero y luego hacer las actividades para sumar XP.</p>
+        <div class="kpPdfWrap">
+          <iframe class="kpPdfFrame" title="Conocimientos previos (PDF)" src="assets/conocimientos-previos.pdf#view=FitH" loading="lazy"></iframe>
+        </div>
+      </section>
+    
+    
 
     <div class="kpNotice">
       <b>Objetivo:</b> nivelarte antes de entrar a practicar. Aquí está la información del PDF, organizada en secciones claras
       y con <b>actividades que suman XP</b> (solo 1 vez por actividad para evitar “farmear”).
-    </div>
+    
 
-    <div class="kpGrid">
-      <section class="kpCard">
+    <div class="kpQuickNav" aria-label="Navegación rápida">
+      <a class="kpChip" href="#pdf">PDF</a>
+      <a class="kpChip" href="#ruta">Ruta</a>
+      <a class="kpChip" href="#docente">Modo clase</a>
+      <a class="kpChip" href="#pronombres">Pronombres</a>
+      <a class="kpChip" href="#verbos">Verbos</a>
+      <a class="kpChip" href="#tenses">Tenses</a>
+      <a class="kpChip" href="#linking">Linking</a>
+      <a class="kpChip" href="#regulares">Regulares</a>
+    </div>
+<div class="kpGrid">
+      <section class="kpCard" id="ruta">
         <h2>Ruta del inglés</h2>
         <p class="kpText">
           Reto en este entrenamiento: <b>verbos regulares + irregulares</b>. Para dominar la app, recorre esta ruta:
@@ -131,8 +154,16 @@
             </div>
 
             <div>
-              <h3>2) Evidencias NVKP (1 por línea)</h3>
-              <textarea class="kpTextarea" id="kpEvidencePaste" rows="6" placeholder="Pega aquí 1 código NVKP por línea…"></textarea>
+              <h3>2) Evidencias NVKP</h3>
+              <div class="kpHint">
+                Puedes pegar <b>solo el NVKP</b> o <b>Nombre | NVKP</b> (una línea por estudiante).<br/>
+                Ejemplo: <code>Juan Pérez | NVKP1....</code> • Si hay varios registros del mismo <b>Nombre + Clase</b>, se conserva el más reciente.
+              </div>
+              <textarea class="kpTextarea" id="kpEvidencePaste" rows="7" placeholder="Ejemplos:
+Juan Pérez | NVKP1....
+María G | NVKP1....
+NVKP1...."></textarea>
+              <div class="kpMini kpDupInfo hidden" id="kpDupInfo" aria-live="polite"></div>
               <div class="kpActActions">
                 <button class="roundbtn" id="kpLoadEvidence" type="button">Cargar</button>
                 <button class="roundbtn danger" id="kpClearEvidence" type="button">Limpiar</button>
@@ -145,7 +176,7 @@
             <table class="kpTable" id="kpTeacherTable">
               <thead>
                 <tr>
-                  <th>#</th><th>Nombre</th><th>Clase</th><th>XP KP</th><th>Actividades</th><th>Completó</th><th>Fecha</th>
+                  <th>#</th><th>Nombre</th><th>Clase</th><th>Registros</th><th>XP KP</th><th>Actividades</th><th>Completó</th><th>Fecha</th>
                 </tr>
               </thead>
               <tbody></tbody>
@@ -159,7 +190,7 @@
       </section>
 
 
-      <section class="kpCard">
+      <section class="kpCard" id="pronombres">
         <h2>1. Pronombres</h2>
         <p class="kpText">En este entrenamiento nos concentramos en los <b>pronombres personales (subject)</b>.</p>
 
@@ -181,9 +212,8 @@
             </table>
           </div>
 
-          <div>
-            <h3>Tabla completa (para referencia)</h3>
-            <div class="kpScroll">
+          <details class="kpDetails"><summary>Tabla completa (para referencia)</summary>
+<div class="kpScroll">
               <table class="kpTable">
                 <thead>
                   <tr>
@@ -202,7 +232,7 @@
                 </tbody>
               </table>
             </div>
-          </div>
+</details>
         </div>
 
         <div class="kpActivity" data-activity="pronouns_quiz">
@@ -220,7 +250,7 @@
         </div>
       </section>
 
-      <section class="kpCard">
+      <section class="kpCard" id="verbos">
         <h2>2. Verbos</h2>
 
         <h3>2.1 Pronombre + Verbo</h3>
@@ -340,7 +370,7 @@
       </section>
 
 
-      <section class="kpCard" id="kpRegularVerbs">
+      <section class="kpCard" id="regulares">
         <h2>2.5 Lista literal de verbos regulares (109)</h2>
         <p class="kpText">Lista extraída del PDF. Puedes buscar por inglés o español.</p>
 
@@ -362,7 +392,7 @@
       </section>
 
 
-      <section class="kpCard">
+      <section class="kpCard" id="tenses">
         <h2>3. Tenses</h2>
         <p class="kpText">
           <b>Afirmativa</b>: I verb / I verb+ed / I have + participle • (He/She/It: verb+s • has + participle)
@@ -399,7 +429,7 @@
         </details>
       </section>
 
-      <section class="kpCard">
+      <section class="kpCard" id="linking">
         <h2>4. Linking Words</h2>
         <p class="kpText">
           Los <b>Linking Words</b> (conectores) unen ideas para que tus oraciones no suenen robóticas.
@@ -452,15 +482,7 @@
 
 
       </section>
-
-      <section class="kpCard">
-        <h2>Documento original</h2>
-        <p class="kpText">Si quieres ver el contenido “tal cual” (literal), aquí tienes el PDF embebido:</p>
-        <div class="kpPdfWrap">
-          <iframe title="Conocimientos previos (PDF)" src="assets/conocimientos-previos.pdf#view=FitH" loading="lazy"></iframe>
-        </div>
-      </section>
-    </div>
+</div>
 
   </div>
 

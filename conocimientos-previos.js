@@ -751,18 +751,30 @@
     }
   }
 
+  
   function renderTeacherTable(items){
     const tbody = document.querySelector("#kpTeacherTable tbody");
     if(!tbody) return;
     tbody.innerHTML = "";
+    const norm = (s)=> String(s||"").toLowerCase().trim().replace(/\s+/g," ").replace(/[^\w\u00C0-\u017F ]/g,"");
     (items||[]).forEach((it, idx)=>{
       const tr = document.createElement("tr");
       const done = Number(it.activities_done||0);
       const total = Number(it.activities_total||0);
+      const rec = Number(it._records||1);
+
+      const pasted = String(it.name_pasted||"").trim();
+      const codeName = String(it.name_in_code||"").trim();
+      const mismatch = pasted && codeName && (norm(pasted) !== norm(codeName));
+
       tr.innerHTML = `
         <td>${idx+1}</td>
-        <td><b>${escapeHtml(it.name||"")}</b></td>
+        <td>
+          <b>${escapeHtml(it.name||"")}</b>
+          ${mismatch ? `<div class="kpSub">Código: ${escapeHtml(codeName)}</div>` : ``}
+        </td>
         <td>${escapeHtml(it.class||"")}</td>
+        <td>${rec > 1 ? `<b>${rec}x</b>` : `1`}</td>
         <td>${escapeHtml(String(it.xp_kp||0))}</td>
         <td>${escapeHtml(`${done}/${total}`)}</td>
         <td>${it.completed ? "✅" : "—"}</td>
@@ -774,18 +786,21 @@
 
   function exportCsv(items){
     const rows = [
-      ["name","email","class","xp_kp","activities_done","activities_total","completed","timestamp"]
+      ["name","email","class","records","xp_kp","activities_done","activities_total","completed","timestamp","name_in_code","name_pasted"]
     ];
     (items||[]).forEach(it=>{
       rows.push([
         it.name||"",
         it.email||"",
         it.class||"",
+        String(it._records||1),
         String(it.xp_kp||0),
         String(it.activities_done||0),
         String(it.activities_total||0),
         it.completed ? "1" : "0",
-        formatDate(it.ts)
+        formatDate(it.ts),
+        it.name_in_code || "",
+        it.name_pasted || ""
       ]);
     });
     const csv = rows.map(r=>r.map(x=>{
@@ -878,26 +893,112 @@
 
     let teacherItems = [];
 
+    
+    function extractNameAndCode(rawLine){
+      const s = String(rawLine||"").trim();
+      if(!s) return {name:"", code:""};
+      const m = s.match(/NVKP1\.[A-Za-z0-9\-_]+/i);
+      if(m){
+        const code = m[0];
+        const before = s.slice(0, m.index).trim();
+        const after = s.slice((m.index||0) + code.length).trim();
+        let name = (before || after || "").trim();
+        name = name.replace(/^[\s\-\–\—\|\:\;\,]+/,"").replace(/[\s\-\–\—\|\:\;\,]+$/,"").trim();
+        name = name.replace(/^[\"'“”‘’]+|[\"'“”‘’]+$/g,"").trim();
+        return {name, code};
+      }
+      return {name:"", code:s};
+    }
+
+    function normKey(s){
+      return String(s||"")
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g," ")
+        .replace(/[^\w\u00C0-\u017F ]/g,"");
+    }
+
     function loadFromPaste(){
-      const lines = (paste ? paste.value : "").split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+      const raw = (paste ? paste.value : "");
+      const lines = raw.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+
       const parsed = [];
-      lines.forEach(line=>{
-        const obj = parseEvidence(line);
-        if(obj && obj.name){
-          parsed.push(obj);
+      let invalid = 0;
+
+      const teacherDefaultClass = (tClass && tClass.value || "").trim();
+
+      lines.forEach((line)=>{
+        const pair = extractNameAndCode(line);
+        const code = pair.code;
+        const obj = parseEvidence(code);
+        if(!obj){
+          invalid++;
+          return;
+        }
+
+        obj.evidence_code = code;
+        obj.raw_line = line;
+
+        const pastedName = (pair.name||"").trim();
+        const nameInCode = (obj.name||"").trim();
+
+        obj.name_in_code = nameInCode;
+        obj.name_pasted = pastedName;
+
+        if(pastedName){
+          obj.name = pastedName; // prioridad al nombre pegado
+        }
+
+        if(!obj.class && teacherDefaultClass){
+          obj.class = teacherDefaultClass;
+        }
+
+        if(!obj.name){
+          invalid++;
+          return;
+        }
+
+        parsed.push(obj);
+      });
+
+      // Dedup por (Nombre + Clase): conserva el más reciente
+      const best = new Map();
+      const counts = new Map();
+
+      parsed.forEach((o)=>{
+        const k = `${normKey(o.class)}__${normKey(o.name)}`;
+        counts.set(k, (counts.get(k)||0) + 1);
+
+        const prev = best.get(k);
+        if(!prev || Number(o.ts||0) > Number(prev.ts||0)){
+          best.set(k, o);
         }
       });
-      // de-dup by (name+class+ts)
-      const key = (o)=>`${o.name}__${o.class}__${o.ts}`;
-      const seen = new Set();
-      teacherItems = parsed.filter(o=>{
-        const k=key(o);
-        if(seen.has(k)) return false;
-        seen.add(k);
-        return true;
-      }).sort((a,b)=> (b.ts||0)-(a.ts||0));
+
+      teacherItems = Array.from(best.entries()).map(([k,o])=>{
+        o._records = counts.get(k) || 1;
+        return o;
+      }).sort((a,b)=> (b.ts||0) - (a.ts||0));
+
+      const unique = teacherItems.length;
+      const dups = parsed.length - unique;
+
       renderTeacherTable(teacherItems);
-      toast("Tablero actualizado", `${teacherItems.length} evidencias cargadas`);
+
+      const info = document.getElementById("kpDupInfo");
+      if(info){
+        info.classList.remove("hidden");
+        info.innerHTML = `
+          <div><b>Resumen</b></div>
+          <div>Total líneas: <b>${lines.length}</b></div>
+          <div>Válidas: <b>${parsed.length}</b></div>
+          <div>Únicas (Nombre+Clase): <b>${unique}</b></div>
+          <div>Duplicadas eliminadas: <b>${dups}</b></div>
+          <div>Inválidas: <b>${invalid}</b></div>
+        `;
+      }
+
+      toast("Tablero actualizado", `${unique} estudiantes • ${dups} duplicados • ${invalid} inválidas`);
     }
 
     if(btnLoad){
@@ -908,6 +1009,11 @@
         if(paste) paste.value="";
         teacherItems = [];
         renderTeacherTable([]);
+        const info = document.getElementById("kpDupInfo");
+        if(info){
+          info.classList.add("hidden");
+          info.innerHTML = "";
+        }
       });
     }
     if(btnCsv){
