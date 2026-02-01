@@ -945,6 +945,19 @@ details[open].kpAcc > summary .kpAccChevron::before{ content:"▴"; }
 }
 .kpSecBtn:focus{ outline: 2px solid rgba(255,255,255,.25); outline-offset: 2px; }
 
+/* Estado activo (como index.html): resalta la sección seleccionada */
+.kpSecBtn.active,
+.kpSecBtn.isActive{
+  background: var(--secondary);
+  color: #0b1220;
+  border-color: var(--secondary);
+  box-shadow: 0 10px 22px rgba(242,139,22,.22);
+}
+.kpSecBtn:not(.active):not(.isActive):hover{
+  transform: translateY(-1px);
+  border-color: rgba(255,255,255,.25);
+}
+
 .kpRoundHintRow{
   margin-top: 6px;
 }
