@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="theme-color" content="#0b1220"/>
+  <title>NEUROVERBS • Conocimientos previos</title>
+  <link rel="stylesheet" href="ui.css"/>
+  <link rel="stylesheet" href="conocimientos-previos.css"/>
+  <link rel="icon" type="image/png" sizes="64x64" href="assets/favicon.png"/>
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png"/>
+</head>
+<body>
+  <div class="app kpApp">
+    <div class="brand kpBrand" tabindex="-1">
+      <h1><span class="brandMark"><img src="assets/brain.png" alt="NEUROVERBS" class="brandLogo"></span> NEUROVERBS</h1>
+      <div class="brandTag">Conocimientos previos</div>
+      <div class="subtitle">Ruta del inglés • Pronombres • Verbos • Tiempos • Linking Words</div>
+    </div>
+
+    <div class="kpTopBar">
+      <a class="roundbtn" href="index.html" title="Volver a la app">← Volver</a>
+      <div class="kpStats" aria-label="Estado de puntos">
+        <div class="kpStat">
+          <span class="kpLabel">Total XP</span>
+          <span class="kpValue" id="kpTotalXp">0</span>
+        </div>
+        <div class="kpStat">
+          <span class="kpLabel">XP hoy</span>
+          <span class="kpValue" id="kpDailyXp">0</span>
+        </div>
+        <div class="kpStat">
+          <span class="kpLabel">Pendiente sync</span>
+          <span class="kpValue" id="kpPending">0</span>
+        </div>
+      </div>
+      <a class="roundbtn ebook" href="assets/conocimientos-previos.pdf" target="_blank" rel="noopener" title="Abrir el PDF original">Ver PDF 📄</a>
+    </div>
+
+    <div class="kpNotice">
+      <b>Objetivo:</b> nivelarte antes de entrar a practicar. Aquí está la información del PDF, organizada en secciones claras
+      y con <b>actividades que suman XP</b> (solo 1 vez por actividad para evitar “farmear”).
+    </div>
+
+    <div class="kpGrid">
+      <section class="kpCard">
+        <h2>Ruta del inglés</h2>
+        <p class="kpText">
+          Reto en este entrenamiento: <b>verbos regulares + irregulares</b>. Para dominar la app, recorre esta ruta:
+        </p>
+        <div class="kpRoadmap" id="kpRoadmap"></div>
+        <div class="kpMini">
+          💡 Tip: si todavía confundes <b>V1/V2/V3</b> y el uso de <b>have/has</b>, realiza primero la actividad “Have: Haber vs Tener”.
+        </div>
+      </section>
+
+      <section class="kpCard">
+        <h2>1. Pronombres</h2>
+        <p class="kpText">En este entrenamiento nos concentramos en los <b>pronombres personales (subject)</b>.</p>
+
+        <div class="kpSplit">
+          <div>
+            <h3>Pronombres personales (Subject)</h3>
+            <table class="kpTable">
+              <thead><tr><th>Español</th><th>English</th></tr></thead>
+              <tbody>
+                <tr><td>Yo</td><td><b>I</b></td></tr>
+                <tr><td>Tú / Usted</td><td><b>You</b></td></tr>
+                <tr><td>Él</td><td><b>He</b></td></tr>
+                <tr><td>Ella</td><td><b>She</b></td></tr>
+                <tr><td>Eso / Cosa</td><td><b>It</b></td></tr>
+                <tr><td>Nosotros</td><td><b>We</b></td></tr>
+                <tr><td>Ustedes</td><td><b>You</b></td></tr>
+                <tr><td>Ellos / Ellas</td><td><b>They</b></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div>
+            <h3>Tabla completa (para referencia)</h3>
+            <div class="kpScroll">
+              <table class="kpTable">
+                <thead>
+                  <tr>
+                    <th>Subject</th><th>Object</th><th>Poss. Adj</th><th>Poss. Pronoun</th><th>Reflexive</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td>I</td><td>Me</td><td>My</td><td>Mine</td><td>Myself</td></tr>
+                  <tr><td>You</td><td>You</td><td>Your</td><td>Yours</td><td>Yourself</td></tr>
+                  <tr><td>He</td><td>Him</td><td>His</td><td>His</td><td>Himself</td></tr>
+                  <tr><td>She</td><td>Her</td><td>Her</td><td>Hers</td><td>Herself</td></tr>
+                  <tr><td>It</td><td>It</td><td>Its</td><td>Its</td><td>Itself</td></tr>
+                  <tr><td>We</td><td>Us</td><td>Our</td><td>Ours</td><td>Ourselves</td></tr>
+                  <tr><td>You</td><td>You</td><td>Your</td><td>Yours</td><td>Yourselves</td></tr>
+                  <tr><td>They</td><td>Them</td><td>Their</td><td>Theirs</td><td>Themselves</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="kpActivity" data-activity="pronouns_quiz">
+          <div class="kpActTop">
+            <h3>Actividad 1 • Pronombres rápidos (gana XP)</h3>
+            <span class="kpBadge" id="badge_pronouns_quiz">Disponible</span>
+          </div>
+          <div class="kpText">Responde 10 preguntas. Necesitas <b>8/10</b> para ganar el premio.</div>
+          <div class="kpQuiz" id="quiz_pronouns_quiz"></div>
+          <div class="kpActActions">
+            <button class="roundbtn" type="button" data-action="start" data-target="pronouns_quiz">Iniciar</button>
+            <button class="roundbtn review" type="button" data-action="check" data-target="pronouns_quiz">Calificar</button>
+          </div>
+          <div class="kpResult" id="res_pronouns_quiz"></div>
+        </div>
+      </section>
+
+      <section class="kpCard">
+        <h2>2. Verbos</h2>
+
+        <h3>2.1 Pronombre + Verbo</h3>
+        <p class="kpText">
+          Regla clave del PDF: en <b>Present Simple</b>, la 3ª persona (<b>He/She/It</b>) lleva <b>-s/-es</b>.
+        </p>
+
+        <table class="kpTable">
+          <thead>
+            <tr><th>Persona</th><th>Subject</th><th>Ejemplo</th><th>Traducción</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Yo</td><td>I</td><td>I work</td><td>Yo trabajo</td></tr>
+            <tr><td>Tú / Usted</td><td>You</td><td>You work</td><td>Tú trabajas / Usted trabaja</td></tr>
+            <tr><td>Él</td><td>He</td><td><b>He works</b>*</td><td>Él trabaja</td></tr>
+            <tr><td>Ella</td><td>She</td><td><b>She works</b>*</td><td>Ella trabaja</td></tr>
+            <tr><td>Eso / Cosa</td><td>It</td><td><b>It works</b>*</td><td>Eso funciona / Eso trabaja</td></tr>
+            <tr><td>Nosotros</td><td>We</td><td>We work</td><td>Nosotros trabajamos</td></tr>
+            <tr><td>Ustedes</td><td>You</td><td>You work</td><td>Ustedes trabajan</td></tr>
+            <tr><td>Ellos / Ellas</td><td>They</td><td>They work</td><td>Ellos/Ellas trabajan</td></tr>
+          </tbody>
+        </table>
+
+        <h3>2.2 Verbos regulares e irregulares (ejemplos)</h3>
+        <table class="kpTable">
+          <thead><tr><th>Tipo</th><th>Verbo (Inglés)</th><th>Traducción</th><th>3ª persona (He/She/It)</th></tr></thead>
+          <tbody>
+            <tr><td>Regular</td><td>To Play</td><td>Jugar</td><td>Plays</td></tr>
+            <tr><td>Regular</td><td>To Cook</td><td>Cocinar</td><td>Cooks</td></tr>
+            <tr><td>Regular</td><td>To Walk</td><td>Caminar</td><td>Walks</td></tr>
+            <tr><td>Regular</td><td>To Dance</td><td>Bailar</td><td>Dances</td></tr>
+            <tr><td>Regular</td><td>To Listen</td><td>Escuchar</td><td>Listens</td></tr>
+            <tr><td>Irregular</td><td>To Drink</td><td>Beber</td><td>Drinks</td></tr>
+            <tr><td>Irregular</td><td>To Sleep</td><td>Dormir</td><td>Sleeps</td></tr>
+            <tr><td>Irregular</td><td>To Eat</td><td>Comer</td><td>Eats</td></tr>
+            <tr><td>Irregular</td><td>To Buy</td><td>Comprar</td><td>Buys</td></tr>
+            <tr><td>Irregular</td><td>To Write</td><td>Escribir</td><td>Writes</td></tr>
+          </tbody>
+        </table>
+
+        <div class="kpActivity" data-activity="thirdperson_quiz">
+          <div class="kpActTop">
+            <h3>Actividad 2 • 3ª persona (-s) (gana XP)</h3>
+            <span class="kpBadge" id="badge_thirdperson_quiz">Disponible</span>
+          </div>
+          <div class="kpText">Elige la opción correcta (10 ítems). Necesitas <b>8/10</b>.</div>
+          <div class="kpQuiz" id="quiz_thirdperson_quiz"></div>
+          <div class="kpActActions">
+            <button class="roundbtn" type="button" data-action="start" data-target="thirdperson_quiz">Iniciar</button>
+            <button class="roundbtn review" type="button" data-action="check" data-target="thirdperson_quiz">Calificar</button>
+          </div>
+          <div class="kpResult" id="res_thirdperson_quiz"></div>
+        </div>
+
+        <h3>2.3 Verbo Haber (Have/Has/Had)</h3>
+        <p class="kpText">
+          En el PDF: <b>Have = HABER</b> (auxiliar) cuando va seguido de otro verbo en <b>participio</b> (V3).
+          <br/>Ej: <b>I have eaten</b> (Yo he comido).
+        </p>
+
+        <div class="kpSplit">
+          <div>
+            <table class="kpTable">
+              <thead><tr><th>Usuario</th><th>Presente</th><th>Pasado</th><th>Futuro</th></tr></thead>
+              <tbody>
+                <tr><td>Yo</td><td>He</td><td>Había</td><td>Habré</td></tr>
+                <tr><td>Tú</td><td>Has</td><td>Habías</td><td>Habrás</td></tr>
+                <tr><td>Él/Ella/Usted</td><td>Ha</td><td>Había</td><td>Habrá</td></tr>
+                <tr><td>Nosotros/as</td><td>Hemos</td><td>Habíamos</td><td>Habremos</td></tr>
+                <tr><td>Ustedes/Ellos</td><td>Han</td><td>Habían</td><td>Habrán</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div>
+            <table class="kpTable">
+              <thead><tr><th>Subject</th><th>Present</th><th>Past</th><th>Future</th></tr></thead>
+              <tbody>
+                <tr><td>I</td><td>Have</td><td>Had</td><td>Will have</td></tr>
+                <tr><td>You</td><td>Have</td><td>Had</td><td>Will have</td></tr>
+                <tr><td>He/She/It</td><td><b>Has</b> ⚠</td><td>Had</td><td>Will have</td></tr>
+                <tr><td>We</td><td>Have</td><td>Had</td><td>Will have</td></tr>
+                <tr><td>They</td><td>Have</td><td>Had</td><td>Will have</td></tr>
+              </tbody>
+            </table>
+            <div class="kpMini">
+              Regla de oro (PDF): si ves la palabra <b>Perfect</b>, normalmente <b>have/has</b> será “haber”.
+            </div>
+          </div>
+        </div>
+
+        <h3>Haber vs Tener vs Have to</h3>
+        <ul class="kpList">
+          <li><b>Have = HABER</b> (auxiliar): va seguido de un verbo en participio (V3). Ej: <b>She has gone</b>.</li>
+          <li><b>Have = TENER</b> (principal): va seguido de un sustantivo. Ej: <b>I have a new computer</b>.</li>
+          <li><b>Have to</b> (obligación): Ej: <b>I have to work</b>.</li>
+        </ul>
+
+        <div class="kpActivity" data-activity="have_quiz">
+          <div class="kpActTop">
+            <h3>Actividad 3 • Have: Haber vs Tener (gana XP)</h3>
+            <span class="kpBadge" id="badge_have_quiz">Disponible</span>
+          </div>
+          <div class="kpText">Clasifica 10 oraciones. Necesitas <b>8/10</b>.</div>
+          <div class="kpQuiz" id="quiz_have_quiz"></div>
+          <div class="kpActActions">
+            <button class="roundbtn" type="button" data-action="start" data-target="have_quiz">Iniciar</button>
+            <button class="roundbtn review" type="button" data-action="check" data-target="have_quiz">Calificar</button>
+          </div>
+          <div class="kpResult" id="res_have_quiz"></div>
+        </div>
+
+        <h3>2.4 Verbos regulares e irregulares (3 columnas)</h3>
+        <div class="kpScroll">
+          <table class="kpTable" id="tbl_3cols"></table>
+        </div>
+        <div class="kpMini">Nota: el PDF muestra ejemplos de 3 columnas (V1/V2/V3) y su equivalente en español con “haber”.</div>
+      </section>
+
+      <section class="kpCard">
+        <h2>3. Tenses</h2>
+        <p class="kpText">
+          <b>Afirmativa</b>: I verb / I verb+ed / I have + participle • (He/She/It: verb+s • has + participle)
+          <br/><b>Negativa</b>: I don't / I didn't / I haven't
+          <br/><b>Interrogativa</b>: Do / Did / Have (auxiliar al frente)
+        </p>
+
+        <div class="kpActivity" data-activity="tenses_quiz">
+          <div class="kpActTop">
+            <h3>Actividad 4 • Auxiliares en Negativa/Interrogativa (gana XP)</h3>
+            <span class="kpBadge" id="badge_tenses_quiz">Disponible</span>
+          </div>
+          <div class="kpText">Elige el auxiliar correcto en 10 ítems. Necesitas <b>8/10</b>.</div>
+          <div class="kpQuiz" id="quiz_tenses_quiz"></div>
+          <div class="kpActActions">
+            <button class="roundbtn" type="button" data-action="start" data-target="tenses_quiz">Iniciar</button>
+            <button class="roundbtn review" type="button" data-action="check" data-target="tenses_quiz">Calificar</button>
+          </div>
+          <div class="kpResult" id="res_tenses_quiz"></div>
+        </div>
+
+        <details class="kpDetails" open>
+          <summary>Ver tablas por temática (del PDF)</summary>
+          <div class="kpText">Incluye ejemplos en afirmativa, negativa e interrogativa con verbos regulares, tal como en el documento.</div>
+          <div class="kpScroll">
+            <table class="kpTable" id="tbl_tenses_aff"></table>
+          </div>
+          <div class="kpScroll">
+            <table class="kpTable" id="tbl_tenses_neg"></table>
+          </div>
+          <div class="kpScroll">
+            <table class="kpTable" id="tbl_tenses_int"></table>
+          </div>
+        </details>
+      </section>
+
+      <section class="kpCard">
+        <h2>4. Linking Words</h2>
+        <p class="kpText">
+          Los <b>Linking Words</b> (conectores) unen ideas para que tus oraciones no suenen robóticas.
+        </p>
+        <div class="kpNotice">
+          💡 Consejo de puntuación del PDF: palabras como <b>However</b>, <b>Therefore</b>, <b>First</b>, <b>Finally</b> casi siempre llevan una <b>coma</b> cuando van al inicio.
+        </div>
+
+        <div class="kpScroll">
+          <table class="kpTable" id="tbl_linking_add"></table>
+        </div>
+        <div class="kpScroll">
+          <table class="kpTable" id="tbl_linking_contrast"></table>
+        </div>
+        <div class="kpScroll">
+          <table class="kpTable" id="tbl_linking_cause"></table>
+        </div>
+        <div class="kpScroll">
+          <table class="kpTable" id="tbl_linking_seq"></table>
+        </div>
+        <div class="kpScroll">
+          <table class="kpTable" id="tbl_linking_illus"></table>
+        </div>
+
+        <div class="kpActivity" data-activity="linking_quiz">
+          <div class="kpActTop">
+            <h3>Actividad 5 • Linking Words (gana XP)</h3>
+            <span class="kpBadge" id="badge_linking_quiz">Disponible</span>
+          </div>
+          <div class="kpText">Completa 10 oraciones con el conector correcto. Necesitas <b>8/10</b>.</div>
+          <div class="kpQuiz" id="quiz_linking_quiz"></div>
+          <div class="kpActActions">
+            <button class="roundbtn" type="button" data-action="start" data-target="linking_quiz">Iniciar</button>
+            <button class="roundbtn review" type="button" data-action="check" data-target="linking_quiz">Calificar</button>
+          </div>
+          <div class="kpResult" id="res_linking_quiz"></div>
+        </div>
+
+      </section>
+
+      <section class="kpCard">
+        <h2>Documento original</h2>
+        <p class="kpText">Si quieres ver el contenido “tal cual” (literal), aquí tienes el PDF embebido:</p>
+        <div class="kpPdfWrap">
+          <iframe title="Conocimientos previos (PDF)" src="assets/conocimientos-previos.pdf#view=FitH" loading="lazy"></iframe>
+        </div>
+      </section>
+    </div>
+
+  </div>
+
+  <script src="conocimientos-previos.js"></script>
+</body>
+</html>
