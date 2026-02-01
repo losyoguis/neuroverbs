@@ -22,7 +22,25 @@
     return `${y}-${m}-${day}`;
   }
 
-  function getGame(){
+  
+  // Ajusta el "safe top" para que la barra fija no tape contenido (varía si la barra hace wrap en 2 líneas)
+  function applyHudSafe(){
+    const bar = document.getElementById("statsBar");
+    if(!bar) return;
+    const r = bar.getBoundingClientRect();
+    // top suele ser 12px; sumamos un margen extra para respirar
+    const safe = Math.max(170, Math.ceil(r.height + r.top + 22));
+    document.documentElement.style.setProperty("--hudSafe", safe + "px");
+  }
+  function onResizeDebounced(){
+    let t=null;
+    return function(){
+      if(t) clearTimeout(t);
+      t=setTimeout(()=>{ applyHudSafe(); }, 120);
+    };
+  }
+  const _onResize = onResizeDebounced();
+function getGame(){
     const raw = safeGet(GAME_KEY);
     let st = {};
     if(raw){
@@ -183,10 +201,10 @@ function toast(title, desc){
   function syncHudSafe(){
     const bar = document.getElementById("statsBar");
     if(!bar) return;
-    const h = Math.ceil(bar.getBoundingClientRect().height || 0);
-    if(h > 0){
-      document.documentElement.style.setProperty("--hudSafe", h + "px");
-    }
+    const r = bar.getBoundingClientRect();
+    // La barra es fixed (top:12px). Sumamos top + un margen extra para que no tape la introducción.
+    const safe = Math.max(170, Math.ceil((r.height || 0) + (r.top || 0) + 22));
+    document.documentElement.style.setProperty("--hudSafe", safe + "px");
   }
 
 function updateHUD(){
@@ -1450,7 +1468,7 @@ function updateHUD(){
 
 function init(){
     syncHudSafe();
-    window.addEventListener("resize", syncHudSafe, {passive:true});
+    window.addEventListener("resize", (typeof _onResize==="function"?_onResize:syncHudSafe), {passive:true});
     renderRoadmap();
     renderThreeCols();
     renderTensesTables();
