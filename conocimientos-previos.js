@@ -115,6 +115,8 @@
     a.done[id] = Object.assign({ts:Date.now()}, meta||{});
     setAwards(a);
     updateBadges();
+    setStudentHUD();
+    updateHUD();
   }
 
   function computeLevel(totalXP){
@@ -172,7 +174,14 @@
 
     const pendEl = document.getElementById("kpPending");
     if(pendEl) pendEl.textContent = String(Math.round(pending||0));
-  }
+  
+    // KP misiones completadas (mini indicador)
+    const kpMEl = document.getElementById("kpMissionsText");
+    if(kpMEl){
+      const c = countDone();
+      kpMEl.textContent = `${c.done}/${c.total}`;
+    }
+}
 
 
   const roadmap = [
