@@ -294,6 +294,15 @@ body.has-floating-stats{ padding-top: var(--pageTopPad, calc(var(--statsSafe, 19
   margin-bottom:14px;
   scroll-margin-top: calc(var(--hudSafe, 360px) + 24px);
 }
+
+
+/* Evita que el HUD fijo tape actividades/anclas internas */
+.kpActivity,
+.kpSectionH3,
+details.kpDetails,
+details.kpSubAcc{
+  scroll-margin-top: calc(var(--hudSafe, 360px) + 24px);
+}
 .kpCard h2{
   margin:0 0 8px;
   font-size: 18px;

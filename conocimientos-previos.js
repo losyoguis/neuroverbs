@@ -30,23 +30,26 @@
     if(!bar) return;
 
     const r = bar.getBoundingClientRect();
-    // La barra es fixed (top:12px). Sumamos top + un margen extra para respirar.
-    const statsSafe = Math.max(170, Math.ceil((r.height || 0) + (r.top || 0) + 22));
+    const statsTop = Math.max(0, Math.ceil(r.top || 0));
+    const statsBottom = Math.max(statsTop, Math.ceil((r.bottom != null ? r.bottom : (statsTop + (r.height||0)))));
+
+    // ✅ Safe top: justo debajo de la barra de puntajes + un poco de aire
+    const statsSafe = Math.max(120, statsBottom + 12);
     document.documentElement.style.setProperty("--statsSafe", statsSafe + "px");
 
-    // El dock (encabezado) ahora es fijo. Lo ubicamos debajo de la barra.
-    const dockTop = Math.ceil(statsSafe + 18);
+    // ✅ Dock (encabezado) "pegado" debajo de la barra (evita que quede a mitad de pantalla)
+    const dockTop = Math.max(0, statsBottom + 10);
     document.documentElement.style.setProperty("--dockTop", dockTop + "px");
 
-    // Altura real del dock (puede cambiar con wrap / responsive)
+    // Altura real del dock (depende del wrap/responsive)
     const dockH = dock ? Math.ceil(dock.getBoundingClientRect().height || dock.offsetHeight || 0) : 0;
 
-    // Empuja el contenido para que TODO lo dinámico quede por debajo del encabezado fijo
-    const pageTopPad = Math.max(dockTop + dockH + 18, statsSafe + 18);
+    // Empuja el contenido para que TODO lo dinámico quede por debajo de barra + dock
+    const pageTopPad = Math.max(dockTop + dockH + 16, statsSafe + 12);
     document.documentElement.style.setProperty("--pageTopPad", pageTopPad + "px");
 
-    // Safe total para anclajes/scroll (barra + dock fijo + respiro)
-    const hudSafe = Math.max(pageTopPad + 24, Math.ceil(dockTop + dockH + 44));
+    // Safe total para anclajes/scroll (barra + dock + respiro)
+    const hudSafe = Math.max(pageTopPad + 24, Math.ceil(dockTop + dockH + 34));
     document.documentElement.style.setProperty("--hudSafe", hudSafe + "px");
   }
 
@@ -1528,6 +1531,21 @@ function updateHUD(){
 
     const sectionNavBtns = Array.from(document.querySelectorAll(".kpSectionNav .kpSectionBtn"));
 
+    // Scroll con offset: evita que el encabezado fijo tape el inicio de la sección/actividad
+    function hudSafePx(){
+      const v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--hudSafe")) || 0;
+      return Number.isFinite(v) ? v : 0;
+    }
+    function smartScrollTo(node){
+      if(!node) return;
+      // Recalcula por si cambió el alto del dock al abrir/cerrar
+      if(typeof syncHudSafe === "function"){ try{ syncHudSafe(); }catch(_){ } }
+      const safe = hudSafePx() || 0;
+      const rect = node.getBoundingClientRect();
+      const y = rect.top + window.scrollY - (safe + 18);
+      window.scrollTo({top: Math.max(0, y), behavior: "smooth"});
+    }
+
     function setActiveSection(mainId){
       sectionNavBtns.forEach(btn=>{
         const href = (btn.getAttribute("href")||"").trim();
@@ -1578,7 +1596,7 @@ function updateHUD(){
       }
 
       setTimeout(()=>{
-        (target || el).scrollIntoView({behavior:"smooth", block:"start"});
+        smartScrollTo(target || el);
       }, 60);
     }
 
@@ -1628,7 +1646,7 @@ function updateHUD(){
         openDetailsChain(detailsEl);
       }
 
-      setTimeout(()=> el.scrollIntoView({behavior:"smooth", block:"start"}), 50);
+      setTimeout(()=> smartScrollTo(el), 50);
     }
     window.addEventListener("hashchange", openFromHash, {passive:true});
     openFromHash();
