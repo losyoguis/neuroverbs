@@ -12,58 +12,41 @@
 <link href="assets/apple-touch-icon.png" rel="apple-touch-icon" sizes="180x180"/>
 </head>
 <body class="has-floating-stats">
-
 <!-- ✅✅✅ BARRA DE PUNTOS (igual a la app principal) -->
 <div class="stats" id="statsBar">
-  <button class="statsNavBtn left" type="button" aria-label="Desplazar a la izquierda">◀</button>
-  <button class="statsNavBtn right" type="button" aria-label="Desplazar a la derecha">▶</button>
+<button aria-label="Desplazar a la izquierda" class="statsNavBtn left" type="button">◀</button>
+<button aria-label="Desplazar a la derecha" class="statsNavBtn right" type="button">▶</button>
 <div class="statBox" data-tip="🔥 Tiros seguidos. Si fallas, puede bajar (Freeze te protege)."><span class="stat-label">Racha</span><span class="stat-value" id="streak">0</span></div>
-  <div class="statBox" data-tip="⭐ Puntos acumulados por actividades completadas."><span class="stat-label">Total XP</span><span class="stat-value" id="xp">0</span></div>
-  <div class="statBox" data-tip="🎯 Porcentaje de aciertos: correctas ÷ intentos."><span class="stat-label">Precisión</span><span class="stat-value" id="acc">100%</span></div>
-  <div class="statBox" data-tip="🧬 Subes de nivel cada 250 XP (aprox.)."><span class="stat-label">Nivel</span><span class="stat-value" id="level">1</span></div>
-  <div class="statBox" data-tip="❤️ Intentos disponibles. Un error consume 1."><span class="stat-label">Vidas</span><span class="stat-value heartsText" id="hearts">❤️❤️❤️❤️❤️</span></div>
-  <div class="statBox" data-tip="🧊 Protege tu racha cuando fallas."><span class="stat-label">Freeze</span><span class="stat-value" id="freeze">0</span></div>
-  <div aria-label="Meta diaria" class="goalBox" data-tip="📅 Objetivo de XP del día. Completa la meta para crear hábito.">
-    <div class="goalTop">
-      <span class="goalLabel">Meta diaria</span>
-      <span class="goalRight">
-        <span class="kpMiniPill" id="kpMiniPill" title="Misiones de Conocimientos Previos completadas">KP <b id="kpMissionsText">0/7</b></span>
-        <span class="goalValue" id="dailyGoalText">0/200</span>
-      </span>
-    </div>
-    <div class="goalBar"><div class="goalFill" id="dailyGoalFill"></div></div>
-    <div class="kpDoneMsg" id="kpDoneMsg" hidden>✅ KP terminado</div>
-  </div>
+<div class="statBox" data-tip="⭐ Puntos acumulados por actividades completadas."><span class="stat-label">Total XP</span><span class="stat-value" id="xp">0</span></div>
+<div class="statBox" data-tip="🎯 Porcentaje de aciertos: correctas ÷ intentos."><span class="stat-label">Precisión</span><span class="stat-value" id="acc">100%</span></div>
+<div class="statBox" data-tip="🧬 Subes de nivel cada 250 XP (aprox.)."><span class="stat-label">Nivel</span><span class="stat-value" id="level">1</span></div>
+<div class="statBox" data-tip="❤️ Intentos disponibles. Un error consume 1."><span class="stat-label">Vidas</span><span class="stat-value heartsText" id="hearts">❤️❤️❤️❤️❤️</span></div>
+<div class="statBox" data-tip="🧊 Protege tu racha cuando fallas."><span class="stat-label">Freeze</span><span class="stat-value" id="freeze">0</span></div>
+<div aria-label="Meta diaria" class="goalBox" data-tip="📅 Objetivo de XP del día. Completa la meta para crear hábito.">
+<div class="goalTop">
+<span class="goalLabel">Meta diaria</span>
+<span class="goalRight">
+<span class="kpMiniPill" id="kpMiniPill" title="Misiones de Conocimientos Previos completadas">KP <b id="kpMissionsText">0/7</b></span>
+<span class="goalValue" id="dailyGoalText">0/200</span>
+</span>
 </div>
-
+<div class="goalBar"><div class="goalFill" id="dailyGoalFill"></div></div>
+<div class="kpDoneMsg" hidden="" id="kpDoneMsg">✅ KP terminado</div>
+</div>
+</div>
 <div class="app kpApp">
 <div class="kpTopDock" id="kpTopDock">
 <div class="brand kpBrand" tabindex="-1">
 <h1><span class="brandMark"><img alt="NEUROVERBS" class="brandLogo" src="assets/brain.png"/></span> NEUROVERBS</h1>
 <div class="brandTag">Conocimientos previos</div>
 <div class="subtitle">Secciones: 1) Pronouns • 2) Verbs • 3) Tenses • 4) Linking Words</div>
-</div>
-<div class="kpNavRow" aria-label="Acciones rápidas">
-  <div class="kpNavLeft">
-    <a class="roundbtn" href="index.html" title="Volver a la app">← Volver</a>
-    <button class="roundbtn ebook" data-open="pdf" type="button" title="Ver el PDF dentro de la página">Ver PDF 📄</button>
-    <button class="roundbtn teacher" data-open="docente" type="button" title="Modo clase (Docente)">Modo clase 🧑‍🏫</button>
-  </div>
-  <div class="kpNavRight">
-    <span class="kpPendingChip" title="XP pendiente de sincronizar con la app principal">Pendiente sync: <b id="kpPending">0</b></span>
-  </div>
-</div>
-
-<div class="kpNotice">
+</div><div aria-label="Acciones rápidas" class="roundrow kpRoundActions"><a class="roundbtn" data-help="Volver a la app" href="index.html" title="Volver a la app">← Volver</a><button class="roundbtn ebook" data-help="Ver el PDF dentro de la página" data-open="pdf" title="Ver el PDF dentro de la página" type="button">Ver PDF 📄</button><button class="roundbtn teacher" data-help="Modo clase (Docente)" data-open="docente" title="Modo clase (Docente)" type="button">Modo clase 🧑‍🏫</button><span class="kpPendingChip" data-help="XP pendiente de sincronizar con la app principal" title="XP pendiente de sincronizar con la app principal">Pendiente sync: <b id="kpPending">0</b></span></div><div aria-label="Secciones principales" class="roundrow kpRoundSections" role="navigation"><a class="roundbtn kpSecBtn active" data-help="Pronouns: subject pronouns + práctica." href="#pronombres">1. Pronouns</a><a class="roundbtn kpSecBtn" data-help="Verbs: regular/irregular + Have/Has/Have to." href="#verbos">2. Verbs</a><a class="roundbtn kpSecBtn" data-help="Tenses: present, past, present perfect." href="#tenses">3. Tenses</a><a class="roundbtn kpSecBtn" data-help="Linking words: connectors for coherence." href="#linking">4. Linking Words</a></div><div class="roundrow kpRoundHintRow"><span class="roundhint" id="kpSectionHint">Pronouns: subject pronouns + práctica</span></div><div class="kpNotice" id="kpObjective">
 <b>Objetivo:</b> nivelarte antes de entrar a practicar. Aquí está la información del PDF, organizada en secciones claras
   y con <b>actividades que suman XP</b> (solo 1 vez por actividad para evitar “farmear”).
 </div>
-<div aria-label="Secciones principales" class="kpSectionNav" role="navigation">
-  <a class="kpSectionBtn" href="#pronombres">1. Pronouns</a>
-  <a class="kpSectionBtn" href="#verbos">2. Verbs</a>
-  <a class="kpSectionBtn" href="#tenses">3. Tenses</a>
-  <a class="kpSectionBtn" href="#linking">4. Linking Words</a>
-</div>
+
+
+
 </div>
 <div class="kpContent">
 <details class="kpCard kpAcc" id="pdf">
@@ -71,8 +54,8 @@
 <div class="kpAccBody">
 <p class="kpText">Aquí está el PDF “tal cual” (literal). Puedes leerlo primero y luego hacer las actividades para sumar XP.</p>
 <div class="kpActActions" style="justify-content:flex-start;gap:10px;margin:10px 0 14px;">
-  <a class="roundbtn mini" href="assets/conocimientos-previos.pdf" target="_blank" rel="noopener" title="Abrir el PDF en una pestaña nueva">Abrir en pestaña nueva</a>
-  <button class="roundbtn mini" data-open="misiones" type="button" title="Ir a las misiones">Ir a misiones</button>
+<a class="roundbtn mini" href="assets/conocimientos-previos.pdf" rel="noopener" target="_blank" title="Abrir el PDF en una pestaña nueva">Abrir en pestaña nueva</a>
+<button class="roundbtn mini" data-open="misiones" title="Ir a las misiones" type="button">Ir a misiones</button>
 </div>
 <div class="kpPdfWrap">
 <iframe class="kpPdfFrame" loading="lazy" src="assets/conocimientos-previos.pdf#view=FitH" title="Conocimientos previos (PDF)"></iframe>
@@ -538,14 +521,12 @@ NVKP1...." rows="7"></textarea>
 </div>
 </details></div></details></div>
 </div>
-
-<nav class="kpBottomTabs" id="kpBottomTabs" aria-label="Navegación rápida (móvil)">
-  <button class="kpTabBtn" type="button" data-jump="#pronombres" aria-label="Pronouns">1</button>
-  <button class="kpTabBtn" type="button" data-jump="#verbos" aria-label="Verbs">2</button>
-  <button class="kpTabBtn" type="button" data-jump="#tenses" aria-label="Tenses">3</button>
-  <button class="kpTabBtn" type="button" data-jump="#linking" aria-label="Linking Words">4</button>
+<nav aria-label="Navegación rápida (móvil)" class="kpBottomTabs" id="kpBottomTabs">
+<button aria-label="Pronouns" class="kpTabBtn" data-jump="#pronombres" type="button">1</button>
+<button aria-label="Verbs" class="kpTabBtn" data-jump="#verbos" type="button">2</button>
+<button aria-label="Tenses" class="kpTabBtn" data-jump="#tenses" type="button">3</button>
+<button aria-label="Linking Words" class="kpTabBtn" data-jump="#linking" type="button">4</button>
 </nav>
-
 <script src="conocimientos-previos.js"></script>
 </body>
 </html>

@@ -1569,7 +1569,7 @@ function updateHUD(){
     // Solo cierra entre secciones principales (1-4)
     const mainAccs = Array.from(document.querySelectorAll("details.kpMainAcc"));
 
-    const sectionNavBtns = Array.from(document.querySelectorAll(".kpSectionNav .kpSectionBtn"));
+    const sectionNavBtns = Array.from(document.querySelectorAll(".kpSecBtn"));
 
     // Scroll con offset: evita que el encabezado fijo tape el inicio de la sección/actividad
     function hudSafePx(){
@@ -1587,14 +1587,28 @@ function updateHUD(){
     }
 
     function setActiveSection(mainId){
+      const hintEl = document.getElementById("kpSectionHint");
       sectionNavBtns.forEach(btn=>{
         const href = (btn.getAttribute("href")||"").trim();
         const id = href.startsWith("#") ? href.slice(1) : href;
         const isActive = (id === mainId);
         btn.classList.toggle("isActive", isActive);
+        btn.classList.toggle("active", isActive); // ✅ igual a index.html (Round 1/2)
         if(isActive) btn.setAttribute("aria-current","true");
         else btn.removeAttribute("aria-current");
       });
+
+      // ✅ Hint tipo index: muestra meta del acordeón activo
+      if(hintEl){
+        if(!mainId){
+          hintEl.textContent = "Selecciona una sección para comenzar.";
+        }else{
+          const d = document.getElementById(mainId);
+          const t = d?.querySelector("summary .kpAccTitle")?.textContent?.trim() || mainId;
+          const meta = d?.querySelector("summary .kpAccMeta")?.textContent?.trim() || "";
+          hintEl.textContent = meta ? `${t}: ${meta}` : t;
+        }
+      }
     }
 
 
@@ -1730,14 +1744,29 @@ function init(){
     }
     function openAndScroll(hash){
       const id = (hash||"").replace("#","");
+      if(!id) return;
+
+      // ✅ Usar la misma navegación del header (openSection) para mantener todo sincronizado
+      if(typeof window.NVKP_openSection === "function"){
+        window.NVKP_openSection(id);
+        setActive("#"+id);
+        return;
+      }
+
+      // Fallback (por si no existe el helper)
       const target = document.getElementById(id);
       if(!target) return;
 
-      // Si apunta a un <details>, lo abrimos y cerramos los demás
       if(target.tagName && target.tagName.toLowerCase()==="details"){
         mainAccs.forEach(d=>{ if(d!==target) d.open=false; });
         target.open = true;
       }
+
+      const safe = hudSafePx() || 0;
+      const y = target.getBoundingClientRect().top + window.scrollY - (safe + 12);
+      window.scrollTo({ top: Math.max(0,y), behavior: "smooth" });
+      setActive("#"+id);
+    }
 
       const safe = hudSafePx() || 0;
       const y = target.getBoundingClientRect().top + window.scrollY - (safe + 12);

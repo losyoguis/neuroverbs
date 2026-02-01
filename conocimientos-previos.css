@@ -919,3 +919,40 @@ details[open].kpAcc > summary .kpAccChevron::before{ content:"▴"; }
   .kpCard{ border-radius: 18px; }
   .kpTable{ font-size: .92rem; }
 }
+
+
+
+/* ✅ Navegación estilo index.html (Round buttons + hint) */
+.kpRoundActions{
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+}
+.kpRoundActions .kpPendingChip{
+  margin-left: auto;
+}
+
+.kpRoundSections{
+  margin-top: 8px;
+  justify-content: center;
+}
+.kpSecBtn{
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.kpSecBtn:focus{ outline: 2px solid rgba(255,255,255,.25); outline-offset: 2px; }
+
+.kpRoundHintRow{
+  margin-top: 6px;
+}
+
+/* En pantallas pequeñas, prioriza lectura: permite 2 filas naturales */
+@media (max-width: 520px){
+  .kpRoundActions{ justify-content: center; }
+  .kpRoundActions .kpPendingChip{ margin-left: 0; width: 100%; text-align: center; }
+  .kpRoundSections{ gap: 8px; }
+  .kpSecBtn{ flex: 1 1 auto; }
+}
