@@ -506,27 +506,40 @@
     const reportText = collectMetrics();
     const links = buildEmailLinks(reportText);
 
-    // Abrir Gmail SIEMPRE en una nueva pestaña (pestaña 2)
+    // Siempre mantener esta pestaña en la APP: NO redireccionar aquí.
     try{ if(sendCard) sendCard.style.display = "block"; }catch(_){}
 
-    // Método robusto: click a un <a target="_blank"> dentro del gesto del usuario
+    // Intento 1: window.open (nueva pestaña/ventana)
+    let opened = false;
     try{
-      const a = document.createElement("a");
-      a.href = links.gmailUrl;
-      a.target = "_blank";
-      a.rel = "noopener noreferrer";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    }catch(_){
-      // Si algo falla, el usuario puede usar los enlaces del panel.
+      const w = window.open(links.gmailUrl, "_blank", "noopener,noreferrer");
+      opened = !!w;
+    }catch(_){ opened = false; }
+
+    // Intento 2: enlace con target _blank (más compatible en algunos navegadores)
+    if(!opened){
+      try{
+        const a = document.createElement("a");
+        a.href = links.gmailUrl;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        opened = true; // si el navegador lo bloquea, igual no redirige la app
+      }catch(_){}
     }
 
-    toast("Correo listo", "Si no se abre automáticamente, usa el botón 'Abrir Gmail' (pestaña nueva) y luego ENVIAR.");
-toast("Correo listo", "Se abrió Gmail con TODOS los KPIs del panel. Solo presiona ENVIAR.");
+    toast(
+      "Correo listo",
+      opened
+        ? "Se abrió el correo en una nueva pestaña. Vuelve aquí para seguir en la app."
+        : "Tu navegador bloqueó la nueva pestaña. Usa 'Abrir Gmail' (pestaña nueva) y presiona ENVIAR."
+    );
   }
 
   btnSend.addEventListener("click", send);
+("click", send);
 })();
 
 
