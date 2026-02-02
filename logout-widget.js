@@ -24,17 +24,49 @@
 
   
   function getStoredPhoto() {
+    const stores = [localStorage, sessionStorage];
     const keys = ["user_profile", "rank_user", "mjb_user", "google_user", "neuroverbs_user", "auth_user"];
-    for (const k of keys) {
-      try {
-        const raw = localStorage.getItem(k);
-        if (!raw) continue;
-        const obj = safeJsonParse(raw);
-        const photo =
-          (obj && (obj.picture || obj.photoURL || obj.photo || obj.avatar || obj.imageUrl)) ||
-          (obj && obj.profile && (obj.profile.picture || obj.profile.photoURL || obj.profile.photo || obj.profile.avatar));
-        if (photo) return String(photo);
-      } catch (_) {}
+    const photoKeys = ["picture","photoURL","photoUrl","photo_url","photo","avatar","avatarUrl","image","imageUrl","img","profilePic","profile_pic"];
+    for (const store of stores) {
+      for (const k of keys) {
+        try {
+          const raw = store.getItem(k);
+          if (!raw) continue;
+          const obj = safeJsonParse(raw);
+          if (!obj) continue;
+
+          // direct
+          for (const pk of photoKeys) {
+            if (obj[pk]) return String(obj[pk]);
+          }
+
+          // common nested
+          const nested = [obj.profile, obj.user, obj.data, obj.result, obj.payload, obj.google, obj.googleProfile];
+          for (const n of nested) {
+            if (!n) continue;
+            for (const pk of photoKeys) {
+              if (n[pk]) return String(n[pk]);
+            }
+          }
+        } catch (_) {}
+      }
+    }
+
+    // Last resort: try to read from DOM (if the page already renders the photo)
+    try {
+      const candidates = [
+        "#profilePhoto", "#userPhoto", "#avatar", "#profileAvatar",
+        "img.profile-photo", "img.avatar", "img#photo", ".profile img", ".avatar img"
+      ];
+      for (const sel of candidates) {
+        const el = document.querySelector(sel);
+        if (el && el.src && String(el.src).startsWith("http")) return String(el.src);
+        if (el && el.src && String(el.src).startsWith("data:image")) return String(el.src);
+      }
+    } catch (_) {}
+
+    return "";
+  } catch (_) {}
     }
     return "";
   }
@@ -64,16 +96,17 @@
   }
 
   function placeholderAvatarDataUri(text) {
-    const t = encodeURIComponent(String(text || "NV").slice(0,2));
+    const initials = String(text || "NV").slice(0, 2).toUpperCase();
     const svg =
-      `<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120">` +
+      `<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120">` +
       `<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">` +
       `<stop offset="0" stop-color="#34d399"/><stop offset="1" stop-color="#06b6d4"/>` +
       `</linearGradient></defs>` +
       `<rect width="120" height="120" rx="60" fill="url(#g)"/>` +
-      `<text x="60" y="72" text-anchor="middle" font-family="Arial" font-size="44" font-weight="800" fill="#0b1220">${t}</text>` +
+      `<text x="60" y="74" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="44" font-weight="800" fill="#0b1220">${initials}</text>` +
       `</svg>`;
-    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+    const b64 = btoa(unescape(encodeURIComponent(svg)));
+    return "data:image/svg+xml;base64," + b64;
   }
 function clearAppSession() {
     const keys = [
@@ -167,8 +200,15 @@ function clearAppSession() {
       objectFit: "cover",
       border: "2px solid rgba(255,255,255,.22)",
       boxShadow: "0 10px 22px rgba(0,0,0,.35)",
-      background: "rgba(255,255,255,.08)"
+      background: "rgba(255,255,255,.10)", display: "block"
     });
+
+    avatar.addEventListener("error", () => {
+      const name = getStoredName();
+      const email = getStoredEmail();
+      avatar.src = placeholderAvatarDataUri(initialsFromName(name || email));
+    });
+
 
     const btn = document.createElement("button");
     btn.id = BTN_ID;
