@@ -1,7 +1,9 @@
 /* NeuroVerbs — Mensajería interna LOCAL (sin Worker / sin servidor)
    ✅ Funciona entre páginas/pestañas del MISMO navegador (mismo dominio) usando BroadcastChannel.
    ✅ Historial temporal por pestaña (sessionStorage). Se borra al cerrar la pestaña.
+   ✅ Lista de usuarios activos (logueados) en ESTA sesión de navegador (presencia local).
    ⚠️ Sin servidor NO es posible mensajería entre diferentes dispositivos.
+   ✅ Regla: solo se permite conversar en INGLÉS (se bloquean mensajes detectados como español).
 */
 (function(){
   "use strict";
@@ -9,10 +11,15 @@
   const ROOT_ID = "nvLocalMessenger";
   const STYLE_ID = "nvLocalMessengerStyles";
   const DEFAULT_ROOM = "global";
-  const MAX_MSG = 60;
+  const MAX_MSG = 80;
+
+  const PRESENCE_CHANNEL = "nv_presence_v1";
+  const PRESENCE_TTL_MS = 25000;     // un usuario se considera "activo" si se vio en los últimos 25s
+  const PRESENCE_PING_MS = 8000;     // cada 8s enviamos "ping" de presencia
 
   if (document.getElementById(ROOT_ID)) return;
 
+  // ===== helpers =====
   function safeGet(key){
     try{ return localStorage.getItem(key); }catch(_){ return null; }
   }
@@ -21,9 +28,6 @@
   }
   function safeSessionSet(key, val){
     try{ sessionStorage.setItem(key, val); }catch(_){}
-  }
-  function safeSessionRemove(key){
-    try{ sessionStorage.removeItem(key); }catch(_){}
   }
   function safeJsonParse(raw, fallback){
     if(!raw) return fallback;
@@ -61,13 +65,70 @@
   function sanitizeRoom(s){
     s = String(s || "").trim().toLowerCase();
     if(!s) return DEFAULT_ROOM;
-    // solo letras, números, guion y guion bajo
-    s = s.replace(/[^a-z0-9_-]/g, "-").replace(/-+/g,"-").slice(0, 40);
+    s = s.replace(/[^a-z0-9_-]/g, "-").replace(/-+/g,"-").slice(0, 48);
     return s || DEFAULT_ROOM;
   }
   function roomKey(room){ return "nv_local_chat_room_" + room; }
 
-  // ====== Styles (inline) ======
+  function hashRoom(a, b){
+    // DM determinístico por par de emails (ordenado)
+    const x = String(a||"").toLowerCase().trim();
+    const y = String(b||"").toLowerCase().trim();
+    const pair = [x,y].sort().join("|");
+    // mini-hash local (sin crypto libs). Usamos una suma hash simple estable.
+    let h = 2166136261;
+    for(let i=0;i<pair.length;i++){
+      h ^= pair.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return "dm_" + (h >>> 0).toString(16);
+  }
+
+  // ===== English-only (heurística) =====
+  // Nota: no es un detector perfecto, pero bloquea español "evidente".
+  const ES_STOP = new Set([
+    "que","de","la","el","y","en","a","los","las","un","una","por","para","con","no",
+    "es","soy","eres","somos","son","hola","gracias","porfavor","por favor","buenos","buenas",
+    "como","cómo","estás","estas","estoy","muy","bien","mal","porque","porqué","tambien","también",
+    "quiero","necesito","tengo","tiene","tienes","vamos","hoy","mañana","ayer","si","sí",
+    "pero","entonces","donde","dónde","cuando","cuándo","quien","quién","usted","ustedes",
+    "profe","profesor","docente","tarea","clase","colegio","medellin","medellín","prado"
+  ]);
+
+  function looksSpanish(text){
+    const t0 = String(text||"").trim();
+    if(!t0) return false;
+
+    // 1) acentos / ñ
+    if(/[ñÑáéíóúÁÉÍÓÚ¿¡]/.test(t0)) return true;
+
+    // 2) stopwords ratio
+    const t = t0.toLowerCase()
+      .replace(/[^\p{L}\p{N}\s]/gu," ")
+      .replace(/\s+/g," ")
+      .trim();
+
+    if(!t) return false;
+
+    const words = t.split(" ").filter(Boolean);
+    if(words.length <= 2) return false;
+
+    let hits = 0;
+    for(const w of words){
+      if(ES_STOP.has(w)) hits++;
+    }
+    const ratio = hits / words.length;
+
+    // Si hay 2+ stopwords y ratio alto -> español
+    if(hits >= 2 && ratio >= 0.22) return true;
+
+    // frases típicas
+    if(/\b(quiero|necesito|por favor|gracias|buenos dias|buenas tardes|buenas noches)\b/i.test(t0)) return true;
+
+    return false;
+  }
+
+  // ===== Styles =====
   if(!document.getElementById(STYLE_ID)){
     const st = document.createElement("style");
     st.id = STYLE_ID;
@@ -85,9 +146,9 @@
 #${ROOT_ID} .nvFab:active{ transform: translateY(0px); }
 
 #${ROOT_ID} .nvPanel{
-  width: 360px;
+  width: 380px;
   max-width: calc(100vw - 32px);
-  height: 520px;
+  height: 560px;
   max-height: calc(100vh - 110px);
   border-radius: 20px;
   border: 1px solid rgba(255,255,255,.14);
@@ -155,8 +216,48 @@
 #${ROOT_ID} .nvBtn:hover{ filter: brightness(1.05); transform: translateY(-1px); }
 #${ROOT_ID} .nvBtn:active{ transform: translateY(0px); }
 
+#${ROOT_ID} .nvUsersBar{
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+#${ROOT_ID} .nvUsersTitle{
+  font-size: 12px; font-weight: 950; letter-spacing:.2px;
+  display:flex; justify-content:space-between; align-items:center;
+}
+#${ROOT_ID} .nvUsersHint{ font-size: 11px; opacity:.72; margin-top: 2px; }
+#${ROOT_ID} .nvUsers{
+  display:flex; flex-wrap:wrap; gap:8px;
+  margin-top: 8px;
+}
+#${ROOT_ID} .nvUserChip{
+  display:inline-flex; align-items:center; gap:8px;
+  border-radius: 999px;
+  padding: 7px 10px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.22);
+  color: rgba(255,255,255,.92);
+  cursor:pointer;
+  font-weight: 900;
+  font-size: 12px;
+}
+#${ROOT_ID} .nvUserChip:hover{ filter: brightness(1.06); transform: translateY(-1px); }
+#${ROOT_ID} .nvUserChip:active{ transform: translateY(0px); }
+#${ROOT_ID} .nvUserChip img{
+  width: 18px; height: 18px; border-radius: 999px; object-fit:cover;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.22);
+}
+#${ROOT_ID} .nvBadge{
+  font-size: 10px;
+  padding: 4px 7px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.06);
+  opacity: .9;
+}
+
 #${ROOT_ID} .nvBody{
-  height: calc(100% - 162px);
+  height: calc(100% - 240px);
   overflow:auto;
   padding: 12px 12px;
 }
@@ -195,7 +296,7 @@
 #${ROOT_ID} .nvText{ font-size: 13px; line-height: 1.35; white-space: pre-wrap; word-break: break-word; }
 
 #${ROOT_ID} .nvFooter{
-  height: 86px;
+  height: 96px;
   border-top: 1px solid rgba(255,255,255,.10);
   padding: 10px 12px;
   display:flex; gap: 8px; align-items:flex-end;
@@ -204,7 +305,7 @@
 #${ROOT_ID} .nvInput{
   flex: 1;
   min-height: 46px;
-  max-height: 64px;
+  max-height: 76px;
   resize: none;
   border-radius: 14px;
   padding: 10px 10px;
@@ -216,7 +317,7 @@
   font-size: 13px;
 }
 #${ROOT_ID} .nvSend{
-  width: 72px;
+  width: 78px;
   height: 46px;
   border-radius: 14px;
   border: 1px solid rgba(255,255,255,.14);
@@ -225,12 +326,16 @@
   font-weight: 900;
   cursor:pointer;
 }
+#${ROOT_ID} .nvSend.disabled{
+  opacity: .45;
+  cursor:not-allowed;
+}
 #${ROOT_ID} .nvSend:hover{ filter: brightness(1.06); }
 #${ROOT_ID} .nvSend:active{ transform: translateY(1px); }
 
 @media (max-width: 520px){
   #${ROOT_ID}{ right:12px; bottom:12px; }
-  #${ROOT_ID} .nvPanel{ width: calc(100vw - 24px); height: 70vh; }
+  #${ROOT_ID} .nvPanel{ width: calc(100vw - 24px); height: 76vh; }
 }
 @media print{
   #${ROOT_ID}{ display:none !important; }
@@ -239,7 +344,7 @@
     document.head.appendChild(st);
   }
 
-  // ====== UI ======
+  // ===== UI =====
   const root = document.createElement("div");
   root.id = ROOT_ID;
   root.innerHTML = `
@@ -247,7 +352,7 @@
       <div class="nvHeader">
         <div class="nvHdrLeft">
           <div class="nvTitle">Mensajería interna (Local)</div>
-          <div class="nvSub">Solo pestañas del mismo navegador • temporal</div>
+          <div class="nvSub">Solo pestañas del mismo navegador • temporal • inglés</div>
         </div>
         <div class="nvHdrBtns">
           <button class="nvIconBtn" id="nvMsgClear" type="button" title="Limpiar mensajes">🧹</button>
@@ -267,16 +372,25 @@
         <button class="nvBtn primary" id="nvRoomJoin" type="button">Entrar</button>
       </div>
 
+      <div class="nvUsersBar">
+        <div class="nvUsersTitle">
+          <span>Usuarios activos</span>
+          <span class="nvBadge" id="nvUsersCount">0</span>
+        </div>
+        <div class="nvUsersHint">Toca un usuario para iniciar chat 1 a 1 (DM).</div>
+        <div class="nvUsers" id="nvUsers"></div>
+      </div>
+
       <div class="nvBody" id="nvBody">
         <div class="nvNote" id="nvNote">
-          🔒 Inicia sesión para identificar al remitente. (Sin servidor, esta mensajería funciona solo entre pestañas del mismo navegador.)
+          🔒 Inicia sesión para chatear con otros estudiantes logueados.
         </div>
         <div id="nvMsgs"></div>
       </div>
 
       <div class="nvFooter">
-        <textarea class="nvInput" id="nvInput" placeholder="Escribe un mensaje..." maxlength="700"></textarea>
-        <button class="nvSend" id="nvSend" type="button">Enviar</button>
+        <textarea class="nvInput" id="nvInput" placeholder="Write in English..." maxlength="700"></textarea>
+        <button class="nvSend" id="nvSend" type="button">Send</button>
       </div>
     </div>
     <button class="nvFab" id="nvFab" type="button" aria-label="Abrir mensajería">💬</button>
@@ -294,24 +408,25 @@
   const roomSel = document.getElementById("nvRoomSel");
   const roomInp = document.getElementById("nvRoomInp");
   const btnJoin = document.getElementById("nvRoomJoin");
+  const usersHost = document.getElementById("nvUsers");
+  const usersCount = document.getElementById("nvUsersCount");
 
-  // ====== State ======
+  // ===== State =====
   let room = DEFAULT_ROOM;
   let bc = null;
-  let my = getProfile();
+
+  // Presence
+  let bcPresence = null;
+  const online = new Map(); // email -> {name,email,picture,lastSeen}
 
   function loadRoom(){
-    // 1) URL ?chatroom=
     try{
       const u = new URL(location.href);
       const r = u.searchParams.get("chatroom");
       if(r) return sanitizeRoom(r);
     }catch(_){}
-
-    // 2) session
     const saved = safeSessionGet("nv_local_room");
     if(saved) return sanitizeRoom(saved);
-
     return DEFAULT_ROOM;
   }
 
@@ -327,19 +442,81 @@
   let history = [];
 
   function setNote(){
-    my = getProfile();
+    const prof = getProfile();
     if(isLoggedIn()){
-      note.innerHTML = `✅ Conectado como <b>${esc(my.name)}</b> (${esc(my.email)}) • Sala: <b>${esc(room)}</b>`;
+      note.innerHTML = `✅ Connected as <b>${esc(prof.name)}</b> (${esc(prof.email)}) • Room: <b>${esc(room)}</b><br/><span style="opacity:.85">Rule: English only.</span>`;
+      input.placeholder = "Write in English...";
+      btnSend.classList.remove("disabled");
+      btnSend.disabled = false;
+      input.disabled = false;
     }else{
-      note.innerHTML = `🔒 Para que se sepa quién envió el mensaje, inicia sesión. • Sala: <b>${esc(room)}</b><br/><span style="opacity:.85">Sin servidor, esta mensajería funciona solo entre pestañas del mismo navegador.</span>`;
+      note.innerHTML = `🔒 Inicia sesión para chatear con otros estudiantes logueados.<br/><span style="opacity:.85">Regla: solo inglés (English only).</span>`;
+      input.placeholder = "Login required";
+      btnSend.classList.add("disabled");
+      btnSend.disabled = true;
+      input.disabled = true;
     }
   }
 
+  function renderUsers(){
+    // Limpia expirados
+    const t = now();
+    for(const [email, u] of Array.from(online.entries())){
+      if(!u || !u.lastSeen || (t - u.lastSeen) > PRESENCE_TTL_MS){
+        online.delete(email);
+      }
+    }
+
+    const my = getProfile();
+    const myEmail = (my?.email||"").toLowerCase();
+
+    const list = Array.from(online.values())
+      .filter(u => u.email && u.email !== myEmail)
+      .sort((a,b)=>(a.name||"").localeCompare(b.name||""));
+
+    usersCount.textContent = String(list.length);
+
+    if(!list.length){
+      usersHost.innerHTML = `<span style="opacity:.75; font-size:12px;">No hay otros estudiantes activos en esta sesión.</span>`;
+      return;
+    }
+
+    usersHost.innerHTML = list.map(u=>{
+      const pic = u.picture || "assets/brain.png";
+      const name = u.name || "Estudiante";
+      return `<button class="nvUserChip" type="button" data-email="${esc(u.email)}" data-name="${esc(name)}">
+        <img src="${esc(pic)}" alt=""/>
+        <span>${esc(name)}</span>
+      </button>`;
+    }).join("");
+
+    // click -> DM
+    usersHost.querySelectorAll(".nvUserChip").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const otherEmail = btn.getAttribute("data-email") || "";
+        const otherName = btn.getAttribute("data-name") || "Student";
+        const me = getProfile();
+        if(!me || !me.email){
+          setNote();
+          return;
+        }
+        const dmRoom = hashRoom(me.email, otherEmail);
+        roomInp.value = dmRoom;
+        connect(dmRoom);
+        // small system notice
+        pushSystem(`DM with ${otherName} • English only`);
+      });
+    });
+  }
+
   function render(){
+    const me = getProfile();
+    const meEmail = (me?.email||"").toLowerCase();
+
     msgsHost.innerHTML = history.map(m=>{
-      const isMe = my && m.email && my.email && (m.email === my.email);
-      const avatar = isMe ? (my.picture || "") : (m.picture || "");
-      const who = isMe ? "Tú" : (m.name || "Usuario");
+      const isMe = meEmail && m.email && (m.email === meEmail);
+      const avatar = isMe ? (me?.picture || "") : (m.picture || "");
+      const who = isMe ? "You" : (m.name || "Student");
       const em = m.email || "";
       const metaLeft = `${esc(who)}${em ? " • " + esc(em) : ""}`;
       const metaRight = formatTime(m.ts || now());
@@ -355,7 +532,6 @@
       `;
     }).join("");
 
-    // scroll down
     try{ body.scrollTop = body.scrollHeight; }catch(_){}
   }
 
@@ -368,7 +544,7 @@
       const hasOpt = Array.from(roomSel.options).some(o=>o.value===room);
       if(hasOpt) roomSel.value = room;
     }
-    if(roomInp) roomInp.value = room;
+    roomInp.value = room;
 
     // history
     history = loadHistory(room);
@@ -381,14 +557,12 @@
       bc = null;
     }
 
-    // BroadcastChannel
     if("BroadcastChannel" in window){
       try{
         bc = new BroadcastChannel("nv_chat_" + room);
         bc.onmessage = (ev)=>{
           const msg = ev?.data;
           if(!msg || !msg.id || msg.room !== room) return;
-          // avoid duplicates
           if(history.some(x=>x.id===msg.id)) return;
           history.push(msg);
           history = history.slice(-MAX_MSG);
@@ -398,7 +572,7 @@
       }catch(_){ bc = null; }
     }
 
-    // fallback: listen to storage events (last resort)
+    // storage fallback for messages
     window.addEventListener("storage", (e)=>{
       if(!e || e.key !== "nv_chat_broadcast") return;
       const msg = safeJsonParse(e.newValue, null);
@@ -411,49 +585,112 @@
     });
   }
 
-  function broadcast(msg){
-    // primary
+  function broadcastMsg(msg){
     if(bc){
       try{ bc.postMessage(msg); return; }catch(_){}
     }
-    // fallback (localStorage event)
     try{
       localStorage.setItem("nv_chat_broadcast", JSON.stringify(msg));
-      // no persist: cleanup quickly
       setTimeout(()=>{ try{ localStorage.removeItem("nv_chat_broadcast"); }catch(_){ } }, 800);
     }catch(_){}
+  }
+
+  function pushSystem(text){
+    const msg = { id: uid(), room, ts: now(), name:"System", email:"", picture:"", text: String(text||"") };
+    history.push(msg);
+    history = history.slice(-MAX_MSG);
+    saveHistory(room, history);
+    render();
   }
 
   function send(){
     const text = String(input.value || "").trim();
     if(!text) return;
 
-    my = getProfile();
-    const logged = isLoggedIn();
+    // must be logged in
+    if(!isLoggedIn()){
+      setNote();
+      return;
+    }
 
+    // English-only rule
+    if(looksSpanish(text)){
+      pushSystem("❌ Spanish detected. Please write in English.");
+      return;
+    }
+
+    const prof = getProfile();
     const msg = {
       id: uid(),
       room,
       ts: now(),
-      name: logged && my ? my.name : "Anónimo",
-      email: logged && my ? my.email : "",
-      picture: logged && my ? my.picture : "",
+      name: prof?.name || "Student",
+      email: prof?.email || "",
+      picture: prof?.picture || "",
       text
     };
 
-    // local append
     history.push(msg);
     history = history.slice(-MAX_MSG);
     saveHistory(room, history);
     render();
-    broadcast(msg);
+    broadcastMsg(msg);
 
     input.value = "";
     input.focus();
   }
 
-  // ====== Events ======
-  fab.addEventListener("click", ()=>{ root.classList.toggle("open"); if(root.classList.contains("open")) input?.focus(); });
+  // ===== Presence (online users) =====
+  function connectPresence(){
+    if(!("BroadcastChannel" in window)) return;
+    try{
+      bcPresence = new BroadcastChannel(PRESENCE_CHANNEL);
+      bcPresence.onmessage = (ev)=>{
+        const p = ev?.data;
+        if(!p || p.type !== "presence" || !p.email) return;
+        online.set(String(p.email).toLowerCase(), {
+          name: p.name || "Student",
+          email: String(p.email).toLowerCase(),
+          picture: p.picture || "",
+          lastSeen: now()
+        });
+        renderUsers();
+      };
+    }catch(_){ bcPresence = null; }
+  }
+
+  function pingPresence(){
+    if(!bcPresence) return;
+    if(!isLoggedIn()){
+      // no mostramos como activo si no hay login
+      return;
+    }
+    const prof = getProfile();
+    if(!prof || !prof.email) return;
+
+    try{
+      bcPresence.postMessage({
+        type: "presence",
+        email: prof.email,
+        name: prof.name,
+        picture: prof.picture,
+        ts: now()
+      });
+    }catch(_){}
+  }
+
+  // ===== Events =====
+  fab.addEventListener("click", ()=>{
+    root.classList.toggle("open");
+    if(root.classList.contains("open")){
+      setNote();
+      renderUsers();
+      if(!input.disabled) input.focus();
+      // ping inmediato al abrir
+      pingPresence();
+    }
+  });
+
   btnClose.addEventListener("click", ()=>{ root.classList.remove("open"); });
 
   btnClear.addEventListener("click", ()=>{
@@ -463,8 +700,8 @@
   });
 
   btnSend.addEventListener("click", send);
+
   input.addEventListener("keydown", (e)=>{
-    // Enter to send, Shift+Enter newline
     if(e.key === "Enter" && !e.shiftKey){
       e.preventDefault();
       send();
@@ -474,19 +711,32 @@
   btnJoin.addEventListener("click", ()=>{
     const r = sanitizeRoom(roomInp.value || roomSel.value || DEFAULT_ROOM);
     connect(r);
+    pushSystem(`Room: ${r} • English only`);
   });
-  roomSel.addEventListener("change", ()=>{
-    roomInp.value = roomSel.value;
-  });
+
+  roomSel.addEventListener("change", ()=>{ roomInp.value = roomSel.value; });
 
   // update note if login changes
   window.addEventListener("storage", (e)=>{
     if(e.key === "user_profile" || e.key === "google_id_token"){
       setNote();
+      // ping presencia al iniciar sesión
+      setTimeout(()=>{ pingPresence(); }, 300);
+      renderUsers();
       render();
     }
   });
 
-  // init
+  // ===== Init =====
+  connectPresence();
   connect(loadRoom());
+  setNote();
+  renderUsers();
+
+  // ping presencia periódicamente
+  setInterval(()=>{
+    pingPresence();
+    renderUsers();
+  }, PRESENCE_PING_MS);
+
 })();
