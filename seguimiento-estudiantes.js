@@ -284,19 +284,8 @@
     $("lastRead").textContent = new Date().toLocaleString();
 
     // Print
-    
-    // Theme (Day/Night)
-    applyTheme(getTheme());
-    const btnTheme = $("btnThemeToggle");
-    if(btnTheme){
-      btnTheme.addEventListener("click", ()=>{
-        const next = (getTheme() === "light") ? "dark" : "light";
-        setTheme(next);
-        applyTheme(next);
-      });
-    }
 
-const btnPrint = $("btnPrint");
+    const btnPrint = $("btnPrint");
     if(btnPrint){
       btnPrint.addEventListener("click", () => window.print());
     }
@@ -304,6 +293,7 @@ const btnPrint = $("btnPrint");
 
   window.addEventListener("load", render);
 })();
+
 
 
 /* ========= Enviar seguimiento por correo (KPIs completos, SIN PDF) =========
@@ -516,22 +506,66 @@ const btnPrint = $("btnPrint");
     const reportText = collectMetrics();
     const links = buildEmailLinks(reportText);
 
-    // Abrir Gmail (intento 1: nueva pestaña)
-    let w = null;
-    try{ w = window.open(links.gmailUrl, "_blank", "noopener,noreferrer"); }catch(_){ w = null; }
+    // Abrir Gmail SIEMPRE en una nueva pestaña (pestaña 2)
+    try{ if(sendCard) sendCard.style.display = "block"; }catch(_){}
 
-    // Fallback si el popup está bloqueado
-    if(!w){
-      try{
-        window.location.assign(links.gmailUrl);
-      }catch(_){
-        try{ window.location.href = links.mailto; }catch(__){}
-      }
-      return;
+    // Método robusto: click a un <a target="_blank"> dentro del gesto del usuario
+    try{
+      const a = document.createElement("a");
+      a.href = links.gmailUrl;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }catch(_){
+      // Si algo falla, el usuario puede usar los enlaces del panel.
     }
 
-    toast("Correo listo", "Se abrió Gmail con TODOS los KPIs del panel. Solo presiona ENVIAR.");
+    toast("Correo listo", "Si no se abre automáticamente, usa el botón 'Abrir Gmail' (pestaña nueva) y luego ENVIAR.");
+toast("Correo listo", "Se abrió Gmail con TODOS los KPIs del panel. Solo presiona ENVIAR.");
   }
 
   btnSend.addEventListener("click", send);
 })();
+
+
+/* ========= Seguimiento: Modo Día / Noche (global, sin dependencias) =========
+   Funciona aunque el tablero no llame render().
+*/
+(function(){
+  const KEY = "nv_seg_theme_v1"; // "dark" | "light"
+  const btn = document.getElementById("btnThemeToggle");
+  if(!btn) return;
+
+  function getTheme(){
+    try{ return (localStorage.getItem(KEY) || "dark"); }catch(_){ return "dark"; }
+  }
+  function setTheme(v){
+    try{ localStorage.setItem(KEY, v); }catch(_){}
+  }
+  function apply(v){
+    document.body.classList.toggle("theme-light", v === "light");
+    if(v === "light"){
+      btn.textContent = "🌙 Noche";
+      btn.title = "Cambiar a modo noche";
+    }else{
+      btn.textContent = "☀️ Día";
+      btn.title = "Cambiar a modo día";
+    }
+  }
+
+  // init
+  apply(getTheme());
+
+  // bind once
+  if(!btn.__nvBoundTheme){
+    btn.__nvBoundTheme = true;
+    btn.addEventListener("click", ()=>{
+      const next = (getTheme() === "light") ? "dark" : "light";
+      setTheme(next);
+      apply(next);
+    });
+  }
+})();
+
