@@ -107,37 +107,6 @@
   <div class="subtitle">“Aprende 180 verbos en 80 días”</div>
 </div>
 
-    <!-- ✅ Inicio de sesión (para guardar progreso y ranking) -->
-    <section class="sessionCard" id="sessionCard" aria-label="Inicio de sesión">
-      <div class="sessionCard__info">
-        <div class="sessionCard__title">Inicio de sesión</div>
-        <div class="sessionCard__subtitle">Inicia sesión para guardar tu progreso y aparecer en el ranking. Recomendado: correo institucional.</div>
-      </div>
-
-      <div class="sessionCard__actions">
-        <div class="authBar authBar--top" id="authBarTop">
-          <div id="googleBtn" class="googleBtnBox" title="Iniciar sesión con Google"></div>
-
-          <div class="userChip" id="userChip" style="display:none" title="Tu cuenta">
-            <img id="userPic" alt="">
-            <div class="userMeta">
-              <div id="userName">Usuario</div>
-              <div id="userEmail">correo@</div>
-            </div>
-          </div>
-
-          <button class="miniBtn" id="signOutBtn" type="button" style="display:none">Salir</button>
-
-          <a class="miniLink" id="mjbLink" href="mjb.html" title="Inicio institucional">Inicio institucional</a>
-
-          <button class="miniBtn miniBtn--ghost" id="guestQuickBtn" type="button" title="Continuar como invitado">Invitado</button>
-        </div>
-
-        <div class="authDomainLabel" id="authDomainLabel">Accede con tu correo institucional</div>
-      </div>
-    </section>
-
-
 <div class="roundbar">
 <!-- ✅ FILA 1: INSTRUCCIONES + E-BOOK + REVIEW -->
 <div class="roundrow">
@@ -241,7 +210,10 @@
 <div class="rankTitle" style="font-size:clamp(34px, 6vw, 54px); font-weight:900; letter-spacing:.6px; color:#ffb24a; text-shadow: 0 2px 10px rgba(0,0,0,.35); line-height:1;"><img alt="Logo Los Yoguis" src="assets/logo.png" style="width:clamp(70px, 14vw, 130px); height:auto; display:inline-block; vertical-align:middle; filter:drop-shadow(0 8px 20px rgba(0,0,0,.45));"/></div>
 <div class="rankTitle" style="font-size:clamp(22px, 4vw, 40px); font-weight:900; letter-spacing:.6px; color:#ffb24a; text-shadow: 0 2px 10px rgba(0,0,0,.35); margin-top:4px;">Ranking</div>
 <div class="rankTitle" style="font-size:clamp(18px, 3.4vw, 32px); font-weight:900; letter-spacing:.6px; color:#ffb24a; text-shadow: 0 2px 10px rgba(0,0,0,.35); margin-top:2px;">I.E Manuel J. Betancur</div>
+<div class="authDomainLabel" style="margin-top:6px; font-size:clamp(14px, 2.2vw, 20px); font-weight:800; color:#fff;">Acceder con @iemanueljbetancur.edu.co</div>
 </div>
+<div class="authBar" id="authBar">
+<div data-help="🔑 Inicia sesión con Google para guardar tus XP y aparecer en el ranking. Solo estudiantes de la I.E Manuel J. Betancur." id="googleBtn"></div>
 <div class="userChip" id="userChip" style="display:none;">
 <img alt="Foto" id="userPic"/>
 <div class="userMeta">
@@ -399,78 +371,27 @@
 <div class="gt-arrow" id="gtArrow"></div>
 </div>
 
-<!-- desde mjb (id_token en el hash) → lo guardamos como nv_id_token + user_profile -->
+<!-- desde mjb -->
+
 <script>
   (function () {
     const hash = (location.hash || "").replace(/^#/, "");
-    if (!hash) return;
-
     const params = new URLSearchParams(hash);
     const idToken = params.get("id_token");
-    if (!idToken) return;
 
-    function b64urlToStr(b64url){
-      try{
-        const b64 = b64url.replace(/-/g, '+').replace(/_/g, '/');
-        const pad = '='.repeat((4 - (b64.length % 4)) % 4);
-        const bin = atob(b64 + pad);
-        let str = '';
-        for(let i=0;i<bin.length;i++) str += String.fromCharCode(bin.charCodeAt(i));
-        return decodeURIComponent(escape(str));
-      }catch(e){
-        return '';
-      }
+    if (idToken) {
+      // Guarda el token (ajusta la key como quieras)
+      localStorage.setItem("mjb_id_token", idToken);
+
+      // Limpia el hash para que no quede visible
+      history.replaceState(null, "", location.pathname + location.search);
+      console.log("✅ Token recibido desde MJB login");
     }
-
-    try {
-      localStorage.setItem("nv_id_token", idToken);
-      localStorage.setItem("nv_id_token_ts", String(Date.now()));
-
-      const parts = idToken.split('.');
-      if (parts.length >= 2) {
-        const payloadStr = b64urlToStr(parts[1]);
-        if (payloadStr) {
-          const payload = JSON.parse(payloadStr);
-          const profile = {
-            sub: payload.sub || ('mjb-' + Date.now()),
-            name: payload.name || payload.given_name || 'Usuario',
-            email: payload.email || '',
-            picture: payload.picture || ''
-          };
-          localStorage.setItem("user_profile", JSON.stringify(profile));
-        }
-      }
-    } catch (e) {}
-
-    // Limpia el hash para que no quede visible
-    history.replaceState(null, "", location.pathname + location.search);
-    console.log("✅ Token recibido y guardado para NEUROVERBS");
   })();
 </script>
 
 <!-- XP sync watcher removed: XP is synced only from exercise actions + server fetch to avoid double-counting -->
-<script>
-// NV_GUEST_QUICK: continuar como invitado (sin sincronizar a servidor)
-(function(){
-  function $(id){ return document.getElementById(id); }
-  function safeSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
-  function safeDel(k){ try{ localStorage.removeItem(k); }catch(e){} }
-
-  function makeGuest(){
-    const name = prompt('Nombre para el modo invitado:', 'Guest') || 'Guest';
-    const profile = { sub: 'guest-' + Date.now(), name: name.trim() || 'Guest', email: '', picture: '' };
-    safeDel('nv_id_token');
-    safeDel('nv_id_token_ts');
-    safeSet('user_profile', JSON.stringify(profile));
-    location.reload();
-  }
-
-  window.addEventListener('DOMContentLoaded', function(){
-    const b = $('guestQuickBtn');
-    if(b) b.addEventListener('click', makeGuest);
-  });
-})();
-</script>
+<script src="core.js"></script>
   <!-- DB helpers (hidden) -->
   <a href="verbs.html" style="display:none">verbs</a>
   <a href="verbs2.html" style="display:none">verbs2</a>
