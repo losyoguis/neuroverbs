@@ -169,7 +169,7 @@ function getGame(){
   }
 
   function markKpBadgeDone(){
-    // guarda una insignia persistente (para mostrar en index.html)
+    // guarda una insignia persistente (para mostrar en neuroverbs.html)
     const exists = safeGet(KP_BADGE_KEY);
     if(exists) return false;
     safeSet(KP_BADGE_KEY, JSON.stringify({ done:true, at: Date.now() }));
@@ -1595,7 +1595,7 @@ function updateHUD(){
         const id = href.startsWith("#") ? href.slice(1) : href;
         const isActive = (id === mainId);
         btn.classList.toggle("isActive", isActive);
-        btn.classList.toggle("active", isActive); // ✅ igual a index.html (Round 1/2)
+        btn.classList.toggle("active", isActive); // ✅ igual a neuroverbs.html (Round 1/2)
         if(isActive) btn.setAttribute("aria-current","true");
         else btn.removeAttribute("aria-current");
       });

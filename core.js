@@ -4999,7 +4999,7 @@ async function loadVerbsDbFromVerbs3Html(){
     return {ok:true, count: __NY_VERBS3_DB__.length};
   }catch(err){
     console.warn("No se pudo cargar verbs3.html:", err);
-    // ✅ Si estamos en un entorno donde fetch falla (p.ej. abriendo index.html por file://),
+    // ✅ Si estamos en un entorno donde fetch falla (p.ej. abriendo neuroverbs.html por file://),
     // usamos un fallback embebido para no perder las traducciones exactas del Grupo 3.
     if(Array.isArray(__NY_VERBS3_FALLBACK__) && __NY_VERBS3_FALLBACK__.length){
       __NY_VERBS3_DB__ = __NY_VERBS3_FALLBACK__;
@@ -5018,7 +5018,7 @@ async function loadVerbsDbFromVerbs3Html(){
 
 
 
-  // ===== Sincronización de verbos (index.html ↔ verbs.html) =====
+  // ===== Sincronización de verbos (neuroverbs.html ↔ verbs.html) =====
   // Carga la base VERBS_DB desde verbs.html y la fusiona con la base interna,
   // para que los menús de Grupo/Día y los ejercicios consulten SIEMPRE los verbos actualizados.
   let __verbsHtmlSyncPromise = null;

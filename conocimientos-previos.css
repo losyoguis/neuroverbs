@@ -951,7 +951,7 @@ details[open].kpAcc > summary .kpAccChevron::before{ content:"▴"; }
 
 
 
-/* ✅ Navegación estilo index.html (Round buttons + hint) */
+/* ✅ Navegación estilo neuroverbs.html (Round buttons + hint) */
 .kpRoundActions{
   justify-content: flex-start;
   align-items: center;
@@ -975,7 +975,7 @@ details[open].kpAcc > summary .kpAccChevron::before{ content:"▴"; }
 }
 .kpSecBtn:focus{ outline: 2px solid rgba(255,255,255,.25); outline-offset: 2px; }
 
-/* Estado activo (como index.html): resalta la sección seleccionada */
+/* Estado activo (como neuroverbs.html): resalta la sección seleccionada */
 .kpSecBtn.active,
 .kpSecBtn.isActive{
   background: var(--secondary);
@@ -1001,7 +1001,7 @@ details[open].kpAcc > summary .kpAccChevron::before{ content:"▴"; }
 }
 
 
-/* --- KP NAV: ensure active color always visible (like index.html) --- */
+/* --- KP NAV: ensure active color always visible (like neuroverbs.html) --- */
 .kpRoundSections .kpSecBtn.active,
 .kpRoundSections .kpSecBtn.isActive{
   background: var(--secondary) !important;

@@ -88,7 +88,7 @@
 /* ✅ Dominio institucional + auto-login + redirección */
 (function () {
   const ALLOWED_DOMAIN = 'iemanueljbetancur.edu.co';
-  const TARGET = 'https://losyoguis.github.io/neuroverbs/';
+  const TARGET = 'neuroverbs.html';
 
   function decodeJwtPayload(jwt) {
     try {
@@ -194,7 +194,7 @@
 <script>
 /* ✅ Ingresar como invitado → redirige a Neuroverbs */
 (function () {
-  const TARGET = 'https://losyoguis.github.io/neuroverbs/';
+  const TARGET = 'neuroverbs.html';
   const btn = document.getElementById("guestBtn");
   if (!btn) return;
   btn.addEventListener("click", () => window.location.href = TARGET);

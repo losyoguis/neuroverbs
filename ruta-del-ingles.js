@@ -434,7 +434,7 @@
     $$('.rutaTab').forEach(btn => btn.addEventListener('click', () => setActiveSec(btn.dataset.sec)));
     $$('.rutaBottomBtn').forEach(btn => btn.addEventListener('click', () => setActiveSec(btn.dataset.sec)));
     const back = document.getElementById('btnBack');
-    if(back) back.addEventListener('click', () => { window.location.href = 'index.html'; });
+    if(back) back.addEventListener('click', () => { window.location.href = 'neuroverbs.html'; });
 
     const reset = document.getElementById('btnReset');
     if(reset) reset.addEventListener('click', () => {

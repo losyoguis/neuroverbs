@@ -2542,7 +2542,7 @@ box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);;justify-content:flex-start;text-ali
 
 
 /* ===========================
-   Teacher Yoguis (layout tipo Teacher Poli, usando estilos base de index.html)
+   Teacher Yoguis (layout tipo Teacher Poli, usando estilos base de neuroverbs.html)
    =========================== */
 
 .tyTopbar{
@@ -2773,7 +2773,7 @@ box-shadow: inset 0 0 0 1px rgba(0,0,0,.08);;justify-content:flex-start;text-ali
 
 /* =========================
    Teacher Yoguis — Writing / Speaking / Role Play (Teacher Poli-like layouts)
-   Uses the original UI tokens of index.html (ui.css)
+   Uses the original UI tokens of neuroverbs.html (ui.css)
    ========================= */
 
 .tyInputRowSolo{
