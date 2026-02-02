@@ -4,7 +4,63 @@
 */
 (function () {
   const BTN_ID = "logoutBtnGlobal";
-  if (document.getElementById(BTN_ID)) return;
+
+  function findLogoutButton(){
+    // Prefer our known id, otherwise look for any button/link that says "Cerrar sesión"
+    const byId = document.getElementById(BTN_ID);
+    if(byId) return byId;
+    try{
+      const candidates = Array.from(document.querySelectorAll("button, a"));
+      const found = candidates.find(el => /cerrar\s*ses/i.test((el.textContent||"").trim()));
+      return found || null;
+    }catch(_){ return null; }
+  }
+
+  function wrapWithAvatar(btn){
+    if(!btn || btn.dataset.nvHasAvatar === "1") return null;
+
+    const wrap = document.createElement("div");
+    wrap.className = "nvLogoutInlineWrap";
+    Object.assign(wrap.style, {
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      gap: "10px"
+    });
+
+    const avatar = document.createElement("img");
+    avatar.id = "logoutAvatar";
+    avatar.alt = "Perfil";
+    Object.assign(avatar.style, {
+      width: "54px",
+      height: "54px",
+      borderRadius: "999px",
+      objectFit: "cover",
+      border: "2px solid rgba(255,255,255,.22)",
+      boxShadow: "0 10px 22px rgba(0,0,0,.35)",
+      background: "rgba(255,255,255,.10)",
+      display: "block"
+    });
+
+    avatar.addEventListener("error", () => {
+      try{
+        const name = (typeof getStoredName === "function") ? getStoredName() : "";
+        const email = (typeof getStoredEmail === "function") ? getStoredEmail() : "";
+        avatar.src = placeholderAvatarDataUri(initialsFromName(name || email));
+      }catch(_){}
+    });
+
+    // Replace btn with wrapper and append avatar+btn
+    const parent = btn.parentNode;
+    if(parent){
+      parent.insertBefore(wrap, btn);
+      wrap.appendChild(avatar);
+      wrap.appendChild(btn);
+      btn.dataset.nvHasAvatar = "1";
+      return { wrap, avatar };
+    }
+    return null;
+  }
 
   function safeJsonParse(s) { try { return JSON.parse(s); } catch (_) { return null; } }
 
@@ -260,10 +316,52 @@ function clearAppSession() {
 
   function mount() {
     try {
+      // If there is an existing logout button already in the page,
+      // we ENHANCE it by placing the profile photo above it.
+      const existing = findLogoutButton();
+
+      // If our floating widget already exists, do nothing
+      if(document.getElementById("logoutWidgetWrap")) return;
+
+      if(existing){
+        const res = wrapWithAvatar(existing);
+        const avatarEl = (res && res.avatar) ? res.avatar : document.getElementById("logoutAvatar");
+
+        // Bind logout action only once
+        if(existing.dataset.nvBoundLogout !== "1"){
+          existing.dataset.nvBoundLogout = "1";
+          existing.addEventListener("click", (e)=>{
+            try{ e.preventDefault(); }catch(_){}
+            logout();
+          });
+        }
+
+        function refreshInline(){
+          try{
+            const email = (typeof getStoredEmail === "function") ? getStoredEmail() : "";
+            const name  = (typeof getStoredName === "function") ? getStoredName() : "";
+            const photo = (typeof getStoredPhoto === "function") ? getStoredPhoto() : "";
+
+            const initials = initialsFromName(name || email);
+            const placeholder = placeholderAvatarDataUri(initials);
+
+            if(avatarEl){
+              avatarEl.src = photo || placeholder;
+            }
+          }catch(_){}
+        }
+
+        refreshInline();
+        setInterval(refreshInline, 1500);
+        return;
+      }
+
+      // Otherwise inject our floating widget (default behavior)
       const w = createWidget();
       if(!document.getElementById(w.id)) document.body.appendChild(w);
     } catch (_) {}
   }
+
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", mount, { once: true });
