@@ -7,6 +7,164 @@
   const BTN_ID = "logoutBtnGlobal";
   const DOCK_ID = "nvLogoutAvatarDock";
   const IMG_ID  = "nvLogoutAvatarImg";
+  const SESSION_DOCK_ID = "nvSessionDock";
+  const PROFILE_PIC_ID  = "nvProfilePic";
+  const PROFILE_NAME_ID = "nvProfileName";
+  const PROFILE_EMAIL_ID= "nvProfileEmail";
+  const PROFILE_SUB_ID  = "nvProfileSub";
+  const PROFILE_DOMAIN_ID = "nvProfileDomain";
+  const LOGOUT_BTN_ID = "nvLogoutBtn";
+
+  function injectSessionDockStyles(){
+    if(document.getElementById("nvSessionDockStyles")) return;
+    const st = document.createElement("style");
+    st.id = "nvSessionDockStyles";
+    st.textContent = `
+      .nvSessionDock{
+        position: fixed;
+        top: 12px;
+        right: 12px;
+        z-index: 200000;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        user-select: none;
+        pointer-events: auto;
+        max-width: min(360px, calc(100vw - 24px));
+      }
+      .nvSessionDock .segCard{
+        width: 340px;
+        max-width: min(340px, calc(100vw - 24px));
+        background: rgba(12, 18, 40, .92);
+        border: 1px solid rgba(255,255,255,.12);
+        border-radius: 18px;
+        padding: 14px;
+        box-shadow: 0 16px 42px rgba(0,0,0,.32);
+        backdrop-filter: blur(10px);
+      }
+      .nvSessionDock .segCardHeader{
+        display:flex;
+        align-items:center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+      .nvSessionDock .segCardHeader h3{
+        margin:0;
+        font-size: 16px;
+        letter-spacing: .2px;
+        color: rgba(255,255,255,.92);
+      }
+      .nvSessionDock .segPill{
+        font-size: 12px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(255,255,255,.16);
+        background: rgba(0,0,0,.20);
+        opacity: .95;
+        font-weight: 900;
+        color: rgba(255,255,255,.86);
+      }
+      .nvSessionDock .segProfile{ display:flex; gap: 12px; align-items:center; }
+      .nvSessionDock .segAvatar{
+        width: 54px; height: 54px;
+        border-radius: 999px;
+        border: 1px solid rgba(255,255,255,.18);
+        background: rgba(0,0,0,.25);
+        object-fit: cover;
+        display:block;
+      }
+      .nvSessionDock .segName{ font-weight: 900; font-size: 16px; color: rgba(255,255,255,.92); }
+      .nvSessionDock .segEmail{ font-size: 13px; opacity: .86; color: rgba(255,255,255,.84); }
+      .nvSessionDock .segSmall{ font-size: 12px; opacity: .72; margin-top: 2px; color: rgba(255,255,255,.78); }
+
+      #${LOGOUT_BTN_ID}{
+        padding: 10px 14px;
+        border-radius: 999px;
+        border: 1px solid rgba(255,90,90,.55);
+        background: #ff5a5a;
+        color: #1b1430;
+        font-weight: 900;
+        cursor: pointer;
+        box-shadow: 0 10px 24px rgba(0,0,0,.30);
+        transition: transform .12s ease, filter .12s ease;
+        user-select: none;
+        min-width: 180px;
+        align-self: flex-end;
+      }
+      #${LOGOUT_BTN_ID}:hover{ filter: brightness(1.05); transform: translateY(-1px); }
+      #${LOGOUT_BTN_ID}:active{ filter: brightness(0.98); transform: translateY(0px); }
+    `;
+    document.head.appendChild(st);
+  }
+
+  function createSessionDock(){
+    injectSessionDockStyles();
+    let dock = document.getElementById(SESSION_DOCK_ID);
+    if(dock) return dock;
+
+    dock = document.createElement("div");
+    dock.id = SESSION_DOCK_ID;
+    dock.className = "nvSessionDock";
+
+    // Profile card (same structure as seguimiento)
+    const article = document.createElement("article");
+    article.className = "segCard";
+    article.innerHTML = `
+      <div class="segCardHeader">
+        <h3>👤 Perfil</h3>
+        <span class="segPill" id="${PROFILE_DOMAIN_ID}">Workspace</span>
+      </div>
+      <div class="segProfile">
+        <img id="${PROFILE_PIC_ID}" class="segAvatar" alt="Foto"/>
+        <div class="segProfileMeta">
+          <div class="segName" id="${PROFILE_NAME_ID}">—</div>
+          <div class="segEmail" id="${PROFILE_EMAIL_ID}">—</div>
+          <div class="segSmall" id="${PROFILE_SUB_ID}">ID: —</div>
+        </div>
+      </div>
+    `;
+
+    const btn = document.createElement("button");
+    btn.id = LOGOUT_BTN_ID;
+    btn.type = "button";
+    btn.textContent = "Cerrar sesión";
+    btn.addEventListener("click", (e)=>{ try{ e.preventDefault(); }catch(_){} logout(); });
+
+    dock.appendChild(article);
+    dock.appendChild(btn);
+    document.body.appendChild(dock);
+    return dock;
+  }
+
+  function hideExistingLogoutButtons(){
+    // Hide any existing "Cerrar sesión" buttons/links to avoid duplicates
+    try{
+      const els = Array.from(document.querySelectorAll("button, a"));
+      for(const el of els){
+        if(el.id === LOGOUT_BTN_ID) continue;
+        if(/cerrar\s*ses/i.test((el.textContent||"").trim())){
+          el.dataset.nvHiddenLogout = "1";
+          el.style.display = "none";
+        }
+      }
+    }catch(_){}
+  }
+
+  function getSubFromStore(){
+    const stores = [localStorage, sessionStorage];
+    for(const st of stores){
+      try{
+        const raw = st.getItem("user_profile");
+        if(!raw) continue;
+        const obj = safeJsonParse(raw);
+        if(obj && (obj.sub || obj.id)) return String(obj.sub || obj.id);
+      }catch(_){}
+    }
+    return "";
+  }
+
 
   // ---------- utils ----------
   function safeJsonParse(s){
@@ -295,18 +453,51 @@
     const prof = getProfile();
     const logged = !!(prof.email && prof.email.includes("@"));
 
-    // If the page already shows a logout button, treat as active session for docking (at least placeholder)
-    const existingBtn = findLogoutButton();
-    const sessionLike = logged || !!existingBtn;
-
-    // Ensure button exists only if logged in
-    const btn = sessionLike ? ensureLogoutButton() : findLogoutButton();
-
-    // Hide injected button if not logged in
-    const injected = document.getElementById(BTN_ID);
-    if(injected){
-      injected.style.display = logged ? "inline-flex" : "none";
+    // If not logged, remove dock and show nothing
+    const dockExisting = document.getElementById(SESSION_DOCK_ID);
+    if(!logged){
+      if(dockExisting) dockExisting.style.display = "none";
+      // Also show back any hidden logout buttons
+      try{
+        const els = Array.from(document.querySelectorAll("button, a"));
+        for(const el of els){
+          if(el.dataset && el.dataset.nvHiddenLogout === "1"){
+            el.style.display = "";
+          }
+        }
+      }catch(_){}
+      return;
     }
+
+    // Logged: hide any page-provided logout buttons and render our dock (profile above logout)
+    hideExistingLogoutButtons();
+    const dock = createSessionDock();
+    dock.style.display = "flex";
+
+    // Fill profile fields
+    try{
+      const nameEl = document.getElementById(PROFILE_NAME_ID);
+      const emailEl = document.getElementById(PROFILE_EMAIL_ID);
+      const subEl = document.getElementById(PROFILE_SUB_ID);
+      const domainEl = document.getElementById(PROFILE_DOMAIN_ID);
+      const picEl = document.getElementById(PROFILE_PIC_ID);
+
+      const sub = getSubFromStore();
+      if(nameEl) nameEl.textContent = prof.name || "—";
+      if(emailEl) emailEl.textContent = prof.email || "—";
+      if(subEl) subEl.textContent = "ID: " + (sub || "—");
+
+      const domain = (prof.email||"").includes("@") ? prof.email.split("@").pop() : "Workspace";
+      if(domainEl) domainEl.textContent = domain;
+
+      if(picEl){
+        const initials = initialsFromName(prof.name || prof.email);
+        const placeholder = placeholderAvatarDataUri(initials);
+        picEl.src = (prof.picture && prof.picture !== "null") ? prof.picture : placeholder;
+        picEl.addEventListener("error", ()=>{ picEl.src = placeholder; }, {once:true});
+      }
+    }catch(_){}
+  }
 
     // Ensure avatar dock
     const dock = ensureAvatarDock();
