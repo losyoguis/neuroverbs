@@ -1323,25 +1323,24 @@ function updateHUD(){
           }catch(_){}
 
           // ✅ Abrir SOLO UNA pestaña de correo y quedarnos en la app
+          // Abrimos la pestaña inmediatamente (mejor compatibilidad con bloqueadores)
           let opened = false;
+          let w = null;
           try{
-            const a = document.createElement("a");
-            a.href = gmailUrl;
-            a.target = "_blank";
-            a.rel = "noopener noreferrer";
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            opened = true;
+            w = window.open("about:blank", "_blank", "noopener,noreferrer");
+            if(w){
+              w.location.href = gmailUrl;
+              opened = true;
+            }
           }catch(_){ opened = false; }
 
           toast(
             "Correo listo",
             opened
               ? "Se abrió Gmail en una nueva pestaña (con copia para tu email en CC). Solo presiona ENVIAR."
-              : "Tu navegador bloqueó la nueva pestaña. Usa 'Abrir Gmail' (pestaña nueva)."
+              : "El navegador bloqueó la nueva pestaña. Activa pop-ups para este sitio o usa 'Abrir Gmail' (pestaña nueva)."
           );
-        });
+});
       }
     }
 
