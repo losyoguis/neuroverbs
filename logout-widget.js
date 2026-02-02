@@ -22,7 +22,60 @@
     return "";
   }
 
-  function clearAppSession() {
+  
+  function getStoredPhoto() {
+    const keys = ["user_profile", "rank_user", "mjb_user", "google_user", "neuroverbs_user", "auth_user"];
+    for (const k of keys) {
+      try {
+        const raw = localStorage.getItem(k);
+        if (!raw) continue;
+        const obj = safeJsonParse(raw);
+        const photo =
+          (obj && (obj.picture || obj.photoURL || obj.photo || obj.avatar || obj.imageUrl)) ||
+          (obj && obj.profile && (obj.profile.picture || obj.profile.photoURL || obj.profile.photo || obj.profile.avatar));
+        if (photo) return String(photo);
+      } catch (_) {}
+    }
+    return "";
+  }
+
+  function getStoredName() {
+    const keys = ["user_profile", "rank_user", "mjb_user", "google_user", "neuroverbs_user", "auth_user"];
+    for (const k of keys) {
+      try {
+        const raw = localStorage.getItem(k);
+        if (!raw) continue;
+        const obj = safeJsonParse(raw);
+        const name =
+          (obj && (obj.name || obj.fullName || obj.displayName)) ||
+          (obj && obj.profile && (obj.profile.name || obj.profile.fullName || obj.profile.displayName));
+        if (name) return String(name);
+      } catch (_) {}
+    }
+    return "";
+  }
+
+  function initialsFromName(name) {
+    const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return "NV";
+    const a = parts[0][0] || "";
+    const b = (parts.length > 1 ? parts[parts.length - 1][0] : (parts[0][1] || "")) || "";
+    return (a + b).toUpperCase();
+  }
+
+  function placeholderAvatarDataUri(text) {
+    const t = encodeURIComponent(String(text || "NV").slice(0,2));
+    const svg =
+      `<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120">` +
+      `<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">` +
+      `<stop offset="0" stop-color="#34d399"/><stop offset="1" stop-color="#06b6d4"/>` +
+      `</linearGradient></defs>` +
+      `<rect width="120" height="120" rx="60" fill="url(#g)"/>` +
+      `<text x="60" y="72" text-anchor="middle" font-family="Arial" font-size="44" font-weight="800" fill="#0b1220">${t}</text>` +
+      `</svg>`;
+    return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+  }
+function clearAppSession() {
     const keys = [
       "google_id_token",
       "user_profile",
@@ -83,18 +136,46 @@
     catch (_) { try { window.location.href = "index.html"; } catch (_) {} }
   }
 
-  function createButton() {
+  function createWidget() {
+    const wrap = document.createElement("div");
+    wrap.id = "logoutWidgetWrap";
+    Object.assign(wrap.style, {
+      position: "fixed",
+      top: "12px",
+      right: "12px",
+      zIndex: "99999",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      gap: "10px",
+      padding: "10px",
+      borderRadius: "16px",
+      background: "rgba(10, 14, 30, .35)",
+      backdropFilter: "blur(8px)",
+      border: "1px solid rgba(255,255,255,.10)",
+      boxShadow: "0 14px 30px rgba(0,0,0,.35)",
+      userSelect: "none"
+    });
+
+    const avatar = document.createElement("img");
+    avatar.id = "logoutAvatar";
+    avatar.alt = "Perfil";
+    Object.assign(avatar.style, {
+      width: "62px",
+      height: "62px",
+      borderRadius: "999px",
+      objectFit: "cover",
+      border: "2px solid rgba(255,255,255,.22)",
+      boxShadow: "0 10px 22px rgba(0,0,0,.35)",
+      background: "rgba(255,255,255,.08)"
+    });
+
     const btn = document.createElement("button");
     btn.id = BTN_ID;
     btn.type = "button";
     btn.textContent = "Cerrar sesión";
 
-    // Fixed top-right button (app-like)
     Object.assign(btn.style, {
-      position: "fixed",
-      top: "12px",
-      right: "12px",
-      zIndex: "99999",
       padding: "10px 14px",
       borderRadius: "999px",
       border: "1px solid rgba(255,90,90,.55)",
@@ -104,7 +185,8 @@
       cursor: "pointer",
       boxShadow: "0 10px 24px rgba(0,0,0,.30)",
       transition: "transform .12s ease, filter .12s ease",
-      userSelect: "none"
+      userSelect: "none",
+      minWidth: "160px"
     });
 
     btn.addEventListener("mouseenter", () => { btn.style.filter = "brightness(1.05)"; btn.style.transform = "translateY(-1px)"; });
@@ -114,22 +196,32 @@
 
     btn.addEventListener("click", logout);
 
-    // Only show if there's a stored email (logged-in state)
-    if (!getStoredEmail()) btn.style.display = "none";
+    function refresh() {
+      const email = getStoredEmail();
+      const name = getStoredName();
+      const photo = getStoredPhoto();
 
-    // Keep visibility updated (in case the page stores profile after login)
-    setInterval(() => {
-      const hasEmail = !!getStoredEmail();
-      btn.style.display = hasEmail ? "" : "none";
-    }, 1500);
+      // visible only in logged-in state
+      wrap.style.display = email ? "flex" : "none";
 
-    return btn;
+      const initials = initialsFromName(name || email);
+      const placeholder = placeholderAvatarDataUri(initials);
+      avatar.src = photo || placeholder;
+    }
+
+    // initial + refresh loop
+    refresh();
+    setInterval(refresh, 1500);
+
+    wrap.appendChild(avatar);
+    wrap.appendChild(btn);
+    return wrap;
   }
 
   function mount() {
     try {
-      const btn = createButton();
-      document.body.appendChild(btn);
+      const w = createWidget();
+      if(!document.getElementById(w.id)) document.body.appendChild(w);
     } catch (_) {}
   }
 
