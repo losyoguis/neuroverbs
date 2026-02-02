@@ -499,24 +499,29 @@
   }
 
   function send(){
-    if(!isLoggedIn()){
-      toast("Debes iniciar sesión", "Inicia sesión con Google Workspace para enviar tu seguimiento.");
-      return;
-    }
-
+    // Construir el reporte con TODO lo visible (KPIs completos)
     const reportText = collectMetrics();
     const links = buildEmailLinks(reportText);
 
     // Mantener esta pestaña en la APP: NO redireccionar aquí.
     try{ if(sendCard) sendCard.style.display = "block"; }catch(_){}
 
-    // Abrir SOLO UNA pestaña de correo (mejor compatibilidad con bloqueadores)
+    // Si no está logueado, igual abrimos el correo (pero puede no haber CC)
+    if(!isLoggedIn()){
+      toast("Sesión no detectada", "No se detectó sesión activa. Se abrirá el correo igualmente (si hay email se incluirá en CC).");
+    }
+
+    // Abrir SOLO UNA pestaña de correo (máxima compatibilidad)
     let opened = false;
-    let w = null;
     try{
-      w = window.open("about:blank", "_blank", "noopener,noreferrer");
+      const w = window.open("about:blank", "_blank"); // sin 'features' para evitar bloqueos/bugs
       if(w){
-        w.location.href = links.gmailUrl;
+        try{ w.opener = null; }catch(_){}
+        try{
+          w.location.href = links.gmailUrl;
+        }catch(_){
+          try{ w.location.replace(links.gmailUrl); }catch(__){}
+        }
         opened = true;
       }
     }catch(_){ opened = false; }
@@ -524,15 +529,15 @@
     toast(
       "Correo listo",
       opened
-        ? "Se abrió el correo en una nueva pestaña (con copia para tu email en CC). Vuelve aquí para seguir en la app."
-        : "El navegador bloqueó la nueva pestaña. Usa 'Abrir Gmail' (pestaña nueva)."
+        ? "Se abrió Gmail en una nueva pestaña. Va para el profesor y con copia (CC) a tu correo (si está disponible)."
+        : "El navegador bloqueó la nueva pestaña. Usa 'Abrir Gmail' (pestaña nueva) en el panel que aparece abajo."
     );
-}
+  }
 
   // Evitar múltiples listeners (que abren 2 pestañas)
   if(!btnSend.dataset.nvBound){
     btnSend.dataset.nvBound = "1";
-    btnSend.addEventListener("click", (e)=>{ e.preventDefault(); send(); });
+    btnSend.addEventListener("click", (e)=>{ e.preventDefault(); e.stopPropagation(); send(); });
   }
 })();
 
