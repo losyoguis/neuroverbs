@@ -42,7 +42,7 @@ function computeTopSafes(){
 
   // Guard rails: evita un padding enorme si el navegador reporta valores raros
   const MIN_BOTTOM = Math.round(safeTop + 60);
-  const MAX_BOTTOM = Math.round(safeTop + Math.min(150, Math.round(vh * 0.22) + 20));
+  const MAX_BOTTOM = Math.round(safeTop + Math.min(240, Math.round(vh * 0.28) + 40));
 
   if(!Number.isFinite(statsBottom) || statsBottom <= 0) statsBottom = MIN_BOTTOM;
   statsBottom = clampNV(statsBottom, MIN_BOTTOM, MAX_BOTTOM);

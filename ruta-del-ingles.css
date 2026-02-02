@@ -7,6 +7,10 @@
   --ruta-border: rgba(15,23,42,.10);
 }
 
+
+body.route-body #statsBar{
+  top: calc(env(safe-area-inset-top, 0px) + 12px) !important;
+}
 body.appShell{
   align-items: stretch;
   padding: 16px;

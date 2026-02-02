@@ -3,8 +3,9 @@
 
 :root{
   /* Medidas calculadas por JS (para convivir con la barra de puntajes FIXED de ui.css) */
-  --statsBottom: 0px;   /* bottom del menú de puntajes en viewport px */
+  --statsBottom: 92px;   /* bottom del menú de puntajes en viewport px */
   --dockTop: 0px;       /* top sticky del encabezado KP (debajo del stats) */
+  --safeTop: env(safe-area-inset-top, 0px);
   --hudSafe: 0px;       /* safe para anclas/scroll (stats + dock) */
   --safeBottom: env(safe-area-inset-bottom, 0px);
 
@@ -14,6 +15,17 @@
   --kpBlue: var(--blue, #2563eb);
 }
 
+
+
+
+
+body.kp-body #statsBar{
+  top: calc(env(safe-area-inset-top, 0px) + 12px) !important;
+}
+body.kp-body{
+  /* Avoid huge top gaps: only reserve space for the fixed score bar */
+  padding-top: calc(var(--statsBottom, 92px) + 10px) !important;
+}
 body{
   background: var(--bg);
   margin:0;
