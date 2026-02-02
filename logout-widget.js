@@ -72,20 +72,33 @@
   function readProfileFromDOM(){
     const out = { name:"", email:"", picture:"" };
     try{
+      // Primary (seguimiento-estudiantes.html)
+      const segPic   = document.getElementById("profilePic");
+      const segName  = document.getElementById("profileName");
+      const segEmail = document.getElementById("profileEmail");
+
+      if(segEmail) out.email = txt(segEmail);
+      if(segName)  out.name  = txt(segName);
+      if(segPic && segPic.src) out.picture = String(segPic.src);
+
+      // Secondary (other pages)
       const emailEl = document.getElementById("userEmail") || document.querySelector(".userEmail");
       const nameEl  = document.getElementById("userName")  || document.querySelector(".userName");
       const imgEl   = document.getElementById("userPic")   || document.querySelector("#userChip img") || document.querySelector("img#photo") || document.querySelector("img.avatar");
 
-      if(emailEl) out.email = txt(emailEl);
-      if(nameEl)  out.name  = txt(nameEl);
-      if(imgEl && imgEl.src) out.picture = String(imgEl.src);
+      if(!out.email && emailEl) out.email = txt(emailEl);
+      if(!out.name  && nameEl)  out.name  = txt(nameEl);
+      if(!out.picture && imgEl && imgEl.src) out.picture = String(imgEl.src);
 
-      // Also: profile panel screenshots may come from #profilePhoto
+      // Also: profile panel may use #profilePhoto
       const p2 = document.getElementById("profilePhoto");
       if(!out.picture && p2 && p2.src) out.picture = String(p2.src);
 
       return out;
     }catch(_){
+      return out;
+    }
+  }catch(_){
       return out;
     }
   }
@@ -107,6 +120,20 @@
     if(!prof.email && dom.email) prof.email = dom.email;
     if(!prof.name  && dom.name)  prof.name  = dom.name;
     if(!prof.picture && dom.picture) prof.picture = dom.picture;
+
+    // Persist (so other pages can reuse the picture/email)
+    try{
+      if(prof.email || prof.name || prof.picture){
+        const current = safeJsonParse(localStorage.getItem("user_profile") || "null") || {};
+        const merged = {
+          ...current,
+          email: prof.email || current.email || "",
+          name: prof.name || current.name || "",
+          picture: prof.picture || current.picture || current.photoURL || ""
+        };
+        localStorage.setItem("user_profile", JSON.stringify(merged));
+      }
+    }catch(_){}
 
     return prof;
   }
@@ -268,8 +295,12 @@
     const prof = getProfile();
     const logged = !!(prof.email && prof.email.includes("@"));
 
+    // If the page already shows a logout button, treat as active session for docking (at least placeholder)
+    const existingBtn = findLogoutButton();
+    const sessionLike = logged || !!existingBtn;
+
     // Ensure button exists only if logged in
-    const btn = logged ? ensureLogoutButton() : findLogoutButton();
+    const btn = sessionLike ? ensureLogoutButton() : findLogoutButton();
 
     // Hide injected button if not logged in
     const injected = document.getElementById(BTN_ID);
@@ -279,7 +310,7 @@
 
     // Ensure avatar dock
     const dock = ensureAvatarDock();
-    if(!logged || !btn){
+    if(!btn){
       dock.style.display = "none";
       return;
     }
