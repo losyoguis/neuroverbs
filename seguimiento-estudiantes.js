@@ -268,9 +268,10 @@
 })();
 
 
-/* ========= Enviar seguimiento por correo (SIN PDF, estilo "Modo Estudiante") =========
-   ✅ Sin backend: abre Gmail con el informe listo.
-   ✅ Incluye quién envía (nombre + email Workspace), fecha/hora, KPIs y recomendaciones.
+/* ========= Enviar seguimiento por correo (KPIs completos, SIN PDF) =========
+   ✅ Sin backend: abre Gmail con el informe listo (texto).
+   ✅ Incluye TODAS las métricas visibles del panel (KPIs, listas, tablas).
+   ✅ Se sabe quién lo envía (nombre + email Workspace).
 */
 (function(){
   const btnSend = document.getElementById("btnSendReport");
@@ -297,7 +298,10 @@
     if(!prof) return {name:"Estudiante", email:"", picture:""};
     return { name: prof.name || "Estudiante", email: (prof.email||""), picture: prof.picture || "" };
   }
-
+  function txt(el){
+    if(!el) return "";
+    return (el.textContent || "").replace(/\s+/g," ").trim();
+  }
   function toast(title, msg){
     const div = document.createElement("div");
     div.style.position="fixed";
@@ -318,98 +322,116 @@
     setTimeout(()=>{ try{ div.remove(); }catch(_){ } }, 4200);
   }
 
-  function txt(sel){
-    return (document.querySelector(sel)?.textContent || "").trim();
-  }
-
-  function collectKpis(){
-    // 1) Prefer data-kpi attributes (si existen)
-    const k = {};
-    document.querySelectorAll("[data-kpi]").forEach(el=>{
-      const key = (el.getAttribute("data-kpi") || "").trim();
-      const val = (el.textContent || "").trim();
-      if(key && val) k[key] = val;
-    });
-
-    // 2) Fallback a IDs comunes si existen
-    const map = {
-      xp_total: "#kpiXpTotal",
-      level: "#kpiLevel",
-      streak: "#kpiStreak",
-      hearts: "#kpiHearts",
-      freeze: "#kpiFreeze",
-      accuracy: "#kpiAccuracy",
-      attempts: "#kpiAttempts",
-      correct: "#kpiCorrect",
-      daily: "#kpiDaily",
-      mastered: "#kpiMastered",
-      last_active: "#kpiLastActive",
-      kp_done: "#kpiKpDone",
-      kp_badge: "#kpiKpBadge"
-    };
-    Object.entries(map).forEach(([kpi, sel])=>{
-      if(!k[kpi]){
-        const v = txt(sel);
-        if(v) k[kpi] = v;
-      }
-    });
-
-    return k;
-  }
-
-  function collectTopList(selector, maxItems){
-    const arr = [];
-    document.querySelectorAll(selector).forEach((el)=>{
-      const t = (el.textContent || "").trim();
-      if(t) arr.push(t);
-    });
-    return arr.slice(0, maxItems || 10);
-  }
-
-  function buildReportText(){
-    const k = collectKpis();
-
+  function collectMetrics(){
     const lines = [];
-    lines.push("REPORTE DE SEGUIMIENTO — NeuroVerbs");
-    lines.push("");
-    lines.push("KPIs:");
-    const order = [
-      ["xp_total", "XP total"],
-      ["level", "Nivel"],
-      ["streak", "Racha"],
-      ["hearts", "Corazones"],
-      ["freeze", "Freeze tokens"],
-      ["daily", "Meta diaria"],
-      ["accuracy", "Precisión"],
-      ["attempts", "Intentos"],
-      ["correct", "Correctas"],
-      ["mastered", "Dominio / Verbos"],
-      ["kp_done", "KP completado"],
-      ["kp_badge", "Insignia KP"],
-      ["last_active", "Última actividad"]
-    ];
-    let any = false;
-    order.forEach(([key,label])=>{
-      if(k[key]){
-        lines.push(`- ${label}: ${k[key]}`);
-        any = true;
-      }
-    });
-    if(!any) lines.push("- (No se detectaron KPIs visibles)");
 
-    // Listas (si existen en tu tablero)
-    const topErrors = collectTopList(".segErrors li, #segTopErrors li, [data-list='top_errors'] li", 8);
-    if(topErrors.length){
+    // Píldoras (nivel, precisión, etc.)
+    const pills = Array.from(document.querySelectorAll(".segPill"))
+      .map(p=>({id: p.id || "", value: txt(p)}))
+      .filter(x=>x.value && x.value !== "—");
+    if(pills.length){
+      lines.push("PÍLDORAS / ESTADO:");
+      pills.forEach(p=>{
+        const label = p.id ? p.id.replace(/^pill/i,"") : "Estado";
+        lines.push(`- ${label}: ${p.value}`);
+      });
       lines.push("");
-      lines.push("Errores frecuentes:");
-      topErrors.forEach((x,i)=> lines.push(`${i+1}. ${x}`));
     }
 
-    const tips = collectTopList(".segTips li, #segTips li, [data-list='tips'] li", 8);
-    if(tips.length){
+    // Métricas (tarjetas de progreso)
+    const metrics = Array.from(document.querySelectorAll(".segMetric")).map(m=>{
+      const label = txt(m.querySelector(".segMetricLabel"));
+      const value = txt(m.querySelector(".segMetricValue")) || txt(m);
+      return {label, value};
+    }).filter(x=>x.label && x.value);
+    if(metrics.length){
+      lines.push("KPIs (MÉTRICAS):");
+      metrics.forEach(x=> lines.push(`- ${x.label}: ${x.value}`));
       lines.push("");
-      lines.push("Recomendaciones:");
-      tips.forEach((x,i)=> lines.push(`${i+1}. ${x}`));
+    }
+
+    // Listas tipo KP / Teacher Yoguis
+    const listRows = Array.from(document.querySelectorAll(".segListRow")).map(r=>{
+      const label = txt(r.querySelector("span"));
+      const value = txt(r.querySelector("b")) || txt(r);
+      return {label, value};
+    }).filter(x=>x.label && x.value);
+    if(listRows.length){
+      lines.push("KPIs (LISTAS):");
+      listRows.forEach(x=> lines.push(`- ${x.label}: ${x.value}`));
+      lines.push("");
+    }
+
+    // Dominio (mini grid)
+    const minis = Array.from(document.querySelectorAll("#masteryGrid .segMini")).map(x=>{
+      const c1 = txt(x.querySelector("b"));
+      const stars = txt(x.querySelector("small"));
+      return (c1 ? `${c1}: ${stars || "—"}` : "");
+    }).filter(Boolean);
+    if(minis.length){
+      lines.push("DOMINIO (muestra):");
+      minis.forEach((s,i)=> lines.push(`${i+1}. ${s}`));
+      lines.push("");
+    }
+
+    // Errores frecuentes (tabla)
+    const rows = Array.from(document.querySelectorAll("#mistakesBody tr"));
+    const table = rows.map(tr=>{
+      const tds = Array.from(tr.querySelectorAll("td")).map(td=>txt(td));
+      if(!tds.length) return null;
+      // si es fila "sin datos"
+      if(tds.length === 1) return {empty: true, text: tds[0]};
+      return {c1: tds[0], count: tds[1] || "", reco: tds[2] || ""};
+    }).filter(Boolean);
+    if(table.length){
+      lines.push("ERRORES FRECUENTES (Top):");
+      table.forEach((r,i)=>{
+        if(r.empty){
+          lines.push(`- ${r.text}`);
+        }else{
+          lines.push(`${i+1}. ${r.c1} | ${r.count} | ${r.reco}`);
+        }
+      });
+      lines.push("");
+    }
+
+    // Teacher Yoguis chips
+    const chips = Array.from(document.querySelectorAll("#tyChips .segChip")).map(c=>txt(c)).filter(Boolean);
+    if(chips.length){
+      lines.push("TEACHER YOGUIS (últimos temas):");
+      chips.forEach((c,i)=> lines.push(`${i+1}. ${c}`));
+      lines.push("");
+    }
+
+    // Recomendaciones
+    const recos = Array.from(document.querySelectorAll("#recoList .segRecoItem")).map(r=>txt(r)).filter(Boolean);
+    if(recos.length){
+      lines.push("RECOMENDACIONES DEL SISTEMA:");
+      recos.forEach((r,i)=> lines.push(`${i+1}. ${r}`));
+      lines.push("");
+    }
+
+    // Hints (texto explicativo)
+    const hintProgress = txt(document.getElementById("hintProgress"));
+    const hintDaily = txt(document.getElementById("hintDaily"));
+    const hintPerf = txt(document.getElementById("hintPerf"));
+    if(hintProgress || hintDaily || hintPerf){
+      lines.push("NOTAS / INTERPRETACIÓN:");
+      if(hintProgress) lines.push(`- Progreso: ${hintProgress}`);
+      if(hintDaily) lines.push(`- Meta diaria: ${hintDaily}`);
+      if(hintPerf) lines.push(`- Rendimiento: ${hintPerf}`);
+      lines.push("");
+    }
+
+    // Última lectura
+    const lastRead = txt(document.getElementById("lastRead"));
+    if(lastRead){
+      lines.push(`Última lectura del panel: ${lastRead}`);
+      lines.push("");
+    }
+
+    if(!lines.length){
+      lines.push("(No se detectaron KPIs visibles en la página)");
     }
 
     return lines.join("\n");
@@ -419,12 +441,14 @@
     const to = "neuroaprendizajedelosverbosirregulares@iemanueljbetancur.edu.co";
     const prof = getProfile();
     const subject = `SEGUIMIENTO | ${prof.name} | ${prof.email || "sin-email"}`;
+
     const header =
-`Estudiante: ${prof.name}\n` +
+`SEGUIMIENTO DEL ESTUDIANTE (NeuroVerbs)\n\n` +
+`Nombre: ${prof.name}\n` +
 `Email: ${prof.email || "—"}\n` +
 `Fecha/Hora: ${new Date().toLocaleString()}\n\n`;
 
-    const body = header + reportText + "\n\nEnviado desde: seguimiento-estudiantes.html";
+    const body = header + reportText + `\n\nEnviado desde: seguimiento-estudiantes.html`;
 
     const gmailUrl =
       "https://mail.google.com/mail/?view=cm&fs=1" +
@@ -450,14 +474,15 @@
       return;
     }
 
-    const reportText = buildReportText();
+    // Construir el reporte con TODO lo que esté visible (KPIs completos)
+    const reportText = collectMetrics();
     const links = buildEmailLinks(reportText);
 
-    // Intento 1: abrir Gmail en nueva pestaña
+    // Abrir Gmail (intento 1: nueva pestaña)
     let w = null;
     try{ w = window.open(links.gmailUrl, "_blank", "noopener,noreferrer"); }catch(_){ w = null; }
 
-    // Si está bloqueado, abrimos en la misma pestaña; si falla, mailto
+    // Fallback si el popup está bloqueado
     if(!w){
       try{
         window.location.assign(links.gmailUrl);
@@ -467,7 +492,7 @@
       return;
     }
 
-    toast("Correo listo", "Se abrió Gmail con el informe preparado. Solo presiona ENVIAR.");
+    toast("Correo listo", "Se abrió Gmail con TODOS los KPIs del panel. Solo presiona ENVIAR.");
   }
 
   btnSend.addEventListener("click", send);

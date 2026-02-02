@@ -276,9 +276,10 @@ body{ background: var(--seg-bg); color: var(--seg-text); }
 /* Botón ENVIAR (seguimiento) */
 .segNavBtn.segSend{
   background: linear-gradient(135deg, rgba(0,255,178,.95), rgba(0,140,255,.95));
-  color: #06101d;
+  color: #05101f !important;
   border: 1px solid rgba(255,255,255,.18);
   font-weight: 950;
+  text-shadow: 0 1px 0 rgba(255,255,255,.22);
 }
 .segNavBtn.segSend:hover{ filter: brightness(1.05); transform: translateY(-1px); }
 .segNavBtn.segSend:active{ transform: translateY(0px); }
@@ -308,3 +309,4 @@ body{ background: var(--seg-bg); color: var(--seg-text); }
   background: linear-gradient(135deg, rgba(255,176,52,.95), rgba(255,110,20,.95));
   color:#07101d;
 }
+
