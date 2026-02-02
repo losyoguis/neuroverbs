@@ -1,277 +1,184 @@
-/* NeuroVerbs — Logout widget (Google Workspace / app session)
-   Injects a fixed "Cerrar sesión" button on every page that includes this script.
-   It clears local app session and (best-effort) disables Google One Tap auto-select + revokes the token.
+/* NeuroVerbs — Logout + Avatar dock (no Worker)
+   - Ensures a "Cerrar sesión" button exists for logged-in users (on pages that include this script)
+   - Shows the Google profile photo (or initials) FIXED above the logout button on ALL pages
+   - Does NOT move your existing button; it only anchors an avatar overlay to it.
 */
 (function () {
   const BTN_ID = "logoutBtnGlobal";
+  const DOCK_ID = "nvLogoutAvatarDock";
+  const IMG_ID  = "nvLogoutAvatarImg";
 
-  function findLogoutButton(){
-    // Prefer our known id, otherwise look for any button/link that says "Cerrar sesión"
-    const byId = document.getElementById(BTN_ID);
-    if(byId) return byId;
-    try{
-      const candidates = Array.from(document.querySelectorAll("button, a"));
-      const found = candidates.find(el => /cerrar\s*ses/i.test((el.textContent||"").trim()));
-      return found || null;
-    }catch(_){ return null; }
+  // ---------- utils ----------
+  function safeJsonParse(s){
+    try { return JSON.parse(s); } catch (_) { return null; }
+  }
+  function txt(el){
+    return (el && (el.textContent || el.innerText) ? String(el.textContent || el.innerText).trim() : "");
   }
 
-  function wrapWithAvatar(btn){
-    if(!btn || btn.dataset.nvHasAvatar === "1") return null;
-
-    const wrap = document.createElement("div");
-    wrap.className = "nvLogoutInlineWrap";
-    Object.assign(wrap.style, {
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      gap: "10px"
-    });
-
-    const avatar = document.createElement("img");
-    avatar.id = "logoutAvatar";
-    avatar.alt = "Perfil";
-    Object.assign(avatar.style, {
-      width: "54px",
-      height: "54px",
-      borderRadius: "999px",
-      objectFit: "cover",
-      border: "2px solid rgba(255,255,255,.22)",
-      boxShadow: "0 10px 22px rgba(0,0,0,.35)",
-      background: "rgba(255,255,255,.10)",
-      display: "block"
-    });
-
-    avatar.addEventListener("error", () => {
-      try{
-        const name = (typeof getStoredName === "function") ? getStoredName() : "";
-        const email = (typeof getStoredEmail === "function") ? getStoredEmail() : "";
-        avatar.src = placeholderAvatarDataUri(initialsFromName(name || email));
-      }catch(_){}
-    });
-
-    // Replace btn with wrapper and append avatar+btn
-    const parent = btn.parentNode;
-    if(parent){
-      parent.insertBefore(wrap, btn);
-      wrap.appendChild(avatar);
-      wrap.appendChild(btn);
-      btn.dataset.nvHasAvatar = "1";
-      return { wrap, avatar };
-    }
-    return null;
-  }
-
-  function safeJsonParse(s) { try { return JSON.parse(s); } catch (_) { return null; } }
-
-  function getStoredEmail() {
-    const keys = ["user_profile", "rank_user", "mjb_user", "google_user", "neuroverbs_user", "auth_user"];
-    for (const k of keys) {
-      try {
-        const raw = localStorage.getItem(k);
-        if (!raw) continue;
-        const obj = safeJsonParse(raw);
-        const email = obj && (obj.email || (obj.profile && obj.profile.email));
-        if (email) return String(email).toLowerCase();
-      } catch (_) {}
-    }
-    return "";
-  }
-
-  
-  function getStoredPhoto() {
-    const stores = [localStorage, sessionStorage];
-    const keys = ["user_profile", "rank_user", "mjb_user", "google_user", "neuroverbs_user", "auth_user"];
-    const photoKeys = ["picture","photoURL","photoUrl","photo_url","photo","avatar","avatarUrl","image","imageUrl","img","profilePic","profile_pic"];
-    for (const store of stores) {
-      for (const k of keys) {
-        try {
-          const raw = store.getItem(k);
-          if (!raw) continue;
-          const obj = safeJsonParse(raw);
-          if (!obj) continue;
-
-          // direct
-          for (const pk of photoKeys) {
-            if (obj[pk]) return String(obj[pk]);
-          }
-
-          // common nested
-          const nested = [obj.profile, obj.user, obj.data, obj.result, obj.payload, obj.google, obj.googleProfile];
-          for (const n of nested) {
-            if (!n) continue;
-            for (const pk of photoKeys) {
-              if (n[pk]) return String(n[pk]);
-            }
-          }
-        } catch (_) {}
-      }
-    }
-
-    // Last resort: try to read from DOM (if the page already renders the photo)
-    try {
-      const candidates = [
-        "#profilePhoto", "#userPhoto", "#avatar", "#profileAvatar",
-        "img.profile-photo", "img.avatar", "img#photo", ".profile img", ".avatar img"
-      ];
-      for (const sel of candidates) {
-        const el = document.querySelector(sel);
-        if (el && el.src && String(el.src).startsWith("http")) return String(el.src);
-        if (el && el.src && String(el.src).startsWith("data:image")) return String(el.src);
-      }
-    } catch (_) {}
-
-    return "";
-  } catch (_) {}
-    }
-    return "";
-  }
-
-  function getStoredName() {
-    const keys = ["user_profile", "rank_user", "mjb_user", "google_user", "neuroverbs_user", "auth_user"];
-    for (const k of keys) {
-      try {
-        const raw = localStorage.getItem(k);
-        if (!raw) continue;
-        const obj = safeJsonParse(raw);
-        const name =
-          (obj && (obj.name || obj.fullName || obj.displayName)) ||
-          (obj && obj.profile && (obj.profile.name || obj.profile.fullName || obj.profile.displayName));
-        if (name) return String(name);
-      } catch (_) {}
-    }
-    return "";
-  }
-
-  function initialsFromName(name) {
+  function initialsFromName(name){
     const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
-    if (!parts.length) return "NV";
+    if(!parts.length) return "NV";
     const a = parts[0][0] || "";
     const b = (parts.length > 1 ? parts[parts.length - 1][0] : (parts[0][1] || "")) || "";
     return (a + b).toUpperCase();
   }
 
-  function placeholderAvatarDataUri(text) {
-    const initials = String(text || "NV").slice(0, 2).toUpperCase();
+  function placeholderAvatarDataUri(initials){
+    const t = String(initials || "NV").slice(0,2).toUpperCase();
     const svg =
       `<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120">` +
       `<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">` +
       `<stop offset="0" stop-color="#34d399"/><stop offset="1" stop-color="#06b6d4"/>` +
       `</linearGradient></defs>` +
       `<rect width="120" height="120" rx="60" fill="url(#g)"/>` +
-      `<text x="60" y="74" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="44" font-weight="800" fill="#0b1220">${initials}</text>` +
+      `<text x="60" y="74" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="44" font-weight="800" fill="#0b1220">${t}</text>` +
       `</svg>`;
     const b64 = btoa(unescape(encodeURIComponent(svg)));
     return "data:image/svg+xml;base64," + b64;
   }
-function clearAppSession() {
-    const keys = [
-      "google_id_token",
-      "user_profile",
-      "rank_user",
-      "mjb_user",
-      "google_user",
-      "neuroverbs_user",
-      "auth_user"
-    ];
-    for (const k of keys) { try { localStorage.removeItem(k); } catch (_) {} }
-    try { if (typeof clearSession === "function") clearSession(); } catch (_) {}
-    try { sessionStorage.clear(); } catch (_) {}
+
+  function readProfileFromStore(store){
+    const keys = ["user_profile", "rank_user", "mjb_user", "google_user", "neuroverbs_user", "auth_user"];
+    const emailKeys = ["email","mail","userEmail"];
+    const nameKeys  = ["name","fullName","displayName","userName"];
+    const picKeys   = ["picture","photoURL","photoUrl","photo_url","photo","avatar","avatarUrl","image","imageUrl","img","profilePic","profile_pic"];
+
+    for(const k of keys){
+      const raw = store.getItem(k);
+      if(!raw) continue;
+      const obj = safeJsonParse(raw);
+      if(!obj) continue;
+
+      const out = { name:"", email:"", picture:"" };
+
+      for(const ek of emailKeys) if(obj[ek]) out.email = String(obj[ek]);
+      for(const nk of nameKeys)  if(obj[nk]) out.name  = String(obj[nk]);
+      for(const pk of picKeys)   if(obj[pk]) out.picture = String(obj[pk]);
+
+      const nested = [obj.profile, obj.user, obj.data, obj.result, obj.payload, obj.google, obj.googleProfile];
+      for(const n of nested){
+        if(!n) continue;
+        for(const ek of emailKeys) if(!out.email && n[ek]) out.email = String(n[ek]);
+        for(const nk of nameKeys)  if(!out.name  && n[nk]) out.name  = String(n[nk]);
+        for(const pk of picKeys)   if(!out.picture && n[pk]) out.picture = String(n[pk]);
+      }
+
+      if(out.email || out.name || out.picture) return out;
+    }
+    return null;
   }
 
-  function ensureGsi(then) {
-    try {
-      if (window.google && google.accounts && google.accounts.id) return then();
-    } catch (_) {}
+  function readProfileFromDOM(){
+    const out = { name:"", email:"", picture:"" };
+    try{
+      const emailEl = document.getElementById("userEmail") || document.querySelector(".userEmail");
+      const nameEl  = document.getElementById("userName")  || document.querySelector(".userName");
+      const imgEl   = document.getElementById("userPic")   || document.querySelector("#userChip img") || document.querySelector("img#photo") || document.querySelector("img.avatar");
 
-    const existing = document.querySelector('script[src*="accounts.google.com/gsi/client"]');
-    if (existing) {
-      existing.addEventListener("load", then, { once: true });
-      // fallback: run anyway after a short delay
-      setTimeout(then, 1500);
-      return;
+      if(emailEl) out.email = txt(emailEl);
+      if(nameEl)  out.name  = txt(nameEl);
+      if(imgEl && imgEl.src) out.picture = String(imgEl.src);
+
+      // Also: profile panel screenshots may come from #profilePhoto
+      const p2 = document.getElementById("profilePhoto");
+      if(!out.picture && p2 && p2.src) out.picture = String(p2.src);
+
+      return out;
+    }catch(_){
+      return out;
+    }
+  }
+
+  function getProfile(){
+    const stores = [localStorage, sessionStorage];
+    let prof = null;
+    for(const st of stores){
+      const p = readProfileFromStore(st);
+      if(p){
+        prof = { ...p };
+        break;
+      }
+    }
+    const dom = readProfileFromDOM();
+    prof = prof || { name:"", email:"", picture:"" };
+
+    // Fill blanks from DOM
+    if(!prof.email && dom.email) prof.email = dom.email;
+    if(!prof.name  && dom.name)  prof.name  = dom.name;
+    if(!prof.picture && dom.picture) prof.picture = dom.picture;
+
+    return prof;
+  }
+
+  function isLoggedIn(){
+    const p = getProfile();
+    return !!(p.email && p.email.includes("@"));
+  }
+
+  // ---------- logout ----------
+  function clearAppSession(){
+    const keys = [
+      "user_profile","rank_user","mjb_user","google_user","neuroverbs_user","auth_user",
+      "nv_user","nv_token","nv_session","nvkp_token"
+    ];
+    for(const k of keys){
+      try{ localStorage.removeItem(k); }catch(_){}
+      try{ sessionStorage.removeItem(k); }catch(_){}
+    }
+  }
+
+  function logout(){
+    const p = getProfile();
+    try{
+      // Google Identity Services (best-effort)
+      if(window.google && google.accounts && google.accounts.id){
+        try{ google.accounts.id.disableAutoSelect(); }catch(_){}
+        // revoke can remove the account authorization for your app
+        if(typeof google.accounts.id.revoke === "function" && p.email){
+          try{ google.accounts.id.revoke(p.email, ()=>{}); }catch(_){}
+        }
+      }
+    }catch(_){}
+    clearAppSession();
+    try{ location.reload(); }catch(_){}
+  }
+
+  // ---------- UI: button + avatar dock ----------
+  function findLogoutButton(){
+    // Prefer known id
+    const byId = document.getElementById(BTN_ID);
+    if(byId) return byId;
+
+    // Any element with text "Cerrar sesión"
+    try{
+      const candidates = Array.from(document.querySelectorAll("button, a, div"));
+      const found = candidates.find(el => /cerrar\s*ses/i.test(txt(el)));
+      return found || null;
+    }catch(_){ return null; }
+  }
+
+  function ensureLogoutButton(){
+    let btn = document.getElementById(BTN_ID);
+    if(btn) return btn;
+
+    // If there is already one in the page, use it
+    const existing = findLogoutButton();
+    if(existing){
+      // If it's not a button, we still can click-bind it
+      return existing;
     }
 
-    const s = document.createElement("script");
-    s.src = "https://accounts.google.com/gsi/client";
-    s.async = true;
-    s.defer = true;
-    s.onload = then;
-    document.head.appendChild(s);
-    setTimeout(then, 2000);
-  }
-
-  function bestEffortGoogleSignOut(email) {
-    ensureGsi(function () {
-      try {
-        if (!(window.google && google.accounts && google.accounts.id)) return;
-
-        // Avoid auto-login / One Tap auto-select
-        try { if (google.accounts.id.disableAutoSelect) google.accounts.id.disableAutoSelect(); } catch (_) {}
-
-        // Revoke the token for this app (best effort)
-        try { if (email && google.accounts.id.revoke) google.accounts.id.revoke(email, function () {}); } catch (_) {}
-      } catch (_) {}
-    });
-  }
-
-  function logout() {
-    const email = getStoredEmail();
-    clearAppSession();
-    bestEffortGoogleSignOut(email);
-
-    // Return to login/entry
-    try { window.location.replace("index.html"); }
-    catch (_) { try { window.location.href = "index.html"; } catch (_) {} }
-  }
-
-  function createWidget() {
-    const wrap = document.createElement("div");
-    wrap.id = "logoutWidgetWrap";
-    Object.assign(wrap.style, {
-      position: "fixed",
-      top: "12px",
-      right: "12px",
-      zIndex: "99999",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      gap: "10px",
-      padding: "10px",
-      borderRadius: "16px",
-      background: "rgba(10, 14, 30, .35)",
-      backdropFilter: "blur(8px)",
-      border: "1px solid rgba(255,255,255,.10)",
-      boxShadow: "0 14px 30px rgba(0,0,0,.35)",
-      userSelect: "none"
-    });
-
-    const avatar = document.createElement("img");
-    avatar.id = "logoutAvatar";
-    avatar.alt = "Perfil";
-    Object.assign(avatar.style, {
-      width: "62px",
-      height: "62px",
-      borderRadius: "999px",
-      objectFit: "cover",
-      border: "2px solid rgba(255,255,255,.22)",
-      boxShadow: "0 10px 22px rgba(0,0,0,.35)",
-      background: "rgba(255,255,255,.10)", display: "block"
-    });
-
-    avatar.addEventListener("error", () => {
-      const name = getStoredName();
-      const email = getStoredEmail();
-      avatar.src = placeholderAvatarDataUri(initialsFromName(name || email));
-    });
-
-
-    const btn = document.createElement("button");
+    // Otherwise inject a fixed button
+    btn = document.createElement("button");
     btn.id = BTN_ID;
     btn.type = "button";
     btn.textContent = "Cerrar sesión";
-
     Object.assign(btn.style, {
+      position: "fixed",
+      top: "14px",
+      right: "14px",
+      zIndex: "99999",
       padding: "10px 14px",
       borderRadius: "999px",
       border: "1px solid rgba(255,90,90,.55)",
@@ -280,92 +187,141 @@ function clearAppSession() {
       fontWeight: "900",
       cursor: "pointer",
       boxShadow: "0 10px 24px rgba(0,0,0,.30)",
-      transition: "transform .12s ease, filter .12s ease",
-      userSelect: "none",
-      minWidth: "160px"
+      userSelect: "none"
     });
+    btn.addEventListener("click", (e)=>{ try{ e.preventDefault(); }catch(_){} logout(); });
+    document.body.appendChild(btn);
+    return btn;
+  }
 
-    btn.addEventListener("mouseenter", () => { btn.style.filter = "brightness(1.05)"; btn.style.transform = "translateY(-1px)"; });
-    btn.addEventListener("mouseleave", () => { btn.style.filter = ""; btn.style.transform = ""; });
-    btn.addEventListener("mousedown", () => { btn.style.filter = "brightness(0.98)"; btn.style.transform = "translateY(0px)"; });
-    btn.addEventListener("mouseup", () => { btn.style.filter = "brightness(1.05)"; btn.style.transform = "translateY(-1px)"; });
+  function ensureAvatarDock(){
+    let dock = document.getElementById(DOCK_ID);
+    if(!dock){
+      dock = document.createElement("div");
+      dock.id = DOCK_ID;
+      Object.assign(dock.style, {
+        position: "fixed",
+        zIndex: "100000",
+        width: "58px",
+        height: "58px",
+        borderRadius: "999px",
+        overflow: "hidden",
+        boxShadow: "0 10px 22px rgba(0,0,0,.35)",
+        border: "2px solid rgba(255,255,255,.22)",
+        background: "rgba(255,255,255,.10)",
+        display: "none",
+        left: "0px",
+        top: "0px",
+        transform: "translate(-50%, 0)"
+      });
 
-    btn.addEventListener("click", logout);
+      const img = document.createElement("img");
+      img.id = IMG_ID;
+      img.alt = "Perfil";
+      Object.assign(img.style, {
+        width: "100%",
+        height: "100%",
+        objectFit: "cover",
+        display: "block"
+      });
 
-    function refresh() {
-      const email = getStoredEmail();
-      const name = getStoredName();
-      const photo = getStoredPhoto();
+      img.addEventListener("error", ()=>{
+        const p = getProfile();
+        img.src = placeholderAvatarDataUri(initialsFromName(p.name || p.email));
+      });
 
-      // visible only in logged-in state
-      wrap.style.display = email ? "flex" : "none";
+      dock.appendChild(img);
+      document.body.appendChild(dock);
+    }
+    return dock;
+  }
 
-      const initials = initialsFromName(name || email);
-      const placeholder = placeholderAvatarDataUri(initials);
-      avatar.src = photo || placeholder;
+  function positionDockAboveButton(dock, btn){
+    if(!dock || !btn) return;
+
+    const rect = btn.getBoundingClientRect();
+    const size = 58;
+    const gap = 10;
+
+    // Center horizontally with the button center
+    const cx = rect.left + rect.width / 2;
+
+    // Place above. If not enough space, place below.
+    let top = rect.top - size - gap;
+    if(top < 8) top = rect.bottom + gap;
+
+    dock.style.left = `${Math.round(cx)}px`;
+    dock.style.top  = `${Math.round(top)}px`;
+  }
+
+  function bindLogoutOnce(btn){
+    if(!btn) return;
+    if(btn.dataset && btn.dataset.nvBoundLogout === "1") return;
+
+    try{
+      if(btn.dataset) btn.dataset.nvBoundLogout = "1";
+      btn.addEventListener("click", (e)=>{ try{ e.preventDefault(); }catch(_){} logout(); });
+    }catch(_){}
+  }
+
+  function updateUI(){
+    const prof = getProfile();
+    const logged = !!(prof.email && prof.email.includes("@"));
+
+    // Ensure button exists only if logged in
+    const btn = logged ? ensureLogoutButton() : findLogoutButton();
+
+    // Hide injected button if not logged in
+    const injected = document.getElementById(BTN_ID);
+    if(injected){
+      injected.style.display = logged ? "inline-flex" : "none";
     }
 
-    // initial + refresh loop
-    refresh();
-    setInterval(refresh, 1500);
+    // Ensure avatar dock
+    const dock = ensureAvatarDock();
+    if(!logged || !btn){
+      dock.style.display = "none";
+      return;
+    }
 
-    wrap.appendChild(avatar);
-    wrap.appendChild(btn);
-    return wrap;
+    // Bind logout to the button (even if it is page-provided)
+    bindLogoutOnce(btn);
+
+    // Use stored picture or placeholder
+    const img = document.getElementById(IMG_ID);
+    if(img){
+      const initials = initialsFromName(prof.name || prof.email);
+      const placeholder = placeholderAvatarDataUri(initials);
+      img.src = (prof.picture && prof.picture !== "null" ? prof.picture : placeholder);
+    }
+
+    // Make visible + position
+    dock.style.display = "block";
+    positionDockAboveButton(dock, btn);
+
+    // If the page has an internal avatar inside any previous widget, hide it to avoid duplicates
+    const old = document.getElementById("logoutAvatar");
+    if(old) old.style.display = "none";
   }
 
-  function mount() {
-    try {
-      // If there is an existing logout button already in the page,
-      // we ENHANCE it by placing the profile photo above it.
-      const existing = findLogoutButton();
-
-      // If our floating widget already exists, do nothing
-      if(document.getElementById("logoutWidgetWrap")) return;
-
-      if(existing){
-        const res = wrapWithAvatar(existing);
-        const avatarEl = (res && res.avatar) ? res.avatar : document.getElementById("logoutAvatar");
-
-        // Bind logout action only once
-        if(existing.dataset.nvBoundLogout !== "1"){
-          existing.dataset.nvBoundLogout = "1";
-          existing.addEventListener("click", (e)=>{
-            try{ e.preventDefault(); }catch(_){}
-            logout();
-          });
-        }
-
-        function refreshInline(){
-          try{
-            const email = (typeof getStoredEmail === "function") ? getStoredEmail() : "";
-            const name  = (typeof getStoredName === "function") ? getStoredName() : "";
-            const photo = (typeof getStoredPhoto === "function") ? getStoredPhoto() : "";
-
-            const initials = initialsFromName(name || email);
-            const placeholder = placeholderAvatarDataUri(initials);
-
-            if(avatarEl){
-              avatarEl.src = photo || placeholder;
-            }
-          }catch(_){}
-        }
-
-        refreshInline();
-        setInterval(refreshInline, 1500);
-        return;
-      }
-
-      // Otherwise inject our floating widget (default behavior)
-      const w = createWidget();
-      if(!document.getElementById(w.id)) document.body.appendChild(w);
-    } catch (_) {}
+  // ---------- bootstrap ----------
+  function mount(){
+    try{ updateUI(); }catch(_){}
   }
 
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", mount, { once: true });
-  } else {
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", mount, {once:true});
+  }else{
     mount();
   }
+
+  // Keep in sync (login happens after page load)
+  window.addEventListener("pageshow", mount);
+  window.addEventListener("storage", mount);
+  window.addEventListener("resize", mount);
+  window.addEventListener("scroll", mount, {passive:true});
+
+  // Light refresh loop (profile picture may appear later)
+  setInterval(()=>{ try{ updateUI(); }catch(_){} }, 1500);
+
 })();
