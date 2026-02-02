@@ -266,3 +266,224 @@
 
   window.addEventListener("load", render);
 })();
+
+
+/* ========= Enviar seguimiento por correo (PDF adjunto cuando sea posible) ========= */
+(function(){
+  const btnSend = document.getElementById("btnSendReport");
+  if(!btnSend) return;
+
+  const sendCard = document.getElementById("segSendCard");
+  const aGmail = document.getElementById("segOpenGmail");
+  const aMailto = document.getElementById("segOpenMailto");
+
+  function safeGet(key){
+    try{ return localStorage.getItem(key); }catch(_){ return null; }
+  }
+  function safeJsonParse(raw, fallback){
+    if(!raw) return fallback;
+    try{ return JSON.parse(raw); }catch(_){ return fallback; }
+  }
+  function isLoggedIn(){
+    const prof = safeJsonParse(safeGet("user_profile"), null);
+    const token = safeGet("google_id_token");
+    return !!(prof && prof.email && token);
+  }
+  function getProfile(){
+    const prof = safeJsonParse(safeGet("user_profile"), null);
+    if(!prof) return {name:"Estudiante", email:"", picture:""};
+    return { name: prof.name || "Estudiante", email: (prof.email||""), picture: prof.picture || "" };
+  }
+
+  function toast(title, msg){
+    // Reutiliza estilos existentes creando un aviso simple
+    const div = document.createElement("div");
+    div.style.position="fixed";
+    div.style.left="50%";
+    div.style.bottom="18px";
+    div.style.transform="translateX(-50%)";
+    div.style.zIndex="99999";
+    div.style.maxWidth="min(720px, calc(100vw - 26px))";
+    div.style.padding="12px 14px";
+    div.style.borderRadius="14px";
+    div.style.border="1px solid rgba(255,255,255,.14)";
+    div.style.background="rgba(10,16,32,.92)";
+    div.style.backdropFilter="blur(10px)";
+    div.style.boxShadow="0 18px 50px rgba(0,0,0,.45)";
+    div.style.color="rgba(255,255,255,.92)";
+    div.innerHTML = `<div style="font-weight:950;margin-bottom:3px;">${title}</div><div style="opacity:.85;font-size:13px;line-height:1.25;">${msg}</div>`;
+    document.body.appendChild(div);
+    setTimeout(()=>{ try{ div.remove(); }catch(_){ } }, 4200);
+  }
+
+  function buildEmailLinks(summaryText){
+    const to = "neuroaprendizajedelosverbosirregulares@iemanueljbetancur.edu.co";
+    const prof = getProfile();
+    const subject = `SEGUIMIENTO | ${prof.name} | ${prof.email || "sin-email"}`;
+    const body =
+`SEGUIMIENTO DEL ESTUDIANTE (NeuroVerbs)\\n\\n` +
+`Nombre: ${prof.name}\\n` +
+`Email: ${prof.email || "—"}\\n` +
+`Fecha/Hora: ${new Date().toLocaleString()}\\n\\n` +
+`RESUMEN:\\n${summaryText}\\n\\n` +
+`Adjunto: PDF del seguimiento (si tu dispositivo lo permite).\\n` +
+`Si no se adjunta automáticamente, por favor descárgalo con "Imprimir / PDF" y adjúntalo.\\n\\n` +
+`Enviado desde: seguimiento-estudiantes.html`;
+
+    const gmailUrl =
+      "https://mail.google.com/mail/?view=cm&fs=1" +
+      "&to=" + encodeURIComponent(to) +
+      "&su=" + encodeURIComponent(subject) +
+      "&body=" + encodeURIComponent(body);
+
+    const mailto =
+      "mailto:" + encodeURIComponent(to) +
+      "?subject=" + encodeURIComponent(subject) +
+      "&body=" + encodeURIComponent(body);
+
+    if(aGmail) aGmail.href = gmailUrl;
+    if(aMailto) aMailto.href = mailto;
+    if(sendCard) sendCard.style.display = "block";
+
+    return { gmailUrl, mailto, subject, body };
+  }
+
+  function getSummaryText(){
+    // Toma algunas métricas visibles del tablero para el cuerpo del correo
+    const getTxt = (sel)=> (document.querySelector(sel)?.textContent || "").trim();
+    const xp = getTxt("[data-kpi='xp_total']") || getTxt("#kpiXpTotal") || "";
+    const level = getTxt("[data-kpi='level']") || getTxt("#kpiLevel") || "";
+    const streak = getTxt("[data-kpi='streak']") || getTxt("#kpiStreak") || "";
+    const acc = getTxt("[data-kpi='accuracy']") || getTxt("#kpiAccuracy") || "";
+    const daily = getTxt("[data-kpi='daily']") || getTxt("#kpiDaily") || "";
+    const mastered = getTxt("[data-kpi='mastered']") || getTxt("#kpiMastered") || "";
+    const last = getTxt("[data-kpi='last_active']") || getTxt("#kpiLastActive") || "";
+
+    const parts = [];
+    if(xp) parts.push(`XP total: ${xp}`);
+    if(level) parts.push(`Nivel: ${level}`);
+    if(streak) parts.push(`Racha: ${streak}`);
+    if(acc) parts.push(`Precisión: ${acc}`);
+    if(daily) parts.push(`Meta diaria: ${daily}`);
+    if(mastered) parts.push(`Dominio/Verbos: ${mastered}`);
+    if(last) parts.push(`Última actividad: ${last}`);
+    return parts.join("\\n") || "(Sin métricas visibles)";
+  }
+
+  async function generatePdfBlob(){
+    // Genera un PDF del contenido usando html2canvas + jsPDF (CDN).
+    const target = document.querySelector(".segMain") || document.body;
+    if(!window.html2canvas) throw new Error("html2canvas no disponible");
+    const jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : null;
+    if(!jsPDF) throw new Error("jsPDF no disponible");
+
+    // Garantiza que el panel esté en el top antes de capturar
+    try{ window.scrollTo({top:0, behavior:"instant"}); }catch(_){ window.scrollTo(0,0); }
+
+    const canvas = await window.html2canvas(target, {
+      scale: 2,
+      backgroundColor: "#0a1020",
+      useCORS: true
+    });
+
+    const imgData = canvas.toDataURL("image/png", 1.0);
+    const pdf = new jsPDF("p", "pt", "a4");
+
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+
+    const imgWidth = pageWidth;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+    let heightLeft = imgHeight;
+    let position = 0;
+
+    pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+
+    while(heightLeft > 0){
+      position = heightLeft - imgHeight; // posición negativa para "subir" la imagen
+      pdf.addPage();
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+    }
+
+    const blob = pdf.output("blob");
+    return blob;
+  }
+
+  function downloadBlob(blob, filename){
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{
+      try{ a.remove(); }catch(_){}
+      try{ URL.revokeObjectURL(url); }catch(_){}
+    }, 800);
+  }
+
+  async function sendReport(){
+    if(!isLoggedIn()){
+      toast("Debes iniciar sesión", "Inicia sesión con Google Workspace para enviar tu seguimiento.");
+      return;
+    }
+
+    btnSend.disabled = true;
+    btnSend.style.opacity = ".75";
+    toast("Preparando...", "Generando el PDF de tu seguimiento...");
+
+    const prof = getProfile();
+    const safeName = (prof.name || "Estudiante").replace(/[^a-z0-9]+/gi,"_").slice(0,40);
+    const fileName = `Seguimiento_${safeName}_${new Date().toISOString().slice(0,10)}.pdf`;
+
+    const summary = getSummaryText();
+    const links = buildEmailLinks(summary);
+
+    let blob = null;
+    try{
+      blob = await generatePdfBlob();
+    }catch(err){
+      // si falla la generación del pdf, aún abrimos el correo con resumen
+      console.warn(err);
+    }
+
+    // 1) Si el navegador permite compartir archivos (celular), enviamos con adjunto
+    if(blob){
+      try{
+        const file = new File([blob], fileName, {type:"application/pdf"});
+        if(navigator.canShare && navigator.canShare({files:[file]}) && navigator.share){
+          await navigator.share({
+            title: "Seguimiento NeuroVerbs",
+            text: "Adjunto va tu PDF de seguimiento. Enviar a: neuroaprendizajedelosverbosirregulares@iemanueljbetancur.edu.co",
+            files: [file]
+          });
+          toast("Listo", "Se abrió el menú de compartir con el PDF adjunto. Elige Gmail y envíalo.");
+          btnSend.disabled = false;
+          btnSend.style.opacity = "1";
+          return;
+        }
+      }catch(err){
+        console.warn("share failed", err);
+      }
+    }
+
+    // 2) Desktop/otros: descargamos el PDF y abrimos Gmail con el mensaje listo (el usuario adjunta el archivo)
+    if(blob){
+      downloadBlob(blob, fileName);
+    }
+    // Intento abrir Gmail en nueva pestaña; si está bloqueado, mostramos enlaces.
+    let w = null;
+    try{ w = window.open(links.gmailUrl, "_blank", "noopener,noreferrer"); }catch(_){ w = null; }
+    if(!w){
+      try{ window.location.assign(links.gmailUrl); }catch(_){ window.location.href = links.mailto; }
+    }
+    toast("Correo listo", "Se abrió el correo con el resumen. Adjunta el PDF descargado y presiona ENVIAR.");
+    btnSend.disabled = false;
+    btnSend.style.opacity = "1";
+  }
+
+  btnSend.addEventListener("click", sendReport);
+})();

@@ -271,3 +271,40 @@ body{ background: var(--seg-bg); color: var(--seg-text); }
   body{ background: #ffffff !important; color: #000000 !important; }
   .segCard{ box-shadow: none !important; }
 }
+
+
+/* Botón ENVIAR (seguimiento) */
+.segNavBtn.segSend{
+  background: linear-gradient(135deg, rgba(0,255,178,.95), rgba(0,140,255,.95));
+  color: #06101d;
+  border: 1px solid rgba(255,255,255,.18);
+  font-weight: 950;
+}
+.segNavBtn.segSend:hover{ filter: brightness(1.05); transform: translateY(-1px); }
+.segNavBtn.segSend:active{ transform: translateY(0px); }
+
+.segSendCard h3{ margin-top: 0; }
+.segActionsRow{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top: 10px;
+}
+.segActionBtn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.06);
+  color: rgba(255,255,255,.92);
+  font-weight: 900;
+  text-decoration:none;
+}
+.segActionBtn:hover{ filter: brightness(1.06); transform: translateY(-1px); }
+.segActionBtn:active{ transform: translateY(0px); }
+.segActionBtn.segPrimary{
+  background: linear-gradient(135deg, rgba(255,176,52,.95), rgba(255,110,20,.95));
+  color:#07101d;
+}

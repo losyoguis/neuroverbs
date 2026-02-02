@@ -27,6 +27,7 @@
       <div class="segHeaderRight">
         <a class="segNavBtn" href="neuroverbs.html">⬅ Volver a NEUROVERBS</a>
         <button class="segNavBtn" id="btnPrint" type="button" title="Imprime o guarda este reporte como PDF">🖨️ Imprimir / PDF</button>
+        <button class="segNavBtn segSend" id="btnSendReport" type="button" title="Enviar tu seguimiento por correo">📩 Enviar</button>
       </div>
     </header>
 
@@ -257,10 +258,36 @@
 
         </div>
       </section>
+    
+      <section class="segCard segSendCard" id="segSendCard" style="display:none;">
+        <h3>Enviar seguimiento</h3>
+        <p class="segMuted">
+          Si tu navegador bloquea ventanas emergentes, usa estos enlaces para abrir el correo:
+        </p>
+        <div class="segActionsRow">
+          <a class="segActionBtn segPrimary" id="segOpenGmail" href="#" target="_blank" rel="noopener noreferrer">Abrir Gmail</a>
+          <a class="segActionBtn" id="segOpenMailto" href="#" rel="noopener noreferrer">Abrir correo</a>
+        </div>
+        <div class="segMuted" style="margin-top:10px;">
+          Tip: Si estás en celular, el botón <b>Enviar</b> intentará compartir el PDF como adjunto usando el menú de compartir.
+        </div>
+      </section>
+
     </main>
   </div>
 
-  <script src="seguimiento-estudiantes.js"></script>
+  
+<script>
+  // Carga diferida de librerías para PDF (sin backend)
+  window.__NV_PDF_LIBS__ = {
+    html2canvas: "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js",
+    jspdf: "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"
+  };
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
+
+<script src="seguimiento-estudiantes.js"></script>
 <script src="logout-widget.js"></script>
 </body>
 </html>
