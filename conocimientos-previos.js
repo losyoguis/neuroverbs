@@ -1246,6 +1246,10 @@ function updateHUD(){
     }
 
     const btnSend = document.getElementById("kpSendEvidence");
+    const fbWrap = document.getElementById("kpSendFallback");
+    const aGmail = document.getElementById("kpOpenGmail");
+    const aMailto = document.getElementById("kpOpenMailto");
+
     if(btnSend){
       btnSend.addEventListener("click", ()=>{
         // Si no hay evidencia aún, la generamos
@@ -1292,43 +1296,47 @@ function updateHUD(){
 `CÓDIGO NVKP:\n${evidence}\n\n` +
 `Enviado desde: NeuroVerbs (Modo Estudiante)`;
 
-        // ✅ Sin servidor: abrimos Gmail con el correo listo (solo presiona ENVIAR)
+        // URLs
         const gmailUrl =
           "https://mail.google.com/mail/?view=cm&fs=1" +
           "&to=" + encodeURIComponent(to) +
           "&su=" + encodeURIComponent(subject) +
           "&body=" + encodeURIComponent(body);
 
-        // Intento 1: Gmail web
-        window.open(gmailUrl, "_blank", "noopener,noreferrer");
-
-        // Intento 2 (fallback): mailto (abre cliente por defecto)
         const mailto =
           "mailto:" + encodeURIComponent(to) +
           "?subject=" + encodeURIComponent(subject) +
           "&body=" + encodeURIComponent(body);
 
-        // Si el navegador bloquea popups, dejamos el mailto listo
-        setTimeout(()=>{
+        // Mostrar enlaces de respaldo (siempre)
+        try{
+          if(aGmail) aGmail.href = gmailUrl;
+          if(aMailto) aMailto.href = mailto;
+          if(fbWrap) fbWrap.style.display = "block";
+        }catch(_){}
+
+        // ✅ Intento principal: abrir Gmail (nueva pestaña)
+        let w = null;
+        try{
+          w = window.open(gmailUrl, "_blank", "noopener,noreferrer");
+        }catch(_){ w = null; }
+
+        // Si el navegador bloquea popups, navegamos en la misma pestaña
+        if(!w){
           try{
-            // no forzamos navegación, solo dejamos un fallback accesible
-            const a=document.createElement("a");
-            a.href=mailto;
-            a.textContent="Abrir correo";
-            a.style.display="none";
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-          }catch(_){}
-        }, 250);
+            window.location.assign(gmailUrl);
+          }catch(_){
+            // Último fallback: mailto
+            try{ window.location.href = mailto; }catch(__){}
+          }
+          return;
+        }
 
         toast("Correo listo", "Se abrió Gmail con el mensaje preparado. Solo presiona ENVIAR.");
       });
     }
 
-
-
-    // Teacher: code + link
+// Teacher: code + link
     const tClass = document.getElementById("kpTeacherClass");
     const btnNew = document.getElementById("kpNewClass");
     const linkBox = document.getElementById("kpStudentLink");
