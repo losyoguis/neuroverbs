@@ -1128,3 +1128,15 @@ details[open].kpAcc > summary .kpAccChevron::before{ content:"▴"; }
     right: 10px !important;
   }
 }
+
+
+/* Botón ENVIAR (Modo Estudiante) */
+.roundbtn.send{
+  background: linear-gradient(135deg, rgba(0,255,178,.95), rgba(0,140,255,.95));
+  border: 1px solid rgba(255,255,255,.22);
+  color: #07101d;
+  font-weight: 900;
+  box-shadow: 0 10px 24px rgba(0,0,0,.30);
+}
+.roundbtn.send:hover{ filter: brightness(1.06); transform: translateY(-1px); }
+.roundbtn.send:active{ transform: translateY(0px); }

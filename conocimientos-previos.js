@@ -1245,6 +1245,89 @@ function updateHUD(){
       });
     }
 
+    const btnSend = document.getElementById("kpSendEvidence");
+    if(btnSend){
+      btnSend.addEventListener("click", ()=>{
+        // Si no hay evidencia aún, la generamos
+        if(box && (!box.value || !box.value.trim())){
+          const code = generateEvidence();
+          if(box) box.value = code;
+          setStudentHUD();
+        }
+        const evidence = box ? (box.value||"").trim() : "";
+        if(!evidence){
+          toast("No hay evidencia", "Primero genera tu código NVKP.");
+          return;
+        }
+
+        // Identidad del estudiante (Workspace si está logueado)
+        let name = "Estudiante";
+        let email = "";
+        try{
+          const prof = JSON.parse(safeGet("user_profile") || "null");
+          if(prof){
+            name = prof.name || name;
+            email = prof.email || email;
+          }
+        }catch(_){}
+
+        // Respaldo: nombre mostrado en KP
+        try{
+          const n = (document.getElementById("kpStudentName")?.textContent || "").trim();
+          if(n && n !== "—") name = n;
+        }catch(_){}
+
+        const classCode = (getClassCode() || "").trim() || "SIN_CLASE";
+        const completion = (document.getElementById("kpCompletion")?.textContent || "").trim() || "";
+        const to = "neuroaprendizajedelosverbosirregulares@iemanueljbetancur.edu.co";
+
+        const subject = `NVKP | ${name} | Clase ${classCode}`;
+        const body =
+`EVIDENCIA NVKP (Conocimientos Previos)\n\n` +
+`Nombre: ${name}\n` +
+`Email: ${email || "—"}\n` +
+`Clase: ${classCode}\n` +
+`Actividades: ${completion || "—"}\n` +
+`Fecha/Hora: ${new Date().toLocaleString()}\n\n` +
+`CÓDIGO NVKP:\n${evidence}\n\n` +
+`Enviado desde: NeuroVerbs (Modo Estudiante)`;
+
+        // ✅ Sin servidor: abrimos Gmail con el correo listo (solo presiona ENVIAR)
+        const gmailUrl =
+          "https://mail.google.com/mail/?view=cm&fs=1" +
+          "&to=" + encodeURIComponent(to) +
+          "&su=" + encodeURIComponent(subject) +
+          "&body=" + encodeURIComponent(body);
+
+        // Intento 1: Gmail web
+        window.open(gmailUrl, "_blank", "noopener,noreferrer");
+
+        // Intento 2 (fallback): mailto (abre cliente por defecto)
+        const mailto =
+          "mailto:" + encodeURIComponent(to) +
+          "?subject=" + encodeURIComponent(subject) +
+          "&body=" + encodeURIComponent(body);
+
+        // Si el navegador bloquea popups, dejamos el mailto listo
+        setTimeout(()=>{
+          try{
+            // no forzamos navegación, solo dejamos un fallback accesible
+            const a=document.createElement("a");
+            a.href=mailto;
+            a.textContent="Abrir correo";
+            a.style.display="none";
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+          }catch(_){}
+        }, 250);
+
+        toast("Correo listo", "Se abrió Gmail con el mensaje preparado. Solo presiona ENVIAR.");
+      });
+    }
+
+
+
     // Teacher: code + link
     const tClass = document.getElementById("kpTeacherClass");
     const btnNew = document.getElementById("kpNewClass");
