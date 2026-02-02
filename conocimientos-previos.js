@@ -1231,19 +1231,25 @@ function updateHUD(){
     const btnGen = document.getElementById("kpGenEvidence");
     const btnCopy = document.getElementById("kpCopyEvidence");
     const box = document.getElementById("kpEvidenceBox");
+
     if(btnGen){
-      btnGen.addEventListener("click", ()=>{
+      btnGen.addEventListener("click", (e)=>{
+        e.preventDefault();
         const code = generateEvidence();
         if(box) box.value = code;
+        toast("Evidencia creada ✅", "Tu código NVKP ya está listo.");
         setStudentHUD();
       });
     }
+
     if(btnCopy){
-      btnCopy.addEventListener("click", ()=>{
+      btnCopy.addEventListener("click", (e)=>{
+        e.preventDefault();
         if(!box) return;
         copyText(box.value);
       });
     }
+
     const btnSend = document.getElementById("kpSendEvidence");
 
     function buildGmailUrlForKP(evidence){
@@ -1286,11 +1292,29 @@ function updateHUD(){
         "&su=" + encodeURIComponent(subject) +
         "&body=" + encodeURIComponent(body);
 
-      return { gmailUrl, email };
+      return gmailUrl;
+    }
+
+    function openOneGmailTab(url){
+      // Abrir SOLO 1 pestaña nueva (sin abrir la app)
+      let w = null;
+      try{
+        w = window.open("about:blank", "_blank");
+      }catch(_){ w = null; }
+      if(w){
+        try{ w.opener = null; }catch(_){}
+        try{
+          w.location.href = url;
+        }catch(_){
+          try{ w.location.replace(url); }catch(__){}
+        }
+        return true;
+      }
+      return false;
     }
 
     if(btnSend){
-      // Evitar múltiples listeners
+      // Evitar múltiples listeners (doble pestaña)
       if(!btnSend.dataset.nvBound){
         btnSend.dataset.nvBound = "1";
         btnSend.addEventListener("click", (e)=>{
@@ -1309,113 +1333,16 @@ function updateHUD(){
             return;
           }
 
-          const { gmailUrl } = buildGmailUrlForKP(evidence);
-
-          // ✅ Abrir SOLO 1 pestaña/ventana y mantener esta pestaña en la app
-          let w = null;
-          try{
-            w = window.open("about:blank", "_blank", "noopener,noreferrer");
-          }catch(_){ w = null; }
-
-          if(w){
-            try{
-              // en algunos navegadores noopener evita acceso a opener, pero igual forzamos por seguridad
-              w.opener = null;
-            }catch(_){}
-            try{
-              w.location.href = gmailUrl;
-            }catch(_){
-              // si no deja asignar, hacemos fallback a abrir la url directa
-              try{ w.location.replace(gmailUrl); }catch(__){}
-            }
-            toast("Correo listo", "Se abrió Gmail en una nueva pestaña. Va para el profesor y con copia (CC) a tu correo. Solo presiona ENVIAR.");
-          }else{
-            // Popup bloqueado: mostramos alternativa (copiar link al portapapeles y abrir manual)
-            try{
-              navigator.clipboard && navigator.clipboard.writeText(gmailUrl);
-            }catch(_){}
-            toast("Ventana bloqueada", "Tu navegador bloqueó la pestaña nueva. Permite popups para este sitio o copia/pega el enlace de Gmail desde el portapapeles.");
-          }
-        });\n      }
-    }
-          const evidence = box ? (box.value||"").trim() : "";
-          if(!evidence){
-            toast("No hay evidencia", "Primero genera tu código NVKP.");
-            return;
-          }
-
-          // Identidad del estudiante (Workspace si está logueado)
-          let name = "Estudiante";
-          let email = "";
-          try{
-            const prof = JSON.parse(safeGet("user_profile") || "null");
-            if(prof){
-              name = prof.name || name;
-              email = prof.email || email;
-            }
-          }catch(_){}
-
-          // Respaldo: nombre mostrado en KP
-          try{
-            const n = (document.getElementById("kpStudentName")?.textContent || "").trim();
-            if(n && n !== "—") name = n;
-          }catch(_){}
-
-          const classCode = (getClassCode() || "").trim() || "SIN_CLASE";
-          const completion = (document.getElementById("kpCompletion")?.textContent || "").trim() || "";
-          const to = "neuroaprendizajedelosverbosirregulares@iemanueljbetancur.edu.co";
-
-          const subject = `NVKP | ${name} | Clase ${classCode}`;
-          const body =
-`EVIDENCIA NVKP (Conocimientos Previos)\n\n` +
-`Nombre: ${name}\n` +
-`Email: ${email || "—"}\n` +
-`Clase: ${classCode}\n` +
-`Actividades: ${completion || "—"}\n` +
-`Fecha/Hora: ${new Date().toLocaleString()}\n\n` +
-`CÓDIGO NVKP:\n${evidence}\n\n` +
-`Enviado desde: NeuroVerbs (Modo Estudiante)`;
-
-          // URLs (con copia al estudiante en CC)
-          const gmailUrl =
-            "https://mail.google.com/mail/?view=cm&fs=1" +
-            "&to=" + encodeURIComponent(to) +
-            "&cc=" + encodeURIComponent((email || "")) +
-            "&su=" + encodeURIComponent(subject) +
-            "&body=" + encodeURIComponent(body);
-
-          const mailto =
-            "mailto:" + encodeURIComponent(to) +
-            "?subject=" + encodeURIComponent(subject) +
-            "&cc=" + encodeURIComponent((email || "")) +
-            "&body=" + encodeURIComponent(body);
-
-          // Mostrar enlaces de respaldo (siempre)
-          try{
-            if(aGmail) aGmail.href = gmailUrl;
-            if(aMailto) aMailto.href = mailto;
-            if(fbWrap) fbWrap.style.display = "block";
-          }catch(_){}
-
-          // ✅ Abrir SOLO UNA pestaña de correo y quedarnos en la app
-          // Abrimos la pestaña inmediatamente (mejor compatibilidad con bloqueadores)
-          let opened = false;
-          let w = null;
-          try{
-            w = window.open("about:blank", "_blank", "noopener,noreferrer");
-            if(w){
-              w.location.href = gmailUrl;
-              opened = true;
-            }
-          }catch(_){ opened = false; }
+          const gmailUrl = buildGmailUrlForKP(evidence);
+          const opened = openOneGmailTab(gmailUrl);
 
           toast(
             "Correo listo",
             opened
-              ? "Se abrió Gmail en una nueva pestaña (con copia para tu email en CC). Solo presiona ENVIAR."
-              : "El navegador bloqueó la nueva pestaña. Activa pop-ups para este sitio o usa 'Abrir Gmail' (pestaña nueva)."
+              ? "Se abrió Gmail en una nueva pestaña. Va para el profesor y con copia (CC) a tu correo. Solo presiona ENVIAR."
+              : "Tu navegador bloqueó la pestaña nueva. Activa pop-ups para este sitio e intenta de nuevo."
           );
-});
+        });
       }
     }
 
