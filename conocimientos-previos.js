@@ -1251,42 +1251,47 @@ function updateHUD(){
     const aMailto = document.getElementById("kpOpenMailto");
 
     if(btnSend){
-      btnSend.addEventListener("click", ()=>{
-        // Si no hay evidencia aún, la generamos
-        if(box && (!box.value || !box.value.trim())){
-          const code = generateEvidence();
-          if(box) box.value = code;
-          setStudentHUD();
-        }
-        const evidence = box ? (box.value||"").trim() : "";
-        if(!evidence){
-          toast("No hay evidencia", "Primero genera tu código NVKP.");
-          return;
-        }
+      // Evitar múltiples listeners (que abren 2 pestañas)
+      if(!btnSend.dataset.nvBound){
+        btnSend.dataset.nvBound = "1";
+        btnSend.addEventListener("click", (e)=>{
+          e.preventDefault();
 
-        // Identidad del estudiante (Workspace si está logueado)
-        let name = "Estudiante";
-        let email = "";
-        try{
-          const prof = JSON.parse(safeGet("user_profile") || "null");
-          if(prof){
-            name = prof.name || name;
-            email = prof.email || email;
+          // Si no hay evidencia aún, la generamos
+          if(box && (!box.value || !box.value.trim())){
+            const code = generateEvidence();
+            if(box) box.value = code;
+            setStudentHUD();
           }
-        }catch(_){}
+          const evidence = box ? (box.value||"").trim() : "";
+          if(!evidence){
+            toast("No hay evidencia", "Primero genera tu código NVKP.");
+            return;
+          }
 
-        // Respaldo: nombre mostrado en KP
-        try{
-          const n = (document.getElementById("kpStudentName")?.textContent || "").trim();
-          if(n && n !== "—") name = n;
-        }catch(_){}
+          // Identidad del estudiante (Workspace si está logueado)
+          let name = "Estudiante";
+          let email = "";
+          try{
+            const prof = JSON.parse(safeGet("user_profile") || "null");
+            if(prof){
+              name = prof.name || name;
+              email = prof.email || email;
+            }
+          }catch(_){}
 
-        const classCode = (getClassCode() || "").trim() || "SIN_CLASE";
-        const completion = (document.getElementById("kpCompletion")?.textContent || "").trim() || "";
-        const to = "neuroaprendizajedelosverbosirregulares@iemanueljbetancur.edu.co";
+          // Respaldo: nombre mostrado en KP
+          try{
+            const n = (document.getElementById("kpStudentName")?.textContent || "").trim();
+            if(n && n !== "—") name = n;
+          }catch(_){}
 
-        const subject = `NVKP | ${name} | Clase ${classCode}`;
-        const body =
+          const classCode = (getClassCode() || "").trim() || "SIN_CLASE";
+          const completion = (document.getElementById("kpCompletion")?.textContent || "").trim() || "";
+          const to = "neuroaprendizajedelosverbosirregulares@iemanueljbetancur.edu.co";
+
+          const subject = `NVKP | ${name} | Clase ${classCode}`;
+          const body =
 `EVIDENCIA NVKP (Conocimientos Previos)\n\n` +
 `Nombre: ${name}\n` +
 `Email: ${email || "—"}\n` +
@@ -1296,44 +1301,48 @@ function updateHUD(){
 `CÓDIGO NVKP:\n${evidence}\n\n` +
 `Enviado desde: NeuroVerbs (Modo Estudiante)`;
 
-        // URLs
-        const gmailUrl =
-          "https://mail.google.com/mail/?view=cm&fs=1" +
-          "&to=" + encodeURIComponent(to) +
-          "&su=" + encodeURIComponent(subject) +
-          "&body=" + encodeURIComponent(body);
+          // URLs (con copia al estudiante en CC)
+          const gmailUrl =
+            "https://mail.google.com/mail/?view=cm&fs=1" +
+            "&to=" + encodeURIComponent(to) +
+            "&cc=" + encodeURIComponent((email || "")) +
+            "&su=" + encodeURIComponent(subject) +
+            "&body=" + encodeURIComponent(body);
 
-        const mailto =
-          "mailto:" + encodeURIComponent(to) +
-          "?subject=" + encodeURIComponent(subject) +
-          "&body=" + encodeURIComponent(body);
+          const mailto =
+            "mailto:" + encodeURIComponent(to) +
+            "?subject=" + encodeURIComponent(subject) +
+            "&cc=" + encodeURIComponent((email || "")) +
+            "&body=" + encodeURIComponent(body);
 
-        // Mostrar enlaces de respaldo (siempre)
-        try{
-          if(aGmail) aGmail.href = gmailUrl;
-          if(aMailto) aMailto.href = mailto;
-          if(fbWrap) fbWrap.style.display = "block";
-        }catch(_){}
-
-        // ✅ Intento principal: abrir Gmail (nueva pestaña)
-        let w = null;
-        try{
-          w = window.open(gmailUrl, "_blank", "noopener,noreferrer");
-        }catch(_){ w = null; }
-
-        // Si el navegador bloquea popups, navegamos en la misma pestaña
-        if(!w){
+          // Mostrar enlaces de respaldo (siempre)
           try{
-            window.location.assign(gmailUrl);
-          }catch(_){
-            // Último fallback: mailto
-            try{ window.location.href = mailto; }catch(__){}
-          }
-          return;
-        }
+            if(aGmail) aGmail.href = gmailUrl;
+            if(aMailto) aMailto.href = mailto;
+            if(fbWrap) fbWrap.style.display = "block";
+          }catch(_){}
 
-        toast("Correo listo", "Se abrió Gmail con el mensaje preparado. Solo presiona ENVIAR.");
-      });
+          // ✅ Abrir SOLO UNA pestaña de correo y quedarnos en la app
+          let opened = false;
+          try{
+            const a = document.createElement("a");
+            a.href = gmailUrl;
+            a.target = "_blank";
+            a.rel = "noopener noreferrer";
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            opened = true;
+          }catch(_){ opened = false; }
+
+          toast(
+            "Correo listo",
+            opened
+              ? "Se abrió Gmail en una nueva pestaña (con copia para tu email en CC). Solo presiona ENVIAR."
+              : "Tu navegador bloqueó la nueva pestaña. Usa 'Abrir Gmail' (pestaña nueva)."
+          );
+        });
+      }
     }
 
 // Teacher: code + link
