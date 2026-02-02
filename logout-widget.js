@@ -174,6 +174,18 @@
     return (el && (el.textContent || el.innerText) ? String(el.textContent || el.innerText).trim() : "");
   }
 
+
+  function decodeJwt(token){
+    try{
+      if(!token || typeof token !== "string") return null;
+      const parts = token.split(".");
+      if(parts.length < 2) return null;
+      const b64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+      const pad = "=".repeat((4 - (b64.length % 4)) % 4);
+      const json = decodeURIComponent(escape(atob(b64 + pad)));
+      return safeJsonParse(json);
+    }catch(_){ return null; }
+  }
   function initialsFromName(name){
     const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
     if(!parts.length) return "NV";
@@ -262,32 +274,50 @@
   }
 
   function getProfile(){
+    // Order of truth:
+    // 1) localStorage/sessionStorage user_profile
+    // 2) google_id_token (JWT payload)
+    // 3) DOM (if present)
     const stores = [localStorage, sessionStorage];
     let prof = null;
+
     for(const st of stores){
       const p = readProfileFromStore(st);
-      if(p){
-        prof = { ...p };
-        break;
-      }
+      if(p && (p.email || p.name || p.picture)) { prof = { ...p }; break; }
     }
-    const dom = readProfileFromDOM();
-    prof = prof || { name:"", email:"", picture:"" };
 
-    // Fill blanks from DOM
+    // If still empty, try JWT
+    if(!prof){
+      try{
+        const token = localStorage.getItem("google_id_token") || sessionStorage.getItem("google_id_token") || "";
+        const payload = decodeJwt(token);
+        if(payload){
+          prof = {
+            sub: payload.sub || "",
+            name: payload.name || payload.given_name || payload.family_name || "",
+            email: payload.email || "",
+            picture: payload.picture || ""
+          };
+        }
+      }catch(_){}
+    }
+
+    // DOM fallback
+    const dom = readProfileFromDOM();
+    prof = prof || { sub:"", name:"", email:"", picture:"" };
+
     if(!prof.email && dom.email) prof.email = dom.email;
     if(!prof.name  && dom.name)  prof.name  = dom.name;
     if(!prof.picture && dom.picture) prof.picture = dom.picture;
 
-    // Persist (so other pages can reuse the picture/email)
+    // Persist for other pages
     try{
-      if(prof.email || prof.name || prof.picture){
-        const current = safeJsonParse(localStorage.getItem("user_profile") || "null") || {};
+      if(prof.email || prof.name || prof.picture || prof.sub){
         const merged = {
-          ...current,
-          email: prof.email || current.email || "",
-          name: prof.name || current.name || "",
-          picture: prof.picture || current.picture || current.photoURL || ""
+          sub: prof.sub || "",
+          name: prof.name || "",
+          email: prof.email || "",
+          picture: prof.picture || ""
         };
         localStorage.setItem("user_profile", JSON.stringify(merged));
       }
@@ -451,19 +481,32 @@
 
   function updateUI(){
     const prof = getProfile();
-    const logged = !!(prof.email && prof.email.includes("@"));
 
-    // If not logged, remove dock and show nothing
-    const dockExisting = document.getElementById(SESSION_DOCK_ID);
-    if(!logged){
-      if(dockExisting) dockExisting.style.display = "none";
-      // Also show back any hidden logout buttons
-      try{
-        const els = Array.from(document.querySelectorAll("button, a"));
-        for(const el of els){
-          if(el.dataset && el.dataset.nvHiddenLogout === "1"){
-            el.style.display = "";
-          }
+    // Detect session by email OR token OR stored profile
+    const tokenExists = !!(localStorage.getItem("google_id_token") || sessionStorage.getItem("google_id_token"));
+    const logged = tokenExists || !!(prof.email && prof.email.includes("@")) || !!(prof.sub);
+
+    const btn = logged ? ensureLogoutButton() : findLogoutButton();
+    const dock = ensureAvatarDock();
+
+    if(!btn){
+      dock.style.display = "none";
+      return;
+    }
+
+    // Show dock if we have ANY session signal; otherwise still show placeholder (mínimo)
+    dock.style.display = "block";
+
+    // Update avatar image
+    const img = dock.querySelector("img");
+    const initials = initialsFromName(prof.name || prof.email || "NV");
+    const placeholder = placeholderAvatarDataUri(initials);
+    const src = (prof.picture && prof.picture !== "null") ? prof.picture : placeholder;
+    if(img && img.src !== src) img.src = src;
+
+    // Position dock above the logout button
+    positionDock(btn, dock);
+  }
         }
       }catch(_){}
       return;
