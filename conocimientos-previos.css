@@ -1148,3 +1148,12 @@ details[open].kpAcc > summary .kpAccChevron::before{ content:"▴"; }
   padding-top: 10px;
   border-top: 1px dashed rgba(255,255,255,.14);
 }
+
+
+/* Asegurar que <a class="roundbtn"> se vea como botón */
+a.roundbtn{
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}

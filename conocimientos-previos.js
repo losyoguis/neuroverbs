@@ -1244,25 +1244,95 @@ function updateHUD(){
         copyText(box.value);
       });
     }
-
     const btnSend = document.getElementById("kpSendEvidence");
-    const fbWrap = document.getElementById("kpSendFallback");
-    const aGmail = document.getElementById("kpOpenGmail");
-    const aMailto = document.getElementById("kpOpenMailto");
+
+    function buildGmailUrlForKP(evidence){
+      // Identidad del estudiante (Workspace si está logueado)
+      let name = "Estudiante";
+      let email = "";
+      try{
+        const prof = JSON.parse(safeGet("user_profile") || "null");
+        if(prof){
+          name = prof.name || name;
+          email = prof.email || email;
+        }
+      }catch(_){}
+
+      // Respaldo: nombre mostrado en KP
+      try{
+        const n = (document.getElementById("kpStudentName")?.textContent || "").trim();
+        if(n && n !== "—") name = n;
+      }catch(_){}
+
+      const classCode = (getClassCode() || "").trim() || "SIN_CLASE";
+      const completion = (document.getElementById("kpCompletion")?.textContent || "").trim() || "";
+      const to = "neuroaprendizajedelosverbosirregulares@iemanueljbetancur.edu.co";
+
+      const subject = `NVKP | ${name} | Clase ${classCode}`;
+      const body =
+`EVIDENCIA NVKP (Conocimientos Previos)\n\n` +
+`Nombre: ${name}\n` +
+`Email: ${email || "—"}\n` +
+`Clase: ${classCode}\n` +
+`Actividades: ${completion || "—"}\n` +
+`Fecha/Hora: ${new Date().toLocaleString()}\n\n` +
+`CÓDIGO NVKP:\n${evidence}\n\n` +
+`Enviado desde: NeuroVerbs (Conocimientos Previos)`;
+
+      const gmailUrl =
+        "https://mail.google.com/mail/?view=cm&fs=1" +
+        "&to=" + encodeURIComponent(to) +
+        "&cc=" + encodeURIComponent((email || "")) +
+        "&su=" + encodeURIComponent(subject) +
+        "&body=" + encodeURIComponent(body);
+
+      return { gmailUrl, email };
+    }
+
+    function refreshSendHref(){
+      if(!btnSend) return;
+      const evidence = box ? (box.value || "").trim() : "";
+      if(!evidence){
+        btnSend.setAttribute("href", "#");
+        btnSend.setAttribute("aria-disabled", "true");
+        return;
+      }
+      const { gmailUrl } = buildGmailUrlForKP(evidence);
+      btnSend.setAttribute("href", gmailUrl);
+      btnSend.removeAttribute("aria-disabled");
+    }
+
+    // Mantener el href actualizado cuando se genera o cambia el estado
+    refreshSendHref();
 
     if(btnSend){
-      // Evitar múltiples listeners (que abren 2 pestañas)
+      // Evitar múltiples listeners
       if(!btnSend.dataset.nvBound){
         btnSend.dataset.nvBound = "1";
         btnSend.addEventListener("click", (e)=>{
-          e.preventDefault();
-
           // Si no hay evidencia aún, la generamos
           if(box && (!box.value || !box.value.trim())){
             const code = generateEvidence();
             if(box) box.value = code;
             setStudentHUD();
           }
+
+          const evidence = box ? (box.value||"").trim() : "";
+          if(!evidence){
+            e.preventDefault();
+            toast("No hay evidencia", "Primero genera tu código NVKP.");
+            return;
+          }
+
+          // Construir URL y dejarla en el href para que el click abra Gmail en NUEVA pestaña (target=_blank)
+          const { gmailUrl } = buildGmailUrlForKP(evidence);
+          btnSend.setAttribute("href", gmailUrl);
+
+          // No hacemos window.open aquí (evita abrir 2 pestañas). El navegador abre SOLO una con target=_blank.
+          toast("Correo listo", "Se abrió Gmail en una nueva pestaña (con copia para tu email en CC). Solo presiona ENVIAR.");
+        });
+      }
+    }
           const evidence = box ? (box.value||"").trim() : "";
           if(!evidence){
             toast("No hay evidencia", "Primero genera tu código NVKP.");
