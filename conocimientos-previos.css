@@ -1101,3 +1101,30 @@ details[open].kpAcc > summary .kpAccChevron::before{ content:"▴"; }
   .kpTopNavRow{ gap:10px; }
   .kpTopTabs{ justify-content:flex-start; }
 }
+
+
+/* ===== Botón especial: Asistente I.A (KP) =====
+   (Debe resaltar y ser diferente al botón ASISTENTE IA del resto de la app)
+*/
+.kp-ai-float{
+  background: linear-gradient(180deg, rgba(34,197,94,1), rgba(34,197,94,.82)) !important;
+  color:#062012 !important;
+  border: 2px solid rgba(255,255,255,.22) !important;
+  text-transform: none !important;
+  letter-spacing: .2px;
+  box-shadow:
+    0 18px 40px rgba(0,0,0,.45),
+    0 16px 38px rgba(34,197,94,.22);
+}
+.kp-ai-float:hover{
+  background: linear-gradient(180deg, rgba(22,163,74,1), rgba(22,163,74,.85)) !important;
+  border-color: rgba(255,255,255,.30) !important;
+}
+
+/* En móvil: que no tape elementos inferiores */
+@media (max-width: 520px){
+  .kp-float-actions{
+    bottom: 8px !important;
+    right: 10px !important;
+  }
+}
