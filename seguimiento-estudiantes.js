@@ -465,10 +465,204 @@
     return lines.join("\n");
   }
 
-  function buildEmailLinks(reportText){
+  function collectSummary(){
+    const lines = [];
+    // Píldoras / estado (solo algunas)
+    const pills = Array.from(document.querySelectorAll(".segPill"))
+      .map(p=>txt(p))
+      .filter(v=>v && v !== "—");
+    if(pills.length){
+      lines.push("ESTADO:");
+      pills.slice(0,6).forEach(v=>lines.push(`- ${v}`));
+      lines.push("");
+    }
+
+    // KPIs (tarjetas)
+    const metrics = Array.from(document.querySelectorAll(".segMetric")).map(m=>{
+      const label = txt(m.querySelector(".segMetricLabel"));
+      const value = txt(m.querySelector(".segMetricValue")) || txt(m);
+      return {label, value};
+    }).filter(x=>x.label && x.value);
+    if(metrics.length){
+      lines.push("KPIs PRINCIPALES:");
+      metrics.slice(0,10).forEach(x=> lines.push(`- ${x.label}: ${x.value}`));
+      lines.push("");
+    }
+
+    const lastRead = txt(document.getElementById("lastRead"));
+    if(lastRead) lines.push(`Última lectura: ${lastRead}`);
+
+    return lines.join("\n").trim();
+  }
+
+  // ========== PDF (texto) sin librerías externas ==========
+  function pdfEscape(s){
+    return String(s)
+      .replace(/\\/g, "\\\\")
+      .replace(/\(/g, "\\(")
+      .replace(/\)/g, "\\)");
+  }
+  function makePdfBytes(title, lines){
+    // Soporta varias páginas de texto (Helvetica)
+    const pageW = 612, pageH = 792;
+    const marginL = 54, marginT = 740;
+    const fontSize = 12;
+    const leading = 14;
+    const maxLinesPerPage = Math.floor((marginT - 54) / leading);
+
+    const pages = [];
+    let current = [];
+    for(const ln of lines){
+      if(current.length >= maxLinesPerPage){
+        pages.push(current);
+        current = [];
+      }
+      current.push(ln);
+    }
+    if(current.length) pages.push(current);
+    if(!pages.length) pages.push(["(Sin datos)"]);
+
+    const enc = new TextEncoder();
+
+    const objects = [];
+    function addObj(str){ objects.push(str); }
+
+    // 1 Catalog
+    addObj(`<< /Type /Catalog /Pages 2 0 R >>`);
+
+    // 2 Pages (Kids to fill later)
+    // placeholder
+    addObj(`<< /Type /Pages /Kids [ ] /Count ${pages.length} >>`);
+
+    // 4 Font
+    // We'll insert later but keep index 4 => object number 4
+    // We'll temporarily add placeholders for page+contents then font; but easier: fixed order:
+    // 1 Catalog, 2 Pages, then for each page: Page obj + Contents obj, then Font obj.
+    // We'll rebuild with offsets in final assembly.
+
+    // We'll build page objects and content objects now, and font at end.
+    const pageObjNums = [];
+    const contentObjNums = [];
+
+    let objNum = 3;
+
+    for(let i=0;i<pages.length;i++){
+      const pageNum = objNum++;
+      const contentNum = objNum++;
+
+      pageObjNums.push(pageNum);
+      contentObjNums.push(contentNum);
+
+      // Page object uses Font object which will be last => fontObjNum
+      // We'll fill fontObjNum after pages created.
+      addObj(""); // placeholder for page object (we'll fill later)
+      addObj(""); // placeholder for content object
+    }
+
+    const fontObjNum = objNum++;
+    addObj(`<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>`);
+
+    // Now fill page + content placeholders
+    // We know their indices in objects: after first two objects, placeholders alternate.
+    let phIndex = 2; // objects[2] corresponds to first placeholder (page1)
+    for(let i=0;i<pages.length;i++){
+      const pageNum = pageObjNums[i];
+      const contentNum = contentObjNums[i];
+
+      // Content stream
+      const contentLines = [];
+      contentLines.push("BT");
+      contentLines.push(`/F1 ${fontSize} Tf`);
+      // Title on first page
+      let y = marginT;
+      if(i === 0 && title){
+        contentLines.push(`${marginL} ${y} Td`);
+        contentLines.push(`(${pdfEscape(title)}) Tj`);
+        contentLines.push(`0 -${leading*2} Td`);
+      }else{
+        contentLines.push(`${marginL} ${y} Td`);
+      }
+
+      for(let j=0;j<pages[i].length;j++){
+        const line = pages[i][j];
+        contentLines.push(`(${pdfEscape(line)}) Tj`);
+        // Move down unless last line
+        if(j !== pages[i].length - 1){
+          contentLines.push(`0 -${leading} Td`);
+        }
+      }
+      contentLines.push("ET");
+      const stream = contentLines.join("\n");
+      const streamBytes = enc.encode(stream);
+      const contentObj =
+`<< /Length ${streamBytes.length} >>\nstream\n${stream}\nendstream`;
+
+      // Page object
+      const pageObj =
+`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageW} ${pageH}] /Resources << /Font << /F1 ${fontObjNum} 0 R >> >> /Contents ${contentNum} 0 R >>`;
+
+      // place them
+      objects[phIndex] = pageObj;
+      objects[phIndex+1] = contentObj;
+      phIndex += 2;
+    }
+
+    // Now fill Pages kids in object 2 (index 1)
+    const kids = pageObjNums.map(n=>`${n} 0 R`).join(" ");
+    objects[1] = `<< /Type /Pages /Kids [ ${kids} ] /Count ${pages.length} >>`;
+
+    // Assemble PDF
+    let pdf = "%PDF-1.4\n";
+    const offsets = [0]; // xref requires object 0
+    let pos = enc.encode(pdf).length;
+
+    for(let i=0;i<objects.length;i++){
+      const objNo = i+1;
+      offsets.push(pos);
+      const chunk = `${objNo} 0 obj\n${objects[i]}\nendobj\n`;
+      pdf += chunk;
+      pos += enc.encode(chunk).length;
+    }
+
+    const xrefPos = pos;
+    // xref table
+    let xref = `xref\n0 ${objects.length+1}\n`;
+    xref += "0000000000 65535 f \n";
+    for(let i=1;i<offsets.length;i++){
+      const off = String(offsets[i]).padStart(10,"0");
+      xref += `${off} 00000 n \n`;
+    }
+
+    const trailer =
+`trailer\n<< /Size ${objects.length+1} /Root 1 0 R >>\nstartxref\n${xrefPos}\n%%EOF`;
+
+    pdf += xref + trailer;
+    return enc.encode(pdf);
+  }
+
+  function downloadBlob(blob, filename){
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>{ try{ URL.revokeObjectURL(url); }catch(_){ } }, 2000);
+  }
+
+  function sanitizeFilename(s){
+    return String(s || "estudiante")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g,"-")
+      .replace(/^-+|-+$/g,"")
+      .slice(0,50) || "estudiante";
+  }
+
+  function buildEmailLinks(summaryText, fileName){
     const to = "neuroaprendizajedelosverbosirregulares@iemanueljbetancur.edu.co";
     const prof = getProfile();
-    const subject = `SEGUIMIENTO | ${prof.name} | ${prof.email || "sin-email"}`;
+    const subject = `SEGUIMIENTO (PDF) | ${prof.name} | ${prof.email || "sin-email"}`;
 
     const header =
 `SEGUIMIENTO DEL ESTUDIANTE (NeuroVerbs)\n\n` +
@@ -476,7 +670,12 @@
 `Email: ${prof.email || "—"}\n` +
 `Fecha/Hora: ${new Date().toLocaleString()}\n\n`;
 
-    const body = header + reportText + `\n\nEnviado desde: seguimiento-estudiantes.html`;
+    const body =
+header +
+(summaryText ? (summaryText + "\n\n") : "") +
+`Adjunto (PDF): ${fileName}\n\n` +
+`Nota: Si el PDF se descargó en tu equipo, adjúntalo en Gmail antes de enviar.\n\n` +
+`Enviado desde: seguimiento-estudiantes.html`;
 
     const gmailUrl =
       "https://mail.google.com/mail/?view=cm&fs=1" +
@@ -498,13 +697,52 @@
     return { gmailUrl, mailto };
   }
 
-  function send(){
-    // Construir el reporte con TODO lo visible (KPIs completos)
-    const reportText = collectMetrics();
-    const links = buildEmailLinks(reportText);
+  async function send(){
+    // Construir el reporte completo (para el PDF) y un resumen corto (para el cuerpo del correo)
+    const fullReport = collectMetrics();
+    const summary = collectSummary();
 
-    // Mantener esta pestaña en la APP: NO redireccionar aquí.
-    try{ if(sendCard) sendCard.style.display = "block"; }catch(_){}
+    const prof = getProfile();
+    const safeName = sanitizeFilename(prof.name);
+    const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,"-");
+    const fileName = `seguimiento-${safeName}-${stamp}.pdf`;
+
+    // 1) Generar PDF (texto)
+    let pdfBlob = null;
+    try{
+      const lines = fullReport.split("\n");
+      const title = `Seguimiento - ${prof.name} (${prof.email || "sin-email"})`;
+      const bytes = makePdfBytes(title, lines);
+      pdfBlob = new Blob([bytes], {type:"application/pdf"});
+    }catch(err){
+      console.error("PDF error", err);
+      toast("Error PDF", "No se pudo generar el PDF. Se enviará el seguimiento como texto.");
+    }
+
+    // 2) Intentar compartir con adjunto (móvil / navegadores compatibles)
+    if(pdfBlob){
+      try{
+        const file = new File([pdfBlob], fileName, {type:"application/pdf"});
+        if(navigator.canShare && navigator.canShare({files:[file]})){
+          await navigator.share({
+            title: "Seguimiento NeuroVerbs (PDF)",
+            text: "Adjunto el PDF de seguimiento.",
+            files: [file]
+          });
+          toast("Compartido ✅", "Se abrió el panel de compartir con el PDF adjunto.");
+          return;
+        }
+      }catch(_){}
+    }
+
+    // 3) Descargar PDF automáticamente (fallback desktop)
+    if(pdfBlob){
+      downloadBlob(pdfBlob, fileName);
+      toast("PDF generado", "Se descargó el PDF. Ahora se abrirá Gmail para que lo adjuntes antes de enviar.");
+    }
+
+    // 4) Abrir Gmail con un cuerpo corto (para evitar URLs largas)
+    const links = buildEmailLinks(summary, fileName);
 
     // Si no está logueado, igual abrimos el correo (pero puede no haber CC)
     if(!isLoggedIn()){
@@ -529,7 +767,7 @@
     toast(
       "Correo listo",
       opened
-        ? "Se abrió Gmail en una nueva pestaña. Va para el profesor y con copia (CC) a tu correo (si está disponible)."
+        ? "Se abrió Gmail en una nueva pestaña (To: profesor, CC: tu correo). Adjunta el PDF descargado y presiona ENVIAR."
         : "El navegador bloqueó la nueva pestaña. Usa 'Abrir Gmail' (pestaña nueva) en el panel que aparece abajo."
     );
   }
