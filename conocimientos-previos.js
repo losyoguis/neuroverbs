@@ -1289,27 +1289,13 @@ function updateHUD(){
       return { gmailUrl, email };
     }
 
-    function refreshSendHref(){
-      if(!btnSend) return;
-      const evidence = box ? (box.value || "").trim() : "";
-      if(!evidence){
-        btnSend.setAttribute("href", "#");
-        btnSend.setAttribute("aria-disabled", "true");
-        return;
-      }
-      const { gmailUrl } = buildGmailUrlForKP(evidence);
-      btnSend.setAttribute("href", gmailUrl);
-      btnSend.removeAttribute("aria-disabled");
-    }
-
-    // Mantener el href actualizado cuando se genera o cambia el estado
-    refreshSendHref();
-
     if(btnSend){
       // Evitar múltiples listeners
       if(!btnSend.dataset.nvBound){
         btnSend.dataset.nvBound = "1";
         btnSend.addEventListener("click", (e)=>{
+          e.preventDefault();
+
           // Si no hay evidencia aún, la generamos
           if(box && (!box.value || !box.value.trim())){
             const code = generateEvidence();
@@ -1319,19 +1305,38 @@ function updateHUD(){
 
           const evidence = box ? (box.value||"").trim() : "";
           if(!evidence){
-            e.preventDefault();
             toast("No hay evidencia", "Primero genera tu código NVKP.");
             return;
           }
 
-          // Construir URL y dejarla en el href para que el click abra Gmail en NUEVA pestaña (target=_blank)
           const { gmailUrl } = buildGmailUrlForKP(evidence);
-          btnSend.setAttribute("href", gmailUrl);
 
-          // No hacemos window.open aquí (evita abrir 2 pestañas). El navegador abre SOLO una con target=_blank.
-          toast("Correo listo", "Se abrió Gmail en una nueva pestaña (con copia para tu email en CC). Solo presiona ENVIAR.");
-        });
-      }
+          // ✅ Abrir SOLO 1 pestaña/ventana y mantener esta pestaña en la app
+          let w = null;
+          try{
+            w = window.open("about:blank", "_blank", "noopener,noreferrer");
+          }catch(_){ w = null; }
+
+          if(w){
+            try{
+              // en algunos navegadores noopener evita acceso a opener, pero igual forzamos por seguridad
+              w.opener = null;
+            }catch(_){}
+            try{
+              w.location.href = gmailUrl;
+            }catch(_){
+              // si no deja asignar, hacemos fallback a abrir la url directa
+              try{ w.location.replace(gmailUrl); }catch(__){}
+            }
+            toast("Correo listo", "Se abrió Gmail en una nueva pestaña. Va para el profesor y con copia (CC) a tu correo. Solo presiona ENVIAR.");
+          }else{
+            // Popup bloqueado: mostramos alternativa (copiar link al portapapeles y abrir manual)
+            try{
+              navigator.clipboard && navigator.clipboard.writeText(gmailUrl);
+            }catch(_){}
+            toast("Ventana bloqueada", "Tu navegador bloqueó la pestaña nueva. Permite popups para este sitio o copia/pega el enlace de Gmail desde el portapapeles.");
+          }
+        });\n      }
     }
           const evidence = box ? (box.value||"").trim() : "";
           if(!evidence){

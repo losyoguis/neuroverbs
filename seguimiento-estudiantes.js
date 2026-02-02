@@ -483,12 +483,12 @@
       "&to=" + encodeURIComponent(to) +
       "&cc=" + encodeURIComponent((prof.email || "")) +
       "&su=" + encodeURIComponent(subject) +
-      "&cc=" + encodeURIComponent((prof.email || "")) +
       "&body=" + encodeURIComponent(body);
 
     const mailto =
       "mailto:" + encodeURIComponent(to) +
       "?subject=" + encodeURIComponent(subject) +
+      "&cc=" + encodeURIComponent((prof.email || "")) +
       "&body=" + encodeURIComponent(body);
 
     if(aGmail) aGmail.href = gmailUrl;
@@ -504,33 +504,30 @@
       return;
     }
 
-    // Construir el reporte con TODO lo que esté visible (KPIs completos)
     const reportText = collectMetrics();
     const links = buildEmailLinks(reportText);
 
     // Mantener esta pestaña en la APP: NO redireccionar aquí.
     try{ if(sendCard) sendCard.style.display = "block"; }catch(_){}
 
-    // Abrir SOLO UNA pestaña de correo (método único + robusto)
+    // Abrir SOLO UNA pestaña de correo (mejor compatibilidad con bloqueadores)
     let opened = false;
+    let w = null;
     try{
-      const a = document.createElement("a");
-      a.href = links.gmailUrl;
-      a.target = "_blank";
-      a.rel = "noopener noreferrer";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      opened = true; // si el navegador lo bloquea, no redirecciona la app; mostramos fallback
+      w = window.open("about:blank", "_blank", "noopener,noreferrer");
+      if(w){
+        w.location.href = links.gmailUrl;
+        opened = true;
+      }
     }catch(_){ opened = false; }
 
     toast(
       "Correo listo",
       opened
         ? "Se abrió el correo en una nueva pestaña (con copia para tu email en CC). Vuelve aquí para seguir en la app."
-        : "Tu navegador bloqueó la nueva pestaña. Usa 'Abrir Gmail' (pestaña nueva)."
+        : "El navegador bloqueó la nueva pestaña. Usa 'Abrir Gmail' (pestaña nueva)."
     );
-  }
+}
 
   // Evitar múltiples listeners (que abren 2 pestañas)
   if(!btnSend.dataset.nvBound){
@@ -538,7 +535,6 @@
     btnSend.addEventListener("click", (e)=>{ e.preventDefault(); send(); });
   }
 })();
-
 
 /* ========= Seguimiento: Modo Día / Noche (global, sin dependencias) =========
    Funciona aunque el tablero no llame render().
