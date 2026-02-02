@@ -17,9 +17,7 @@
 <link href="ui.css" rel="stylesheet"/><style>
   #guestBtn:hover { filter: brightness(1.05); transform: translateY(-1px); }
   #guestBtn:active { transform: translateY(0px); filter: brightness(0.98); }
-</style>
-
-  <!-- Icons (externos) -->
+</style><!-- Icons (externos) -->
   <link rel="icon" type="image/png" sizes="64x64" href="assets/favicon.png"/>
   <link rel="icon" type="image/png" sizes="512x512" href="assets/logo.png"/>
   <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png"/>
@@ -68,12 +66,14 @@
 </div>
 <div class="authBar" id="authBar" style="display:flex;flex-direction:column;align-items:center;gap:12px;">
 <div data-help="🔑 Inicia sesión con Google para guardar tus XP y aparecer en el ranking. Solo estudiantes de la I.E Manuel J. Betancur." id="googleBtn"></div>
+
 <div style="display:flex;justify-content:center;margin-top:10px;">
   <button id="guestBtn" type="button"
     style="padding:12px 18px; border-radius:999px; border:1px solid rgba(255,178,74,.55);background: #ffb24a; color:#1b1430; font-weight:900; cursor:pointer; min-width:260px;box-shadow: 0 10px 24px rgba(0,0,0,.30);">
     Ingresar como invitado
   </button>
 </div>
+
 <div class="userChip" id="userChip" style="display:none;">
 <img alt="Foto" id="userPic"/>
 <div class="userMeta">
@@ -191,15 +191,15 @@
   const t = setInterval(() => { if (patch()) clearInterval(t); }, 50);
 })();
 </script>
+
 <script>
-/* ✅ Ingresar como invitado → redirige a Neuroverbs */
-(function () {
-  const TARGET = 'neuroverbs.html';
+(() => {
   const btn = document.getElementById("guestBtn");
   if (!btn) return;
   btn.addEventListener("click", () => window.location.href = TARGET);
 })();
 </script>
+
 
 <script src="core.js"></script>
 <script>
