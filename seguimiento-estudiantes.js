@@ -11,6 +11,32 @@
     try{ return JSON.parse(raw); }catch(_){ return fallback; }
   }
   function $(id){ return document.getElementById(id); }
+
+  const THEME_KEY = "nv_seg_theme_v1"; // "dark" | "light"
+
+  function getTheme(){
+    try{ return (localStorage.getItem(THEME_KEY) || "dark"); }catch(_){ return "dark"; }
+  }
+  function setTheme(v){
+    try{ localStorage.setItem(THEME_KEY, v); }catch(_){}
+  }
+  function applyTheme(v){
+    const b = document.body;
+    if(!b) return;
+    b.classList.toggle("theme-light", v === "light");
+    const btn = $("btnThemeToggle");
+    if(btn){
+      // Si estás en light, el botón ofrece "Noche"
+      if(v === "light"){
+        btn.textContent = "🌙 Noche";
+        btn.title = "Cambiar a modo noche";
+      }else{
+        btn.textContent = "☀️ Día";
+        btn.title = "Cambiar a modo día";
+      }
+    }
+  }
+
   function esc(s){
     return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");
   }
@@ -258,7 +284,19 @@
     $("lastRead").textContent = new Date().toLocaleString();
 
     // Print
-    const btnPrint = $("btnPrint");
+    
+    // Theme (Day/Night)
+    applyTheme(getTheme());
+    const btnTheme = $("btnThemeToggle");
+    if(btnTheme){
+      btnTheme.addEventListener("click", ()=>{
+        const next = (getTheme() === "light") ? "dark" : "light";
+        setTheme(next);
+        applyTheme(next);
+      });
+    }
+
+const btnPrint = $("btnPrint");
     if(btnPrint){
       btnPrint.addEventListener("click", () => window.print());
     }

@@ -310,3 +310,86 @@ body{ background: var(--seg-bg); color: var(--seg-text); }
   color:#07101d;
 }
 
+
+
+/* ========= Tema Día / Noche (solo seguimiento) ========= */
+.segNavBtn.segTheme{
+  background: rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.18);
+  font-weight: 950;
+}
+
+body.theme-light{
+  --seg-bg: #f6f7fb;
+  --seg-card: rgba(0,0,0,.03);
+  --seg-stroke: rgba(0,0,0,.12);
+  --seg-text: rgba(0,0,0,.92);
+  --seg-muted: rgba(0,0,0,.64);
+}
+
+body.theme-light .segHeader{
+  background: rgba(255,255,255,.86);
+  border-bottom-color: rgba(0,0,0,.12);
+}
+
+body.theme-light .segNavBtn{
+  background: rgba(0,0,0,.04);
+  color: rgba(0,0,0,.88);
+  border-color: rgba(0,0,0,.14);
+}
+
+body.theme-light .segNavBtn.segTheme{
+  background: rgba(0,0,0,.06);
+}
+
+body.theme-light .segMetric,
+body.theme-light .segMini,
+body.theme-light .segListRow,
+body.theme-light .segChip,
+body.theme-light .segRecoItem,
+body.theme-light .segHint,
+body.theme-light .segGateCard{
+  background: rgba(255,255,255,.72);
+  border-color: rgba(0,0,0,.12);
+  color: rgba(0,0,0,.92);
+}
+
+body.theme-light .segPill{
+  background: rgba(0,0,0,.04);
+  border-color: rgba(0,0,0,.12);
+  color: rgba(0,0,0,.78);
+}
+
+body.theme-light .segAvatar{
+  border-color: rgba(0,0,0,.12);
+}
+
+body.theme-light .segTableWrap{
+  border-color: rgba(0,0,0,.12);
+}
+
+body.theme-light .segTable th, 
+body.theme-light .segTable td{
+  border-bottom-color: rgba(0,0,0,.10);
+}
+
+body.theme-light .segTable th{
+  background: rgba(0,0,0,.04);
+  color: rgba(0,0,0,.80);
+}
+
+body.theme-light .segActionBtn{
+  border-color: rgba(0,0,0,.14);
+  background: rgba(0,0,0,.04);
+  color: rgba(0,0,0,.88);
+}
+
+body.theme-light .segActionBtn.segPrimary{
+  color: #07101d;
+}
+
+body.theme-light .segNavBtn.segSend{
+  /* Mantiene el gradiente pero asegura legibilidad */
+  color: #05101f !important;
+  text-shadow: none;
+}
