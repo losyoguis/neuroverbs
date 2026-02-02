@@ -481,7 +481,9 @@
     const gmailUrl =
       "https://mail.google.com/mail/?view=cm&fs=1" +
       "&to=" + encodeURIComponent(to) +
+      "&cc=" + encodeURIComponent((prof.email || "")) +
       "&su=" + encodeURIComponent(subject) +
+      "&cc=" + encodeURIComponent((prof.email || "")) +
       "&body=" + encodeURIComponent(body);
 
     const mailto =
@@ -506,40 +508,35 @@
     const reportText = collectMetrics();
     const links = buildEmailLinks(reportText);
 
-    // Siempre mantener esta pestaña en la APP: NO redireccionar aquí.
+    // Mantener esta pestaña en la APP: NO redireccionar aquí.
     try{ if(sendCard) sendCard.style.display = "block"; }catch(_){}
 
-    // Intento 1: window.open (nueva pestaña/ventana)
+    // Abrir SOLO UNA pestaña de correo (método único + robusto)
     let opened = false;
     try{
-      const w = window.open(links.gmailUrl, "_blank", "noopener,noreferrer");
-      opened = !!w;
+      const a = document.createElement("a");
+      a.href = links.gmailUrl;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      opened = true; // si el navegador lo bloquea, no redirecciona la app; mostramos fallback
     }catch(_){ opened = false; }
-
-    // Intento 2: enlace con target _blank (más compatible en algunos navegadores)
-    if(!opened){
-      try{
-        const a = document.createElement("a");
-        a.href = links.gmailUrl;
-        a.target = "_blank";
-        a.rel = "noopener noreferrer";
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        opened = true; // si el navegador lo bloquea, igual no redirige la app
-      }catch(_){}
-    }
 
     toast(
       "Correo listo",
       opened
-        ? "Se abrió el correo en una nueva pestaña. Vuelve aquí para seguir en la app."
-        : "Tu navegador bloqueó la nueva pestaña. Usa 'Abrir Gmail' (pestaña nueva) y presiona ENVIAR."
+        ? "Se abrió el correo en una nueva pestaña (con copia para tu email en CC). Vuelve aquí para seguir en la app."
+        : "Tu navegador bloqueó la nueva pestaña. Usa 'Abrir Gmail' (pestaña nueva)."
     );
   }
 
-  btnSend.addEventListener("click", send);
-("click", send);
+  // Evitar múltiples listeners (que abren 2 pestañas)
+  if(!btnSend.dataset.nvBound){
+    btnSend.dataset.nvBound = "1";
+    btnSend.addEventListener("click", (e)=>{ e.preventDefault(); send(); });
+  }
 })();
 
 
