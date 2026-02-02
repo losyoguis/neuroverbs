@@ -268,7 +268,10 @@
 })();
 
 
-/* ========= Enviar seguimiento por correo (PDF adjunto cuando sea posible) ========= */
+/* ========= Enviar seguimiento por correo (SIN PDF, estilo "Modo Estudiante") =========
+   ✅ Sin backend: abre Gmail con el informe listo.
+   ✅ Incluye quién envía (nombre + email Workspace), fecha/hora, KPIs y recomendaciones.
+*/
 (function(){
   const btnSend = document.getElementById("btnSendReport");
   if(!btnSend) return;
@@ -296,14 +299,13 @@
   }
 
   function toast(title, msg){
-    // Reutiliza estilos existentes creando un aviso simple
     const div = document.createElement("div");
     div.style.position="fixed";
     div.style.left="50%";
     div.style.bottom="18px";
     div.style.transform="translateX(-50%)";
     div.style.zIndex="99999";
-    div.style.maxWidth="min(720px, calc(100vw - 26px))";
+    div.style.maxWidth="min(760px, calc(100vw - 26px))";
     div.style.padding="12px 14px";
     div.style.borderRadius="14px";
     div.style.border="1px solid rgba(255,255,255,.14)";
@@ -316,19 +318,113 @@
     setTimeout(()=>{ try{ div.remove(); }catch(_){ } }, 4200);
   }
 
-  function buildEmailLinks(summaryText){
+  function txt(sel){
+    return (document.querySelector(sel)?.textContent || "").trim();
+  }
+
+  function collectKpis(){
+    // 1) Prefer data-kpi attributes (si existen)
+    const k = {};
+    document.querySelectorAll("[data-kpi]").forEach(el=>{
+      const key = (el.getAttribute("data-kpi") || "").trim();
+      const val = (el.textContent || "").trim();
+      if(key && val) k[key] = val;
+    });
+
+    // 2) Fallback a IDs comunes si existen
+    const map = {
+      xp_total: "#kpiXpTotal",
+      level: "#kpiLevel",
+      streak: "#kpiStreak",
+      hearts: "#kpiHearts",
+      freeze: "#kpiFreeze",
+      accuracy: "#kpiAccuracy",
+      attempts: "#kpiAttempts",
+      correct: "#kpiCorrect",
+      daily: "#kpiDaily",
+      mastered: "#kpiMastered",
+      last_active: "#kpiLastActive",
+      kp_done: "#kpiKpDone",
+      kp_badge: "#kpiKpBadge"
+    };
+    Object.entries(map).forEach(([kpi, sel])=>{
+      if(!k[kpi]){
+        const v = txt(sel);
+        if(v) k[kpi] = v;
+      }
+    });
+
+    return k;
+  }
+
+  function collectTopList(selector, maxItems){
+    const arr = [];
+    document.querySelectorAll(selector).forEach((el)=>{
+      const t = (el.textContent || "").trim();
+      if(t) arr.push(t);
+    });
+    return arr.slice(0, maxItems || 10);
+  }
+
+  function buildReportText(){
+    const k = collectKpis();
+
+    const lines = [];
+    lines.push("REPORTE DE SEGUIMIENTO — NeuroVerbs");
+    lines.push("");
+    lines.push("KPIs:");
+    const order = [
+      ["xp_total", "XP total"],
+      ["level", "Nivel"],
+      ["streak", "Racha"],
+      ["hearts", "Corazones"],
+      ["freeze", "Freeze tokens"],
+      ["daily", "Meta diaria"],
+      ["accuracy", "Precisión"],
+      ["attempts", "Intentos"],
+      ["correct", "Correctas"],
+      ["mastered", "Dominio / Verbos"],
+      ["kp_done", "KP completado"],
+      ["kp_badge", "Insignia KP"],
+      ["last_active", "Última actividad"]
+    ];
+    let any = false;
+    order.forEach(([key,label])=>{
+      if(k[key]){
+        lines.push(`- ${label}: ${k[key]}`);
+        any = true;
+      }
+    });
+    if(!any) lines.push("- (No se detectaron KPIs visibles)");
+
+    // Listas (si existen en tu tablero)
+    const topErrors = collectTopList(".segErrors li, #segTopErrors li, [data-list='top_errors'] li", 8);
+    if(topErrors.length){
+      lines.push("");
+      lines.push("Errores frecuentes:");
+      topErrors.forEach((x,i)=> lines.push(`${i+1}. ${x}`));
+    }
+
+    const tips = collectTopList(".segTips li, #segTips li, [data-list='tips'] li", 8);
+    if(tips.length){
+      lines.push("");
+      lines.push("Recomendaciones:");
+      tips.forEach((x,i)=> lines.push(`${i+1}. ${x}`));
+    }
+
+    return lines.join("\n");
+  }
+
+  function buildEmailLinks(reportText){
     const to = "neuroaprendizajedelosverbosirregulares@iemanueljbetancur.edu.co";
     const prof = getProfile();
     const subject = `SEGUIMIENTO | ${prof.name} | ${prof.email || "sin-email"}`;
-    const body =
-`SEGUIMIENTO DEL ESTUDIANTE (NeuroVerbs)\\n\\n` +
-`Nombre: ${prof.name}\\n` +
-`Email: ${prof.email || "—"}\\n` +
-`Fecha/Hora: ${new Date().toLocaleString()}\\n\\n` +
-`RESUMEN:\\n${summaryText}\\n\\n` +
-`Adjunto: PDF del seguimiento (si tu dispositivo lo permite).\\n` +
-`Si no se adjunta automáticamente, por favor descárgalo con "Imprimir / PDF" y adjúntalo.\\n\\n` +
-`Enviado desde: seguimiento-estudiantes.html`;
+    const header =
+`Estudiante: ${prof.name}\n` +
+`Email: ${prof.email || "—"}\n` +
+`Fecha/Hora: ${new Date().toLocaleString()}\n\n`;
+
+    const body = header + reportText + "\n\nEnviado desde: seguimiento-estudiantes.html";
 
     const gmailUrl =
       "https://mail.google.com/mail/?view=cm&fs=1" +
@@ -345,145 +441,34 @@
     if(aMailto) aMailto.href = mailto;
     if(sendCard) sendCard.style.display = "block";
 
-    return { gmailUrl, mailto, subject, body };
+    return { gmailUrl, mailto };
   }
 
-  function getSummaryText(){
-    // Toma algunas métricas visibles del tablero para el cuerpo del correo
-    const getTxt = (sel)=> (document.querySelector(sel)?.textContent || "").trim();
-    const xp = getTxt("[data-kpi='xp_total']") || getTxt("#kpiXpTotal") || "";
-    const level = getTxt("[data-kpi='level']") || getTxt("#kpiLevel") || "";
-    const streak = getTxt("[data-kpi='streak']") || getTxt("#kpiStreak") || "";
-    const acc = getTxt("[data-kpi='accuracy']") || getTxt("#kpiAccuracy") || "";
-    const daily = getTxt("[data-kpi='daily']") || getTxt("#kpiDaily") || "";
-    const mastered = getTxt("[data-kpi='mastered']") || getTxt("#kpiMastered") || "";
-    const last = getTxt("[data-kpi='last_active']") || getTxt("#kpiLastActive") || "";
-
-    const parts = [];
-    if(xp) parts.push(`XP total: ${xp}`);
-    if(level) parts.push(`Nivel: ${level}`);
-    if(streak) parts.push(`Racha: ${streak}`);
-    if(acc) parts.push(`Precisión: ${acc}`);
-    if(daily) parts.push(`Meta diaria: ${daily}`);
-    if(mastered) parts.push(`Dominio/Verbos: ${mastered}`);
-    if(last) parts.push(`Última actividad: ${last}`);
-    return parts.join("\\n") || "(Sin métricas visibles)";
-  }
-
-  async function generatePdfBlob(){
-    // Genera un PDF del contenido usando html2canvas + jsPDF (CDN).
-    const target = document.querySelector(".segMain") || document.body;
-    if(!window.html2canvas) throw new Error("html2canvas no disponible");
-    const jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : null;
-    if(!jsPDF) throw new Error("jsPDF no disponible");
-
-    // Garantiza que el panel esté en el top antes de capturar
-    try{ window.scrollTo({top:0, behavior:"instant"}); }catch(_){ window.scrollTo(0,0); }
-
-    const canvas = await window.html2canvas(target, {
-      scale: 2,
-      backgroundColor: "#0a1020",
-      useCORS: true
-    });
-
-    const imgData = canvas.toDataURL("image/png", 1.0);
-    const pdf = new jsPDF("p", "pt", "a4");
-
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-
-    const imgWidth = pageWidth;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-    let heightLeft = imgHeight;
-    let position = 0;
-
-    pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight;
-
-    while(heightLeft > 0){
-      position = heightLeft - imgHeight; // posición negativa para "subir" la imagen
-      pdf.addPage();
-      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-    }
-
-    const blob = pdf.output("blob");
-    return blob;
-  }
-
-  function downloadBlob(blob, filename){
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(()=>{
-      try{ a.remove(); }catch(_){}
-      try{ URL.revokeObjectURL(url); }catch(_){}
-    }, 800);
-  }
-
-  async function sendReport(){
+  function send(){
     if(!isLoggedIn()){
       toast("Debes iniciar sesión", "Inicia sesión con Google Workspace para enviar tu seguimiento.");
       return;
     }
 
-    btnSend.disabled = true;
-    btnSend.style.opacity = ".75";
-    toast("Preparando...", "Generando el PDF de tu seguimiento...");
+    const reportText = buildReportText();
+    const links = buildEmailLinks(reportText);
 
-    const prof = getProfile();
-    const safeName = (prof.name || "Estudiante").replace(/[^a-z0-9]+/gi,"_").slice(0,40);
-    const fileName = `Seguimiento_${safeName}_${new Date().toISOString().slice(0,10)}.pdf`;
-
-    const summary = getSummaryText();
-    const links = buildEmailLinks(summary);
-
-    let blob = null;
-    try{
-      blob = await generatePdfBlob();
-    }catch(err){
-      // si falla la generación del pdf, aún abrimos el correo con resumen
-      console.warn(err);
-    }
-
-    // 1) Si el navegador permite compartir archivos (celular), enviamos con adjunto
-    if(blob){
-      try{
-        const file = new File([blob], fileName, {type:"application/pdf"});
-        if(navigator.canShare && navigator.canShare({files:[file]}) && navigator.share){
-          await navigator.share({
-            title: "Seguimiento NeuroVerbs",
-            text: "Adjunto va tu PDF de seguimiento. Enviar a: neuroaprendizajedelosverbosirregulares@iemanueljbetancur.edu.co",
-            files: [file]
-          });
-          toast("Listo", "Se abrió el menú de compartir con el PDF adjunto. Elige Gmail y envíalo.");
-          btnSend.disabled = false;
-          btnSend.style.opacity = "1";
-          return;
-        }
-      }catch(err){
-        console.warn("share failed", err);
-      }
-    }
-
-    // 2) Desktop/otros: descargamos el PDF y abrimos Gmail con el mensaje listo (el usuario adjunta el archivo)
-    if(blob){
-      downloadBlob(blob, fileName);
-    }
-    // Intento abrir Gmail en nueva pestaña; si está bloqueado, mostramos enlaces.
+    // Intento 1: abrir Gmail en nueva pestaña
     let w = null;
     try{ w = window.open(links.gmailUrl, "_blank", "noopener,noreferrer"); }catch(_){ w = null; }
+
+    // Si está bloqueado, abrimos en la misma pestaña; si falla, mailto
     if(!w){
-      try{ window.location.assign(links.gmailUrl); }catch(_){ window.location.href = links.mailto; }
+      try{
+        window.location.assign(links.gmailUrl);
+      }catch(_){
+        try{ window.location.href = links.mailto; }catch(__){}
+      }
+      return;
     }
-    toast("Correo listo", "Se abrió el correo con el resumen. Adjunta el PDF descargado y presiona ENVIAR.");
-    btnSend.disabled = false;
-    btnSend.style.opacity = "1";
+
+    toast("Correo listo", "Se abrió Gmail con el informe preparado. Solo presiona ENVIAR.");
   }
 
-  btnSend.addEventListener("click", sendReport);
+  btnSend.addEventListener("click", send);
 })();
