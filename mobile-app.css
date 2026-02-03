@@ -1,0 +1,125 @@
+/* NEUROVERBS — Mobile App Responsive Enhancements
+   Goal: modern, thumb-friendly UI on phones without breaking desktop layout.
+*/
+:root{
+  --safeTop: env(safe-area-inset-top, 0px);
+  --safeBottom: env(safe-area-inset-bottom, 0px);
+}
+
+*{ -webkit-tap-highlight-color: transparent; }
+
+img{ max-width: 100%; height: auto; }
+
+@media (max-width: 820px){
+  body{
+    padding: calc(var(--safeTop) + 12px) 12px calc(var(--safeBottom) + 14px);
+    align-items: stretch;
+  }
+  .app{
+    padding: 16px;
+    border-radius: 20px;
+    max-width: 100%;
+  }
+
+  /* Give a bit more breathing room under fixed HUD */
+  body.has-floating-stats{
+    padding-top: calc(var(--hudSafe, 160px) + 10px);
+  }
+
+  /* Fixed stats bar: slimmer + edge-to-edge */
+  .stats{
+    top: calc(var(--safeTop) + 8px) !important;
+    width: calc(100% - 16px) !important;
+    border-radius: 18px;
+    padding: 10px;
+    gap: 8px;
+  }
+  .statBox, .goalBox{
+    min-width: 96px;
+    padding: 10px 12px;
+    border-radius: 14px;
+  }
+  .stat-label{ font-size: .62rem; }
+  .stat-value{ font-size: 1.05rem; }
+
+  /* Brand card */
+  .brand{
+    padding: 14px 12px;
+    border-radius: 18px;
+  }
+  .brand h1{ font-size: 1.15rem; }
+  .brand .subtitle{ font-size: .95rem; }
+  .brand .by{ font-size: .82rem; }
+
+  /* Navigation rows: swipeable like a mobile app */
+  .roundbar{ gap: 8px; }
+  .roundrow{
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    justify-content: flex-start;
+    width: 100%;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+  }
+  .roundrow::-webkit-scrollbar{ height: 0; }
+  .roundbtn{
+    flex: 0 0 auto;
+    min-width: 170px;
+    padding: 12px 14px;
+    border-radius: 16px;
+    font-size: .95rem;
+    scroll-snap-align: start;
+  }
+  .roundhint{
+    width: 100%;
+    text-align: center;
+    font-size: .9rem;
+    opacity: .95;
+  }
+
+  /* Selectors block (Grupo/Día + botón) -> stack */
+  .top{
+    grid-template-columns: 1fr !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    padding: 14px !important;
+    border-radius: 18px !important;
+  }
+  .btn-mini{
+    width: 100%;
+    justify-content: center;
+    padding: 12px 14px;
+    border-radius: 16px;
+  }
+  select{
+    padding: 13px 12px;
+    border-radius: 14px;
+    font-size: 1rem;
+  }
+  label{ font-size: .82rem; }
+
+  /* Panels/cards */
+  .hint, .card, .box, .panel{
+    border-radius: 18px !important;
+  }
+
+  /* Tables and wide sections: allow horizontal scroll */
+  table{ display: block; overflow-x: auto; width: 100%; }
+
+  /* Modals: fit screen and avoid going under HUD */
+  .modalCard, .modal, .dialog, .sheet{
+    max-width: min(92vw, 560px);
+  }
+
+  /* Floating assistant buttons: keep thumb zone */
+  .floatingBtn, .asistenteBtn, .assistantBtn{
+    right: 12px !important;
+    bottom: calc(var(--safeBottom) + 12px) !important;
+  }
+}
+
+@media (max-width: 420px){
+  .roundbtn{ min-width: 156px; font-size: .92rem; }
+  .statBox, .goalBox{ min-width: 90px; }
+}
