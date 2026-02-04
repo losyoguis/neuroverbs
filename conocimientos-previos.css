@@ -1233,3 +1233,49 @@ a.roundbtn{
 }
 
 .kpSpeakWrap{ padding-right: 6px; }
+
+
+/* === Twin tables (Haber ES vs Have EN) alignment + fit === */
+.kpTwinTables{
+  align-items: start;
+}
+.kpTwinTables .kpTable{
+  min-width: 0;
+  width: 100%;
+  table-layout: fixed;
+}
+.kpTwinTables .kpTable thead th{
+  white-space: nowrap;
+}
+.kpTwinTables .kpTable th,
+.kpTwinTables .kpTable td{
+  padding: 14px 10px;
+  vertical-align: middle;
+}
+.kpTwinTables .kpTable tbody tr{
+  height: 72px;
+}
+
+/* Column widths (avoid horizontal cut, keep FUTURE audio visible) */
+.kpHaberEs th:nth-child(1), .kpHaberEs td:nth-child(1){
+  width: 34%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.kpHaberEs th:nth-child(2), .kpHaberEs td:nth-child(2){ width: 22%; }
+.kpHaberEs th:nth-child(3), .kpHaberEs td:nth-child(3){ width: 22%; }
+.kpHaberEs th:nth-child(4), .kpHaberEs td:nth-child(4){ width: 22%; }
+
+.kpHaveEn th:nth-child(1), .kpHaveEn td:nth-child(1){
+  width: 22%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.kpHaveEn th:nth-child(2), .kpHaveEn td:nth-child(2){ width: 22%; }
+.kpHaveEn th:nth-child(3), .kpHaveEn td:nth-child(3){ width: 20%; }
+.kpHaveEn th:nth-child(4), .kpHaveEn td:nth-child(4){
+  width: 36%;
+  white-space: nowrap;
+}
