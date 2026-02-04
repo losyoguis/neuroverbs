@@ -2011,12 +2011,6 @@ function init(){
     if(x.includes("verbo (ingles)") || x.includes("verb (english)")) return true;
     if(hasWord("english") || hasWord("ingles")) return true;
 
-    // Exclude meta columns we do NOT want to read
-    if(hasWord("tense")) return false;
-
-    // Linking words tables: read the connector and the example sentence
-    if(x.includes("linking word") || hasWord("linking")) return true;
-    if(hasWord("example") || hasWord("sentence")) return true;
     // v1/v2/v3 columns
     const compact = x.replace(/\s+/g,"");
     if(/^v[123]$/.test(compact)) return true;
