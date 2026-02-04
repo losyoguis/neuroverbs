@@ -1296,3 +1296,28 @@ a.roundbtn{
 
 /* Inline EN highlight */
 .kpEn{ color: rgba(99, 179, 255, .95); font-weight: 800; }
+
+
+/* === Force ALL KP audio buttons to appear AFTER spoken text (left aligned) === */
+.kpAudioCell, .kpSpeakWrap, .kpAudioWrap, .kpTtsWrap, .kpCellAudio{
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 6px !important;
+  width: auto !important;
+}
+
+.kpAudioText, .kpSpeakText, .kpTtsText{
+  order: 1 !important;
+  flex: 0 1 auto !important;
+  min-width: 0 !important;
+}
+
+.kpSpeakBtn{
+  order: 2 !important;
+  margin-left: 6px !important;
+}
+
+@media (max-width: 520px){
+  .kpSpeakBtn{ margin-left: 6px !important; }
+}

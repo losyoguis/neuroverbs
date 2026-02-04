@@ -2021,7 +2021,7 @@ function init(){
   }
 
   function isEnglishHeader(h){
-    const hh = norm(h);
+    const hh = normalize(h);
     if(!hh) return false;
 
     // Stop-columns (Spanish-only / metadata)
