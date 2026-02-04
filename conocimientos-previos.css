@@ -1205,3 +1205,31 @@ a.roundbtn{
   .kpCellAudio{ padding-right: 44px !important; }
   .kpCellAudio .kpSpeakBtn{ right: 8px; }
 }
+
+
+
+/* ===== KP: Ajuste tablas en móvil (para ver el audio en FUTURE sin scroll) ===== */
+@media (max-width: 860px){
+  .kpTableWrap{ overflow-x:auto; }
+  .kpTableWrap table{ min-width: 0 !important; width:100%; }
+  .kpTable{ min-width: 0 !important; width:100%; table-layout: fixed; }
+  .kpTable th, .kpTable td{
+    padding: 8px 8px;
+    font-size: 0.98rem;
+  }
+  .kpTable td{
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  /* 4 columnas: Subject / Present / Past / Future */
+  .kpTable th:nth-child(1), .kpTable td:nth-child(1){ width: 22%; }
+  .kpTable th:nth-child(2), .kpTable td:nth-child(2){ width: 24%; }
+  .kpTable th:nth-child(3), .kpTable td:nth-child(3){ width: 24%; }
+  .kpTable th:nth-child(4), .kpTable td:nth-child(4){ width: 30%; }
+
+  /* Botón de audio más compacto en móvil */
+  .kpSpeakBtn{ width: 24px; height: 24px; }
+}
+
+.kpSpeakWrap{ padding-right: 6px; }
