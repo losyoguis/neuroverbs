@@ -589,4 +589,6 @@
   // Light refresh loop (profile picture may appear later)
   setInterval(()=>{ try{ updateUI(); }catch(_){} }, 1500);
 
+
+  try{ window.NVLogout = logout; }catch(_){}
 })();

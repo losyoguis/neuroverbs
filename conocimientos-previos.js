@@ -2098,3 +2098,36 @@ function init(){
   }
 
 })();
+
+
+// --- Cerrar sesión (KP) ---
+(function(){
+  function clearLocalSession(){
+    try{
+      ["user_profile","google_id_token","rank_user","mjb_user","google_user","neuroverbs_user","auth_user"].forEach(k=>{
+        try{ localStorage.removeItem(k); }catch(_){}
+        try{ sessionStorage.removeItem(k); }catch(_){}
+      });
+    }catch(_){}
+  }
+
+  function doLogout(){
+    try{
+      if (typeof window.NVLogout === "function"){
+        window.NVLogout();
+        return;
+      }
+    }catch(_){}
+    // Fallback: clear local session and reload
+    clearLocalSession();
+    try{ location.href = "index.html"; }catch(_){ location.reload(); }
+  }
+
+  document.addEventListener("click", (e)=>{
+    const t = e.target;
+    if(t && t.id === "btnLogoutKP"){
+      e.preventDefault();
+      doLogout();
+    }
+  });
+})();
