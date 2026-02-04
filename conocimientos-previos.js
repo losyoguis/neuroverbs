@@ -2064,3 +2064,147 @@ function init(){
     init();
   }
 })();
+
+
+// =========================
+// NVKP_TTS_TABLES_GENERIC (EN)
+// Adds audio buttons to English columns in KP tables (verbs examples, tenses, V1/V2/V3, etc.)
+// =========================
+(function(){
+  const BTN_CLASS = "kpSpeakBtn";
+  const CELL_CLASS = "kpCellAudio";
+  let enVoice = null;
+
+  function normalize(s){
+    return String(s||"")
+      .toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g,""); // remove accents
+  }
+
+  function pickEnglishVoice(){
+    try{
+      const vs = window.speechSynthesis.getVoices ? window.speechSynthesis.getVoices() : [];
+      enVoice = vs.find(v => /en(-|_)?us/i.test(v.lang)) ||
+                vs.find(v => /^en/i.test(v.lang)) ||
+                null;
+    }catch(_){ enVoice = null; }
+  }
+
+  function cleanSpeakText(t){
+    let s = String(t||"").replace(/\s+/g," ").trim();
+    // remove warning / emoji symbols that confuse speech
+    s = s.replace(/[⚠️🚫✅❌🔊🎧📌📍⭐️⭐✳️]/g,"").trim();
+    // special-case "I"
+    if(/^i$/i.test(s)) return "eye";
+    return s;
+  }
+
+  function speakEN(text){
+    const speakText = cleanSpeakText(text);
+    if(!speakText) return;
+
+    if(!window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
+
+    try{ pickEnglishVoice(); }catch(_){}
+    try{ window.speechSynthesis.cancel(); }catch(_){}
+
+    const u = new SpeechSynthesisUtterance(speakText);
+    u.lang = "en-US";
+    if(enVoice) u.voice = enVoice;
+    u.rate = 1;
+    u.pitch = 1;
+    try{ window.speechSynthesis.speak(u); }catch(_){}
+  }
+
+  function shouldAudioForHeader(h){
+    const x = normalize(h);
+    if(!x) return false;
+
+    // English-related headers
+    const keys = [
+      "english", "ingles", "ingls", "ingl", "verbo (ingles)", "verb (english)",
+      "v1", "v2", "v3",
+      "present", "past", "future", "subject",
+      "3a persona", "3ª persona", "tercera persona",
+      "he/she/it", "he", "she", "it"
+    ];
+
+    // avoid Spanish columns explicitly
+    if(x.includes("traduccion") || x.includes("espanol") || x.includes("tipo")) return false;
+
+    return keys.some(k => x.includes(k));
+  }
+
+  function addBtnToCell(cell, text){
+    if(!cell) return;
+    if(cell.querySelector("button."+BTN_CLASS)) return;
+
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = BTN_CLASS;
+    btn.setAttribute("aria-label","Escuchar pronunciación");
+    btn.title = "Listen (EN)";
+    btn.innerHTML = "🔊";
+    btn.addEventListener("click", (e)=>{
+      e.preventDefault();
+      e.stopPropagation();
+      speakEN(text);
+    });
+
+    cell.classList.add(CELL_CLASS);
+    cell.appendChild(btn);
+  }
+
+  function processTable(table){
+    if(!table || table.dataset.kpAudioGen === "1") return;
+
+    const thead = table.querySelector("thead");
+    const headRow = thead ? thead.querySelector("tr") : null;
+    const ths = headRow ? Array.from(headRow.querySelectorAll("th")) : [];
+    const headers = ths.map(th => th.textContent || "");
+
+    if(headers.length === 0) return;
+
+    const audioCols = [];
+    headers.forEach((h, idx)=>{
+      if(shouldAudioForHeader(h)) audioCols.push(idx);
+    });
+    if(audioCols.length === 0) return;
+
+    const rows = Array.from(table.querySelectorAll("tbody tr"));
+    rows.forEach(r=>{
+      const cells = Array.from(r.querySelectorAll("td"));
+      audioCols.forEach(ci=>{
+        const cell = cells[ci];
+        if(!cell) return;
+        const raw = (cell.textContent || "").replace(/\s+/g," ").trim();
+        if(!raw) return;
+        addBtnToCell(cell, raw);
+      });
+    });
+
+    table.dataset.kpAudioGen = "1";
+  }
+
+  function run(){
+    if(!window.speechSynthesis) return;
+
+    // voices async on Chrome
+    try{
+      window.speechSynthesis.onvoiceschanged = () => { try{ pickEnglishVoice(); }catch(_){ } };
+      pickEnglishVoice();
+    }catch(_){}
+
+    const tables = Array.from(document.querySelectorAll("table.kpTable"));
+    tables.forEach(processTable);
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", run, { once:true });
+  }else{
+    run();
+  }
+  // in case content loads later
+  setTimeout(run, 600);
+  setTimeout(run, 1400);
+})();

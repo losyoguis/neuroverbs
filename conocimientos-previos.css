@@ -1185,3 +1185,20 @@ a.roundbtn{
   .kpSpeakCol{ width: 52px; }
   .kpSpeakBtn{ width: 40px; height: 40px; }
 }
+
+
+/* Generic audio button positioning inside table cell */
+.kpCellAudio{
+  position: relative;
+  padding-right: 62px !important;
+}
+.kpCellAudio .kpSpeakBtn{
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+}
+@media (max-width: 520px){
+  .kpCellAudio{ padding-right: 56px !important; }
+  .kpCellAudio .kpSpeakBtn{ right: 8px; }
+}
