@@ -2118,23 +2118,37 @@ function init(){
     try{ window.speechSynthesis.speak(u); }catch(_){}
   }
 
-  function shouldAudioForHeader(h){
+    function shouldAudioForHeader(h){
     const x = normalize(h);
     if(!x) return false;
 
-    // avoid Spanish columns explicitly
-    if(x.includes("traduccion") || x.includes("espanol") || x.includes("tipo") || x.includes("persona")) return false;
+    // Explicit Spanish headers -> no audio
+    const stop = ["traduccion","espanol","tipo","usuario","presente","pasado","futuro"];
+    if(stop.some(s => x.includes(s))) return false;
 
-    // English-related headers (NOTE: "subject" excluded on purpose)
-    const keys = [
-      "english", "ingles", "ingls", "ingl", "verbo (ingles)", "verb (english)",
-      "v1", "v2", "v3",
-      "present", "past", "future",
-      "3a persona", "3ª persona", "tercera persona",
-      "he/she/it"
-    ];
+    // Utility: whole-word match (prevents 'presente' matching 'present')
+    function hasWord(w){
+      const ww = normalize(w).replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+      const re = new RegExp("(^|[^a-z])"+ww+"([^a-z]|$)","i");
+      return re.test(x);
+    }
 
-    return keys.some(k => x.includes(k));
+    // Strong English indicators / verb columns
+    if(x.includes("verbo (ingles)") || x.includes("verb (english)")) return true;
+    if(hasWord("english") || hasWord("ingles")) return true;
+
+    // v1/v2/v3 columns
+    const compact = x.replace(/\s+/g,"");
+    if(/^v[123]$/.test(compact)) return true;
+
+    // Present/Past/Future in English only (word boundary)
+    if(hasWord("present") || hasWord("past") || hasWord("future")) return true;
+
+    // 3rd person column
+    if(x.includes("3a persona") || x.includes("tercera persona") || x.includes("he/she/it")) return true;
+
+    // NOTE: "subject" excluded on purpose (pronoun-only lists)
+    return false;
   }
 
   function addBtnToCell(cell, displayText, speakText){

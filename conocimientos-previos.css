@@ -1190,6 +1190,7 @@ a.roundbtn{
 /* Generic audio button positioning inside table cell */
 .kpCellAudio{
   position: relative;
+  overflow: hidden;
   padding-right: 62px !important;
 }
 .kpCellAudio .kpSpeakBtn{
