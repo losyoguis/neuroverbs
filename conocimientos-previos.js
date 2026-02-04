@@ -1944,210 +1944,224 @@ function init(){
 // NVKP_TTS_TABLES_GENERIC (EN)
 // Adds audio buttons to English columns in KP tables (verbs examples, tenses, V1/V2/V3, etc.)
 // =========================
+
 (function(){
+  // ========= TTS (SpeechSynthesis) — Audio buttons for English content =========
   const BTN_CLASS = "kpSpeakBtn";
-  const CELL_CLASS = "kpCellAudio";
-  let enVoice = null;
+  const WRAP_CLASS = "kpAudioCell";
+  const TEXT_CLASS = "kpAudioText";
+
+  const STOP_HEADERS = new Set([
+    "traduccion","traducción","espanol","español","tipo","usuario","persona",
+    "presente","pasado","futuro"
+  ]);
 
   function normalize(s){
-    return String(s||"")
+    return (s||"")
+      .toString()
+      .trim()
       .toLowerCase()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g,""); // remove accents
+      .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+      .replace(/\s+/g," ");
   }
 
-  function pickEnglishVoice(){
-    try{
-      const vs = window.speechSynthesis.getVoices ? window.speechSynthesis.getVoices() : [];
-      enVoice = vs.find(v => /en(-|_)?us/i.test(v.lang)) ||
-                vs.find(v => /^en/i.test(v.lang)) ||
-                null;
-    }catch(_){ enVoice = null; }
+  function headerText(th){
+    return normalize(th ? th.textContent : "");
   }
 
-  function cleanSpeakText(t){
-    let s = String(t||"").replace(/\s+/g," ").trim();
-    // remove warning / emoji symbols that confuse speech
-    s = s.replace(/[⚠️🚫✅❌🔊🎧📌📍⭐️⭐✳️]/g,"").trim();
-    // remove trailing markers like * or punctuation-only
-    s = s.replace(/\*+$/g,"").trim();
-    // special-case "I"
-    if(/^i$/i.test(s)) return "eye";
-    return s;
-  }
-
-  function speakEN(text){
-    const speakText = cleanSpeakText(text);
-    if(!speakText) return;
-
-    if(!window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
-
-    try{ pickEnglishVoice(); }catch(_){}
-    try{ window.speechSynthesis.cancel(); }catch(_){}
-
-    const u = new SpeechSynthesisUtterance(speakText);
-    u.lang = "en-US";
-    if(enVoice) u.voice = enVoice;
-    u.rate = 1;
-    u.pitch = 1;
-    try{ window.speechSynthesis.speak(u); }catch(_){}
-  }
-
-    function shouldAudioForHeader(h){
-    const x = normalize(h);
-    if(!x) return false;
-
-    // Explicit Spanish headers -> no audio
-    const stop = ["traduccion","espanol","tipo","usuario","presente","pasado","futuro"];
-    if(stop.some(s => x.includes(s))) return false;
-
-    // Utility: whole-word match (prevents 'presente' matching 'present')
-    function hasWord(w){
-      const ww = normalize(w).replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
-      const re = new RegExp("(^|[^a-z])"+ww+"([^a-z]|$)","i");
-      return re.test(x);
-    }
-
-    // Strong English indicators / verb columns
-    if(x.includes("verbo (ingles)") || x.includes("verb (english)")) return true;
-    if(hasWord("english") || hasWord("ingles")) return true;
-
-    // v1/v2/v3 columns
-    const compact = x.replace(/\s+/g,"");
-    if(/^v[123]$/.test(compact)) return true;
-
-    // Present/Past/Future in English only (word boundary)
-    if(hasWord("present") || hasWord("past") || hasWord("future")) return true;
-
-    // 3rd person column
-    if(x.includes("3a persona") || x.includes("tercera persona") || x.includes("he/she/it")) return true;
-
-    // NOTE: "subject" excluded on purpose (pronoun-only lists)
+  function isEnglishHeader(h){
+    if(!h) return false;
+    if(STOP_HEADERS.has(h)) return false;
+    if(h === "subject") return false; // usually just pronouns; user asked to remove these audios
+    // English-ish / columns with English forms
+    if(h.includes("english")) return true;
+    if(h.includes("verbo") && (h.includes("ingles") || h.includes("ingl"))) return true; // "Verbo (Inglés)"
+    if(h === "v1" || h === "v2" || h === "v3") return true;
+    if(h.includes("infinitive") || h.includes("base form") || h === "verb") return true;
+    if(h.includes("past participle") || h.includes("participle")) return true;
+    if(h.includes("past") || h.includes("present") || h.includes("future") || h.includes("perfect")) return true; // tenses
+    if(h.includes("3a persona") || h.includes("3rd person") || h.includes("third person") || h.includes("he/she/it")) return true;
+    if(h.includes("linking word") || h.includes("linking")) return true;
+    if(h.includes("example") || h.includes("sentence")) return true;
+    // Spanish header "Ejemplo" but the cell content is English sentences in several sections
+    if(h.startsWith("ejemplo")) return true;
     return false;
   }
 
-  function addBtnToCell(cell, displayText, speakText){
-    if(!cell) return;
-    if(cell.querySelector("button."+BTN_CLASS)) return;
+  // Pick a good English voice if available
+  function pickEnglishVoice(){
+    try{
+      const voices = window.speechSynthesis ? speechSynthesis.getVoices() : [];
+      if(!voices || !voices.length) return null;
+      const prefer = (v)=>/en(-|_)?(us|gb|au|ca)?/i.test(v.lang||"");
+      const best = voices.find(v=>prefer(v) && /google/i.test(v.name||"")) ||
+                   voices.find(v=>prefer(v) && /female|natural|neural/i.test(v.name||"")) ||
+                   voices.find(v=>prefer(v)) ||
+                   null;
+      return best;
+    }catch(e){ return null; }
+  }
+
+  function speakEnglish(text){
+    const t = (text||"").toString().trim();
+    if(!t) return;
+    try{
+      if(window.speechSynthesis){
+        speechSynthesis.cancel(); // stop previous
+        const u = new SpeechSynthesisUtterance(t);
+        u.lang = "en-US";
+        const v = pickEnglishVoice();
+        if(v) u.voice = v;
+        u.rate = 0.95;
+        u.pitch = 1.0;
+        speechSynthesis.speak(u);
+      }
+    }catch(e){}
+  }
+
+  // Make button + wrap without destroying existing formatting
+  function ensureAudioInCell(cell, sayText){
+    if(!cell || cell.querySelector("button."+BTN_CLASS)) return;
+
+    // Keep original nodes to preserve <b>, <i>, etc.
+    const wrap = document.createElement("div");
+    wrap.className = WRAP_CLASS;
+
+    const textSpan = document.createElement("span");
+    textSpan.className = TEXT_CLASS;
+
+    // Move existing child nodes
+    while(cell.firstChild){
+      textSpan.appendChild(cell.firstChild);
+    }
 
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = BTN_CLASS;
-    btn.setAttribute("aria-label","Escuchar pronunciación");
-    btn.title = "Listen (EN)";
+    btn.title = "Escuchar pronunciación";
+    btn.setAttribute("aria-label","Escuchar");
     btn.innerHTML = "🔊";
-    const toSpeak = (speakText != null ? speakText : displayText);
-    btn.addEventListener("click", (e)=>{
-      e.preventDefault();
-      e.stopPropagation();
-      speakEN(toSpeak);
+
+    btn.addEventListener("click", (ev)=>{
+      ev.preventDefault();
+      ev.stopPropagation();
+      const text = (sayText || textSpan.innerText || textSpan.textContent || "").trim();
+      speakEnglish(text);
     });
 
-    cell.classList.add(CELL_CLASS);
-    cell.appendChild(btn);
+    wrap.appendChild(textSpan);
+    wrap.appendChild(btn);
+    cell.appendChild(wrap);
+  }
+
+  function tableHeaders(table){
+    const ths = Array.from(table.querySelectorAll("thead th"));
+    if(ths.length) return ths.map(headerText);
+    // fallback: first row in tbody
+    const firstRow = table.querySelector("tr");
+    if(!firstRow) return [];
+    return Array.from(firstRow.children).map(ch=>headerText(ch));
   }
 
   function processTable(table){
-    if(!table || table.dataset.kpAudioGen === "1") return;
+    if(!table || table.dataset.kpTtsDone === "1") return;
+    const headers = tableHeaders(table);
+    if(!headers.length) return;
 
-    const thead = table.querySelector("thead");
-    const headRow = thead ? thead.querySelector("tr") : null;
-    const ths = headRow ? Array.from(headRow.querySelectorAll("th")) : [];
-    const headers = ths.map(th => (th.textContent || "").trim());
-    const headersN = headers.map(h => normalize(h));
+    const hasLinking = headers.some(h=>h.includes("linking word") || h === "linking");
+    const subjIdx = headers.findIndex(h=>h === "subject");
+    const transIdx = headers.findIndex(h=>h === "traduccion" || h === "traducción");
+    const exampleIdx = headers.findIndex(h=>h === "example" || h === "sentence" || h.startsWith("ejemplo"));
 
-    if(headers.length === 0) return;
-
-    // identify special columns
-    const subjIdx = headersN.findIndex(h => h === "subject");
-    const transIdx = headersN.findIndex(h => h.includes("traduccion"));
-    const ejemploIdx = headersN.findIndex(h => h === "ejemplo");
-
-    // base audio columns by header heuristics
-    const audioCols = [];
-    headers.forEach((h, idx)=>{
-      if(shouldAudioForHeader(h)) audioCols.push(idx);
-    });
-
-    // Special case: Spanish header "Ejemplo" usually contains the English phrase (e.g., "I work")
-    if(ejemploIdx >= 0 && subjIdx >= 0 && transIdx >= 0 && !audioCols.includes(ejemploIdx)){
-      audioCols.push(ejemploIdx);
+    // 1) Special case: persona/subject/ejemplo/traducción — only speak the full example sentence
+    let audioCols = [];
+    if(subjIdx >= 0 && transIdx >= 0 && exampleIdx >= 0){
+      audioCols = [exampleIdx];
     }
-
-    // Safety: ensure 3rd-person singular column gets audio (e.g., Plays, Cooks)
-    const thirdIdx = headersN.findIndex(h => h.includes(\"3a persona\") || h.includes(\"tercera persona\") || h.includes(\"he/she/it\"));
-    if(thirdIdx >= 0 && !audioCols.includes(thirdIdx)) audioCols.push(thirdIdx);
-
-    // Special case: conjugation tables with Subject + (Present/Past/Future)
-    const tenseCols = [];
-    headersN.forEach((h, idx)=>{
-      if(h === "present" || h === "past" || h === "future" || h === "present perfect") tenseCols.push(idx);
-    });
-
-    // If we have subject+tense, we ensure tense cols are included, and we speak "Subject + cell"
-    if(subjIdx >= 0 && tenseCols.length){
-      tenseCols.forEach(ci=>{
-        if(!audioCols.includes(ci)) audioCols.push(ci);
+    // 2) Linking tables: speak linking word + example sentence
+    else if(hasLinking){
+      headers.forEach((h, i)=>{
+        if(h.includes("linking word") || h === "linking" || h.startsWith("ejemplo")){
+          audioCols.push(i);
+        }
+      });
+    }
+    // 3) Generic: speak English-looking columns
+    else{
+      headers.forEach((h,i)=>{
+        if(isEnglishHeader(h)) audioCols.push(i);
       });
     }
 
-    if(audioCols.length === 0) return;
+    // Safety: never add audio to Spanish-only columns
+    audioCols = audioCols.filter(i=>{
+      const h = headers[i] || "";
+      const hn = normalize(h);
+      return !STOP_HEADERS.has(hn) && hn !== "subject" && hn !== "usuario";
+    });
 
-    const rows = Array.from(table.querySelectorAll("tbody tr"));
-    rows.forEach(r=>{
-      const cells = Array.from(r.querySelectorAll("td"));
-      if(!cells.length) return;
+    if(!audioCols.length){
+      table.dataset.kpTtsDone = "1";
+      return;
+    }
 
-      const subjectVal = (subjIdx >= 0 && cells[subjIdx]) 
-        ? (cells[subjIdx].textContent || "").replace(/\s+/g," ").trim()
-        : "";
+    // Skip header row in tbody if exists
+    const tbody = table.tBodies && table.tBodies.length ? table.tBodies[0] : null;
+    const rows = tbody ? Array.from(tbody.rows) : Array.from(table.querySelectorAll("tr")).slice(1);
 
+    rows.forEach(row=>{
+      const cells = Array.from(row.cells || []);
       audioCols.forEach(ci=>{
         const cell = cells[ci];
         if(!cell) return;
-
-        const raw = (cell.textContent || "").replace(/\s+/g," ").trim();
-        if(!raw) return;
-
-        // For tense tables: speak "Subject + tense"
-        if(subjIdx >= 0 && subjectVal && (headersN[ci] === "present" || headersN[ci] === "past" || headersN[ci] === "future" || headersN[ci] === "present perfect")){
-          const combined = `${subjectVal} ${raw}`.replace(/\s+/g," ").trim();
-          addBtnToCell(cell, raw, combined);
-          return;
-        }
-
-        // For example tables: cell already contains the full English phrase (e.g., "I work")
-        if(ejemploIdx === ci){
-          addBtnToCell(cell, raw, raw);
-          return;
-        }
-
-        // Default: speak cell text as-is
-        addBtnToCell(cell, raw, raw);
+        // Determine what to say: use cell innerText (keeps symbols like "*")
+        const say = (cell.innerText || cell.textContent || "").trim();
+        // Avoid speaking empty or extremely short punctuation-only
+        if(!say || say.replace(/[^\w]/g,"").length < 1) return;
+        ensureAudioInCell(cell, say);
       });
     });
 
-    table.dataset.kpAudioGen = "1";
+    table.dataset.kpTtsDone = "1";
   }
 
-  function run(){
-    if(!window.speechSynthesis) return;
-
-    // voices async on Chrome
-    try{
-      window.speechSynthesis.onvoiceschanged = () => { try{ pickEnglishVoice(); }catch(_){ } };
-      pickEnglishVoice();
-    }catch(_){}
-
+  function scan(){
     const tables = Array.from(document.querySelectorAll("table.kpTable"));
     tables.forEach(processTable);
   }
 
-  if(document.readyState === "loading"){
-    document.addEventListener("DOMContentLoaded", run, { once:true });
-  }else{
-    run();
+  function init(){
+    // Inject minimal styles (smaller button + better wrapping)
+    if(!document.getElementById("kpTtsStyle")){
+      const css = document.createElement("style");
+      css.id = "kpTtsStyle";
+      css.textContent = `
+        .${WRAP_CLASS}{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px}
+        .${TEXT_CLASS}{min-width:0}
+        .${BTN_CLASS}{
+          width:26px;height:26px;border-radius:999px;border:1px solid rgba(255,255,255,.25);
+          background:linear-gradient(135deg,#5ec8ff,#9aa0ff);
+          display:inline-flex;align-items:center;justify-content:center;
+          font-size:13px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.25);
+        }
+        .${BTN_CLASS}:active{transform:scale(.98)}
+      `;
+      document.head.appendChild(css);
+    }
+
+    // voices may load async; calling getVoices once helps
+    try{ if(window.speechSynthesis) speechSynthesis.getVoices(); }catch(e){}
+
+    scan();
+    // Re-scan after dynamic renders (login / switch tabs)
+    setTimeout(scan, 600);
+    setTimeout(scan, 1400);
+    document.addEventListener("click", ()=>setTimeout(scan, 200), {passive:true});
   }
-  // in case content loads later
-  setTimeout(run, 600);
-  setTimeout(run, 1400);
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", init);
+  }else{
+    init();
+  }
 })();
