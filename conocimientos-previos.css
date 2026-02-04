@@ -1165,8 +1165,8 @@ a.roundbtn{
   text-align: right;
 }
 .kpSpeakBtn{
-  width: 34px;
-  height: 34px;
+  width: 28px;
+  height: 28px;
   border-radius: 999px;
   border: 1px solid rgba(255,255,255,.22);
   background: radial-gradient(circle at 30% 30%, rgba(95,210,255,.95), rgba(135,120,255,.85));
@@ -1178,14 +1178,14 @@ a.roundbtn{
   align-items: center;
   justify-content: center;
 
-  font-size: 14px;
+  font-size: 12px;
 }
 .kpSpeakBtn:hover{ filter: brightness(1.05); transform: translateY(-1px); }
 .kpSpeakBtn:active{ transform: translateY(0px); }
 
 @media (max-width: 520px){
-  .kpSpeakCol{ width: 40px; }
-  .kpSpeakBtn{ width: 30px; height: 30px; font-size: 13px; }
+  .kpSpeakCol{ width: 34px; }
+  .kpSpeakBtn{ width: 24px; height: 24px; font-size: 11px; }
 }
 
 
@@ -1193,7 +1193,7 @@ a.roundbtn{
 .kpCellAudio{
   position: relative;
   overflow: hidden;
-  padding-right: 50px !important;
+  padding-right: 40px !important;
 }
 .kpCellAudio .kpSpeakBtn{
   position: absolute;
