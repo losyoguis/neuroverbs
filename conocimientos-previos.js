@@ -642,37 +642,37 @@ const haveDiagQuestions = [
 
   const linkingTables = {
     add: [
-      ["And", "Y", "I work in the morning and I study at night.", "Present Simple"],
-      ["Also", "También", "She walked to the park. She also visited the museum.", "Past Simple"],
-      ["In addition", "Además", "He has finished the report. In addition, he has printed the files.", "Present Perfect"],
-      ["Moreover", "Además", "The computer works fast. Moreover, it prints quickly.", "Present Simple"],
-      ["Too", "También", "I washed the car. I cleaned the room too.", "Past Simple"],
+      ["And", "Y", "I work in the morning and I study at night.", "Trabajo en la mañana y estudio en la noche.", "Present Simple"],
+      ["Also", "También", "She walked to the park. She also visited the museum.", "Ella caminó al parque. También visitó el museo.", "Past Simple"],
+      ["In addition", "Además", "He has finished the report. In addition, he has printed the files.", "Él ha terminado el informe. Además, ha impreso los archivos.", "Present Perfect"],
+      ["Moreover", "Además", "The computer works fast. Moreover, it prints quickly.", "La computadora funciona rápido. Además, imprime rápido.", "Present Simple"],
+      ["Too", "También", "I washed the car. I cleaned the room too.", "Lavé el carro. También limpié el cuarto.", "Past Simple"],
     ],
     contrast: [
-      ["But", "Pero", "I have studied a lot, but I failed the test.", "Present Perfect + Past Simple"],
-      ["However", "Sin embargo", "It rained all day. However, we played soccer.", "Past Simple"],
-      ["Although", "Aunque", "Although she works hard, she doesn't earn much money.", "Present Simple"],
-      ["On the other hand", "Por otro lado", "I have lived here for years. On the other hand, I have never traveled.", "Present Perfect"],
-      ["Despite", "A pesar de", "We walked home despite the rain.", "Past Simple"],
+      ["But", "Pero", "I have studied a lot, but I failed the test.", "He estudiado mucho, pero reprobé el examen.", "Present Perfect + Past Simple"],
+      ["However", "Sin embargo", "It rained all day. However, we played soccer.", "Llovió todo el día. Sin embargo, jugamos fútbol.", "Past Simple"],
+      ["Although", "Aunque", "Although she works hard, she doesn't earn much money.", "Aunque ella trabaja duro, no gana mucho dinero.", "Present Simple"],
+      ["On the other hand", "Por otro lado", "I have lived here for years. On the other hand, I have never traveled.", "He vivido aquí por años. Por otro lado, nunca he viajado.", "Present Perfect"],
+      ["Despite", "A pesar de", "We walked home despite the rain.", "Caminamos a casa a pesar de la lluvia.", "Past Simple"],
     ],
     cause: [
-      ["Because", "Porque", "I smile because I have passed the exam.", "Present Simple + Present Perfect"],
-      ["So", "Así que", "It rained heavily, so I stayed home.", "Past Simple"],
-      ["Therefore", "Por lo tanto", "He doesn't listen. Therefore, he fails the exams.", "Present Simple"],
-      ["As a result", "Como resultado", "The store closed. As a result, they looked for new jobs.", "Past Simple"],
-      ["Due to", "Debido a", "We have canceled the trip due to the storm.", "Present Perfect"],
+      ["Because", "Porque", "I smile because I have passed the exam.", "Sonrío porque he aprobado el examen.", "Present Simple + Present Perfect"],
+      ["So", "Así que", "It rained heavily, so I stayed home.", "Llovió fuerte, así que me quedé en casa.", "Past Simple"],
+      ["Therefore", "Por lo tanto", "He doesn't listen. Therefore, he fails the exams.", "Él no escucha. Por lo tanto, reprueba los exámenes.", "Present Simple"],
+      ["As a result", "Como resultado", "The store closed. As a result, they looked for new jobs.", "La tienda cerró. Como resultado, buscaron nuevos trabajos.", "Past Simple"],
+      ["Due to", "Debido a", "We have canceled the trip due to the storm.", "Hemos cancelado el viaje debido a la tormenta.", "Present Perfect"],
     ],
     seq: [
-      ["First", "Primero", "First, I wash the vegetables.", "Present Simple"],
-      ["Next", "Siguiente", "Next, I mixed the sugar and butter.", "Past Simple"],
-      ["Then", "Luego", "I walked to the gym. Then, I exercised for an hour.", "Past Simple"],
-      ["Finally", "Finalmente", "I have finally finished the project.", "Present Perfect"],
-      ["Meanwhile", "Mientras tanto", "I cook dinner. Meanwhile, he cleans the table.", "Present Simple"],
+      ["First", "Primero", "First, I wash the vegetables.", "Primero, lavo las verduras.", "Present Simple"],
+      ["Next", "Siguiente", "Next, I mixed the sugar and butter.", "Luego, mezclé el azúcar y la mantequilla.", "Past Simple"],
+      ["Then", "Luego", "I walked to the gym. Then, I exercised for an hour.", "Caminé al gimnasio. Luego, hice ejercicio por una hora.", "Past Simple"],
+      ["Finally", "Finalmente", "I have finally finished the project.", "Por fin he terminado el proyecto.", "Present Perfect"],
+      ["Meanwhile", "Mientras tanto", "I cook dinner. Meanwhile, he cleans the table.", "Yo cocino la cena. Mientras tanto, él limpia la mesa.", "Present Simple"],
     ],
     illus: [
-      ["For example", "Por ejemplo", "I have visited many cities, for example, Rome and Paris.", "Present Perfect"],
-      ["For instance", "Por ejemplo", "Bright colors help. For instance, red attracts attention.", "Present Simple"],
-      ["Such as", "Tal como", "She cooked Italian dishes such as lasagna.", "Past Simple"],
+      ["For example", "Por ejemplo", "I have visited many cities, for example, Rome and Paris.", "He visitado muchas ciudades, por ejemplo, Roma y París.", "Present Perfect"],
+      ["For instance", "Por ejemplo", "Bright colors help. For instance, red attracts attention.", "Los colores brillantes ayudan. Por ejemplo, el rojo atrae la atención.", "Present Simple"],
+      ["Such as", "Tal como", "She cooked Italian dishes such as lasagna.", "Ella cocinó platos italianos, como lasaña.", "Past Simple"],
     ],
   };
 
@@ -826,8 +826,8 @@ const haveDiagQuestions = [
       const t=document.getElementById(id);
       if(!t) return;
       t.innerHTML = `
-        <thead><tr><th>Linking Word</th><th>Traducción</th><th>Ejemplo (solo verbos regulares)</th><th>Tiempos utilizados</th></tr></thead>
-        <tbody>${rows.map(r=>`<tr><td><b>${escapeHtml(r[0])}</b></td><td>${escapeHtml(r[1])}</td><td>${escapeHtml(r[2])}</td><td>${escapeHtml(r[3])}</td></tr>`).join("")}</tbody>
+        <thead><tr><th>Linking Word (ENGLISH)</th><th>Traducción (ESPAÑOL)</th><th>Example (ENGLISH)</th><th>Ejemplo (ESPAÑOL)</th><th>Tiempos utilizados</th></tr></thead>
+        <tbody>${rows.map(r=>`<tr><td><b>${escapeHtml(r[0])}</b></td><td>${escapeHtml(r[1])}</td><td>${escapeHtml(r[2])}</td><td>${escapeHtml(r[3])}</td><td>${escapeHtml(r[4])}</td></tr>`).join("")}</tbody>
       `;
     }
     fill("tbl_linking_add", linkingTables.add);
