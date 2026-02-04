@@ -2033,6 +2033,8 @@ function init(){
 
     // Typical English headers
     if(hh.includes('english')) return true;
+    // Some tables use Spanish label "inglés" to indicate English columns
+    if(hh.includes('ingles')) return true;
     if(hh.includes('example')) return true;
 
     // Spanish "Ejemplo (Español)" columns must be excluded
@@ -2042,6 +2044,9 @@ function init(){
     if(hh.includes('linking word') || hh.startsWith('linking')) return true;
 
     // Verb/tenses columns
+    // Some sections label the base column simply as "VERB" and 3rd-person columns as "3ª persona (he/she/it)"
+    if(hh === 'verb') return true;
+    if(hh.includes('he/she/it') || hh.includes('he / she / it') || hh.includes('3a persona') || hh.includes('3ª persona') || hh.includes('3a persona')) return true;
     if(/infinitivo|v1|v2|v3|past|partic|present|future|present perfect|have to|haber|tener/.test(hh)) return true;
 
     return false;
@@ -2080,6 +2085,8 @@ function init(){
 
   // Make button + wrap without destroying existing formatting
   function ensureAudioInCell(cell, sayText){
+    // Avoid adding audio buttons to group/title rows (usually a single cell spanning many columns)
+    if(cell && cell.colSpan && cell.colSpan > 1) return;
     if(!cell || cell.querySelector("button."+BTN_CLASS)) return;
 
     // Keep original nodes to preserve <b>, <i>, etc.
@@ -2215,9 +2222,16 @@ function removeAudioFromCell(cell){
     table.dataset.kpTtsDone = "1";
   }
 
+  let scanning = false;
   function scan(){
-    const tables = Array.from(document.querySelectorAll("table.kpTable"));
-    tables.forEach(processTable);
+    if(scanning) return;
+    scanning = true;
+    try{
+      const tables = Array.from(document.querySelectorAll("table.kpTable"));
+      tables.forEach(processTable);
+    } finally {
+      scanning = false;
+    }
   }
 
   function init(){
@@ -2248,6 +2262,21 @@ function removeAudioFromCell(cell){
     setTimeout(scan, 600);
     setTimeout(scan, 1400);
     document.addEventListener("click", ()=>setTimeout(scan, 200), {passive:true});
+
+    // Observe dynamic DOM updates (some sections/tables are injected after initial render)
+    if(!window.__kpTtsObserver){
+      let t = null;
+      window.__kpTtsObserver = new MutationObserver(()=>{
+        if(scanning) return;
+        clearTimeout(t);
+        t = setTimeout(scan, 250);
+      });
+      try{
+        window.__kpTtsObserver.observe(document.body, {childList:true, subtree:true});
+      }catch(e){}
+    }
+
+    // (Observer already set up above)
   }
 
   if(document.readyState === "loading"){
