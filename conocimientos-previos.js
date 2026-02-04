@@ -1937,3 +1937,130 @@ function init(){
   }
 
 })();
+
+
+// =========================
+// NVKP_TTS_PRONOUNS (EN)
+// =========================
+(function(){
+  const SPEAK_BTN_CLASS = "kpSpeakBtn";
+  const SPEAK_COL_CLASS = "kpSpeakCol";
+  let enVoice = null;
+
+  function safeToast(msg){
+    try{
+      if(typeof toast === "function") toast(msg);
+    }catch(_){}
+  }
+
+  function pickEnglishVoice(){
+    try{
+      const vs = window.speechSynthesis.getVoices ? window.speechSynthesis.getVoices() : [];
+      enVoice = vs.find(v => /en(-|_)?US/i.test(v.lang)) ||
+                vs.find(v => /^en/i.test(v.lang)) ||
+                null;
+    }catch(_){ enVoice = null; }
+  }
+
+  function speakEN(text){
+    let t = String(text||"").replace(/\s+/g," ").trim();
+    if(!t) return;
+
+    // Fix for "I" -> should sound like "eye"
+    const speakText = (/^i$/i.test(t)) ? "eye" : t;
+
+    if(!window.speechSynthesis || !window.SpeechSynthesisUtterance){
+      safeToast("Audio no disponible en este navegador.");
+      return;
+    }
+
+    try{ pickEnglishVoice(); }catch(_){}
+    try{ window.speechSynthesis.cancel(); }catch(_){}
+
+    const u = new SpeechSynthesisUtterance(speakText);
+    u.lang = "en-US";
+    if(enVoice) u.voice = enVoice;
+    u.rate = 1;
+    u.pitch = 1;
+
+    try{ window.speechSynthesis.speak(u); }catch(_){}
+  }
+
+  function addAudioToPronounsTable(){
+    // Only target the 2-column pronouns table: headers Español + English
+    const tables = Array.from(document.querySelectorAll("table.kpTable"));
+    tables.forEach(table=>{
+      if(table.dataset.kpAudio === "1") return;
+
+      const ths = Array.from(table.querySelectorAll("thead th")).map(th=>th.textContent.trim().toLowerCase());
+      if(ths.length < 2) return;
+      const isPronouns2Col = ths[0] === "español" && ths[1] === "english";
+      if(!isPronouns2Col) return;
+
+      // Ensure header has audio column
+      const headRow = table.querySelector("thead tr");
+      if(headRow && headRow.children.length === 2){
+        const th = document.createElement("th");
+        th.className = SPEAK_COL_CLASS;
+        th.setAttribute("aria-label","Audio");
+        th.textContent = "";
+        headRow.appendChild(th);
+      }
+
+      const rows = Array.from(table.querySelectorAll("tbody tr"));
+      rows.forEach(r=>{
+        const tds = r.querySelectorAll("td");
+        if(tds.length < 2) return;
+        const englishCell = tds[1];
+        const englishText = (englishCell.textContent || "").replace(/\s+/g," ").trim();
+        if(!englishText) return;
+
+        // Ensure 3rd cell for button
+        let audioTd = (tds.length >= 3) ? tds[2] : null;
+        if(!audioTd){
+          audioTd = document.createElement("td");
+          r.appendChild(audioTd);
+        }
+        audioTd.className = SPEAK_COL_CLASS;
+
+        // Prevent duplicates
+        if(audioTd.querySelector("button."+SPEAK_BTN_CLASS)) return;
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = SPEAK_BTN_CLASS;
+        btn.setAttribute("aria-label", "Escuchar pronunciación");
+        btn.innerHTML = "🔊";
+        btn.addEventListener("click", (e)=>{
+          e.preventDefault();
+          e.stopPropagation();
+          speakEN(englishText);
+        });
+        audioTd.appendChild(btn);
+      });
+
+      table.dataset.kpAudio = "1";
+    });
+  }
+
+  function init(){
+    if(!window.speechSynthesis) return;
+
+    // In Chrome, voices load async
+    try{
+      window.speechSynthesis.onvoiceschanged = () => { try{ pickEnglishVoice(); }catch(_){ } };
+      pickEnglishVoice();
+    }catch(_){}
+
+    addAudioToPronounsTable();
+    // In case content is injected later
+    setTimeout(addAudioToPronounsTable, 500);
+    setTimeout(addAudioToPronounsTable, 1500);
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", init, { once:true });
+  }else{
+    init();
+  }
+})();

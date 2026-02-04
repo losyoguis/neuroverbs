@@ -1157,3 +1157,31 @@ a.roundbtn{
   align-items: center;
   justify-content: center;
 }
+
+
+/* Pronouns table audio buttons (EN) */
+.kpSpeakCol{
+  width: 58px;
+  text-align: right;
+}
+.kpSpeakBtn{
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.22);
+  background: radial-gradient(circle at 30% 30%, rgba(95,210,255,.95), rgba(135,120,255,.85));
+  color: #071125;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 12px 22px rgba(0,0,0,.26);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.kpSpeakBtn:hover{ filter: brightness(1.05); transform: translateY(-1px); }
+.kpSpeakBtn:active{ transform: translateY(0px); }
+
+@media (max-width: 520px){
+  .kpSpeakCol{ width: 52px; }
+  .kpSpeakBtn{ width: 40px; height: 40px; }
+}
