@@ -236,7 +236,15 @@
 </div>
 <p class="lbNote" id="lbStatus">Inicia sesión para ver el ranking.</p>
 <div class="lbList" id="leaderboardList"></div>
-<div class="lbFollowWrap" style="display:flex; justify-content:center; margin:14px 0 2px 0;">
+<div class="lbFollowWrap" style="display:flex; flex-direction:column; align-items:center; gap:10px; margin:14px 0 2px 0;">
+  <button class="lbBtn" id="btnRegistroSheet" type="button"
+     style="text-decoration:none; padding:12px 18px; border-radius:999px; font-weight:900; letter-spacing:.2px;
+            background: linear-gradient(135deg, rgba(255, 178, 0, .98), rgba(255, 64, 129, .96));
+            color:#08101c; border:1px solid rgba(255,255,255,.22);
+            box-shadow: 0 10px 24px rgba(0,0,0,.30); cursor:pointer;">
+    📑 Registro (Sheets)
+  </button>
+
   <a class="lbBtn" id="btnSeguimiento" href="seguimiento-estudiantes.html"
      style="text-decoration:none; padding:12px 18px; border-radius:999px; font-weight:900; letter-spacing:.2px;
             background: linear-gradient(135deg, rgba(0, 255, 178, .95), rgba(0, 140, 255, .95));
@@ -252,6 +260,34 @@
 </div>
 </footer>
 </div>
+<!-- 📑 Modal: Registro (Google Sheets) -->
+<div class="overlay" id="sheetOverlay" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px;">
+      <h2 id="sheetTitle" style="margin:0;">📑 Registro (Sheets)</h2>
+      <button type="button" id="closeSheet" aria-label="Cerrar"
+              style="border:none; background:rgba(0,0,0,.06); padding:10px 12px; border-radius:12px; font-weight:900; cursor:pointer;">
+        ✕
+      </button>
+    </div>
+
+    <div style="width:100%; border:1px solid rgba(0,0,0,.10); border-radius:14px; overflow:hidden; background:#fff;">
+      <iframe style="width:100%; height:72vh; border:0; display:block;"
+        src="https://docs.google.com/spreadsheets/d/e/2PACX-1vQ4AY3kQOIsRM-6TJIWJVr2MDtRTcE3gJvwu1KBKQy3SVSViXTYBRZ-tXCjODwwsaLgRfGixyYoe2Zh/pubhtml?gid=1102861025&amp;single=true&amp;widget=true&amp;headers=false"></iframe>
+    </div>
+
+    <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:12px;">
+      <button type="button" class="lbBtn" id="closeSheet2"
+        style="text-decoration:none; padding:12px 18px; border-radius:999px; font-weight:900; letter-spacing:.2px;
+              background: linear-gradient(135deg, rgba(255, 153, 0, .95), rgba(255, 85, 0, .95));
+              color:#08101c; border:1px solid rgba(255,255,255,.22);
+              box-shadow: 0 10px 24px rgba(0,0,0,.25); cursor:pointer;">
+        Cerrar
+      </button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="overlay">
 <div class="modal">
 <h2><img src="assets/brain.png" alt="" class="inlineLogo"> Red neuronal del día</h2>
@@ -405,6 +441,43 @@
 </script>
 
 <!-- XP sync watcher removed: XP is synced only from exercise actions + server fetch to avoid double-counting -->
+<script>
+  // 📑 Modal Google Sheets (Registro)
+  (function(){
+    function onReady(fn){ if(document.readyState !== 'loading') fn(); else document.addEventListener('DOMContentLoaded', fn); }
+    onReady(function(){
+      const btn = document.getElementById('btnRegistroSheet');
+      const overlay = document.getElementById('sheetOverlay');
+      const close1 = document.getElementById('closeSheet');
+      const close2 = document.getElementById('closeSheet2');
+      if(!btn || !overlay) return;
+
+      function open(){
+        overlay.style.display = 'flex';
+        overlay.setAttribute('aria-hidden','false');
+        document.body.style.overflow = 'hidden';
+      }
+      function close(){
+        overlay.style.display = 'none';
+        overlay.setAttribute('aria-hidden','true');
+        document.body.style.overflow = '';
+      }
+
+      btn.addEventListener('click', open);
+      if(close1) close1.addEventListener('click', close);
+      if(close2) close2.addEventListener('click', close);
+
+      overlay.addEventListener('click', function(e){
+        if(e.target === overlay) close();
+      });
+
+      document.addEventListener('keydown', function(e){
+        if(e.key === 'Escape' && overlay.style.display === 'flex') close();
+      });
+    });
+  })();
+</script>
+
 <script src="core.js"></script>
   <!-- DB helpers (hidden) -->
   <a href="verbs.html" style="display:none">verbs</a>
