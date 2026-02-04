@@ -2152,12 +2152,12 @@ function removeAudioFromCell(cell){
     if(subjIdx >= 0 && transIdx >= 0 && exampleIdx >= 0){
       audioCols = [exampleIdx];
     }
-    // 2) Linking tables: speak linking word + example sentence
+    // 2) Linking tables: speak linking word + ENGLISH example sentence (NOT the Spanish example)
     else if(hasLinking){
       headers.forEach((h, i)=>{
-        if(h.includes("linking word") || h === "linking" || h.startsWith("ejemplo")){
-          audioCols.push(i);
-        }
+        // normalize() already removed accents + trimmed
+        if(h.includes("linking word") || h === "linking") audioCols.push(i);
+        if(h.startsWith("example")) audioCols.push(i);
       });
     }
     // 3) Generic: speak English-looking columns
