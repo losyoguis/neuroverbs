@@ -2021,22 +2021,29 @@ function init(){
   }
 
   function isEnglishHeader(h){
-    if(!h) return false;
-    if(STOP_HEADERS.has(h)) return false;
-    if(h === "subject") return false; // usually just pronouns; user asked to remove these audios
-    // English-ish / columns with English forms
-    if(h.includes("english")) return true;
-    if(h.includes("verbo") && (h.includes("ingles") || h.includes("ingl"))) return true; // "Verbo (Inglés)"
-    if(h === "v1" || h === "v2" || h === "v3") return true;
-    if(h.includes("infinitivo")) return true; // Spanish header for base form column
-    if(h.includes("infinitive") || h.includes("base form") || h === "verb") return true;
-    if(h.includes("past participle") || h.includes("participle")) return true;
-    if(h.includes("past") || h.includes("present") || h.includes("future") || h.includes("perfect")) return true; // tenses
-    if(h.includes("3a persona") || h.includes("3rd person") || h.includes("third person") || h.includes("he/she/it")) return true;
-    if(h.includes("linking word") || h.includes("linking")) return true;
-    if(h.includes("example") || h.includes("sentence")) return true;
-    // Spanish header "Ejemplo" but the cell content is English sentences in several sections
-    if(h.startsWith("ejemplo")) return true;
+    const hh = norm(h);
+    if(!hh) return false;
+
+    // Stop-columns (Spanish-only / metadata)
+    if(STOP_HEADERS.has(hh)) return false;
+
+    // If the header explicitly mentions Spanish, do NOT add audio
+    if(hh.includes('espanol') || hh.includes('spanish')) return false;
+    if(hh.includes('traduccion') || hh.includes('traducion')) return false;
+
+    // Typical English headers
+    if(hh.includes('english')) return true;
+    if(hh.includes('example')) return true;
+
+    // Spanish "Ejemplo (Español)" columns must be excluded
+    if(hh.startsWith('ejemplo')) return !hh.includes('espanol') && !hh.includes('spanish');
+
+    // Linking Words
+    if(hh.includes('linking word') || hh.startsWith('linking')) return true;
+
+    // Verb/tenses columns
+    if(/infinitivo|v1|v2|v3|past|partic|present|future|present perfect|have to|haber|tener/.test(hh)) return true;
+
     return false;
   }
 
