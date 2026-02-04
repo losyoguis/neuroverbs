@@ -1933,12 +1933,37 @@ function updateHUD(){
   }catch(_){ /* no-op */ }
 
   function __nvkpSpeakEN(text){
-    const t = String(text||"").replace(/\s+/g," ").trim();
+    let t = String(text||"").replace(/\s+/g," ").trim();
     if(!t) return;
+
+    // Fix: pronoun "I" should sound like "eye" even if the browser selects a non-English voice.
+    const speakText = (/^i$/i.test(t)) ? "eye" : t;
+
     if(!window.speechSynthesis || !window.SpeechSynthesisUtterance){
       try{ toast("Audio no disponible","Tu navegador no soporta lectura en voz alta."); }catch(_){ }
       return;
     }
+
+    // Ensure voices are loaded before speaking
+    try{ __nvkpLoadVoices(); }catch(_){}
+
+    try{ window.speechSynthesis.cancel(); }catch(_){ }
+    const u = new SpeechSynthesisUtterance(speakText);
+    u.lang = "en-US";
+
+    // Pick an English voice if available (best effort)
+    try{
+      if(!__nvkpEnVoice){
+        const vs = window.speechSynthesis.getVoices ? window.speechSynthesis.getVoices() : [];
+        __nvkpEnVoice = vs.find(v=>/en(-|_)?US/i.test(v.lang)) || vs.find(v=>/^en/i.test(v.lang)) || null;
+      }
+      if(__nvkpEnVoice) u.voice = __nvkpEnVoice;
+    }catch(_){}
+
+    u.rate = 1;
+    u.pitch = 1;
+    try{ window.speechSynthesis.speak(u); }catch(_){ }
+  }
     try{ window.speechSynthesis.cancel(); }catch(_){ }
     const u = new SpeechSynthesisUtterance(t);
     u.lang = "en-US";
@@ -2030,12 +2055,15 @@ function updateHUD(){
           englishCols.forEach(ci=>{
             const cell = cells[ci-1];
             if(!cell) return;
+            // Do not add audio buttons to table headers (e.g., "ENGLISH")
+            if(cell.tagName && cell.tagName.toUpperCase() === "TH") return;
             const txt = cell.textContent.replace(/\s+/g," ").trim();
             if(__nvkpTextLooksEN(txt)) __nvkpAddBtnInto(cell, txt);
           });
         }else{
           // Fallback
           cells.forEach(cell=>{
+            if(cell && cell.tagName && cell.tagName.toUpperCase() === "TH") return;
             const txt = cell.textContent.replace(/\s+/g," ").trim();
             if(txt && txt.length <= 60 && __nvkpTextLooksEN(txt)) __nvkpAddBtnInto(cell, txt);
           });
