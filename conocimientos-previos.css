@@ -1232,7 +1232,7 @@ a.roundbtn{
   .kpSpeakBtn{ width: 24px; height: 24px; }
 }
 
-.kpSpeakWrap{ padding-right: 6px; }
+.kpSpeakWrap{display:inline-flex;align-items:center;justify-content:flex-start;gap:6px;flex-wrap:wrap;max-width:100%;padding-right:0;}
 
 
 /* === Twin tables (Haber ES vs Have EN) alignment + fit === */
@@ -1279,3 +1279,20 @@ a.roundbtn{
   width: 36%;
   white-space: nowrap;
 }
+
+
+/* === KP Audio alignment: button after spoken text (left) === */
+.kpSpeakWrap{ display:inline-flex !important; align-items:center; justify-content:flex-start; gap:6px; flex-wrap:wrap; max-width:100%; padding-right:0 !important; }
+.kpSpeakText{ max-width:100%; }
+.kpSpeakBtn{ width:22px; height:22px; font-size:12px; box-shadow: 0 10px 18px rgba(0,0,0,.22); }
+@media (max-width: 520px){
+  .kpSpeakBtn{ width:20px; height:20px; font-size:11px; }
+}
+
+/* If any legacy absolute-position audio exists, neutralize it */
+.kpCellAudio{ position: static !important; padding-right: 0 !important; overflow: visible !important; }
+.kpCellAudio .kpSpeakBtn{ position: static !important; top:auto !important; right:auto !important; transform:none !important; margin-left:6px; }
+
+
+/* Inline EN highlight */
+.kpEn{ color: rgba(99, 179, 255, .95); font-weight: 800; }

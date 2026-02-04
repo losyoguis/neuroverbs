@@ -602,6 +602,31 @@ function updateHUD(){
     {s:"I have to wash the car.", a:"HAVE TO"},
   ];
 
+// Quiz B: Choose the correct FORM (have/has/had/have to/has to/had to/have had/has had/have had to/has had to)
+const haveFormsQuestions = [
+  {prompt:'___ eaten pizza. (present perfect)', options:['have','has','had','have to'], correct:'have'},
+  {prompt:'She ___ eaten pizza. (present perfect)', options:['have','has','had','has to'], correct:'has'},
+  {prompt:'We ___ finish the project. (obligation)', options:['have','have to','have had','had'], correct:'have to'},
+  {prompt:'He ___ finish the project. (obligation)', options:['has','has to','had to','has had'], correct:'has to'},
+  {prompt:'They ___ a new car. (present)', options:['have','has','have to','had'], correct:'have'},
+  {prompt:'It ___ a new battery. (present)', options:['has','have','had','has to'], correct:'has'},
+  {prompt:'I ___ time yesterday. (past)', options:['have','had','have had','had to'], correct:'had'},
+  {prompt:'You ___ a cold last week. (past)', options:['have','had','have to','have had'], correct:'had'},
+  {prompt:'We ___ had many problems. (present perfect - tener)', options:['have had','have','had','have to'], correct:'have had'},
+  {prompt:'She ___ had a good day. (present perfect - tener)', options:['has had','has','had','has to'], correct:'has had'},
+  {prompt:'They ___ had to study a lot. (present perfect - obligation)', options:['have had to','had to','have to','have had'], correct:'have had to'},
+  {prompt:'He ___ had to work late. (present perfect - obligation)', options:['has had to','had to','has to','has had'], correct:'has had to'},
+];
+
+// Diagnóstico (B): multiple-choice translations
+const haveDiagQuestions = [
+  {prompt:'Traduce: "He tenido tiempo"', options:['I have had time.','I have time.','I have to time.','I had have time.'], correct:'I have had time.'},
+  {prompt:'Traduce: "Tengo una idea"', options:['I have an idea.','I have had an idea.','I have to an idea.','I had an idea.'], correct:'I have an idea.'},
+  {prompt:'Traduce: "Tengo que trabajar hoy"', options:['I have to work today.','I have work today.','I have had to work today.','I had to working today.'], correct:'I have to work today.'},
+  {prompt:'Traduce: "Hemos tenido que estudiar mucho"', options:['We have had to study a lot.','We have to study a lot.','We had study a lot.','We have had study a lot.'], correct:'We have had to study a lot.'},
+];
+
+
   const tensesAux = [
     {p:"___ I ask? (present)", opts:["Do", "Did", "Have"], c:"Do"},
     {p:"___ I ask? (past)", opts:["Do", "Did", "Have"], c:"Did"},
@@ -813,7 +838,7 @@ function updateHUD(){
   }
 
   function updateBadges(){
-    const ids = ["roadmap_check","pronouns_quiz","thirdperson_quiz","have_quiz","tenses_quiz","linking_quiz","writing_challenge"];
+    const ids = ["roadmap_check","pronouns_quiz","thirdperson_quiz","have_quiz","have_forms_quiz","have_diag","tenses_quiz","linking_quiz","writing_challenge"];
     ids.forEach((id)=>{
       const nodes = document.querySelectorAll(`.kpBadge[data-badge="${id}"]`);
       if(!nodes || !nodes.length) return;
@@ -870,7 +895,18 @@ function updateHUD(){
       makeQuiz("quiz_have_quiz", qs);
       setResult(id, "Listo. Responde y luego presiona Calificar.");
     }
-    if(id === "tenses_quiz"){
+    
+if(id === "have_forms_quiz"){
+  const qs = pickN(haveFormsQuestions, 10);
+  makeQuiz("quiz_have_forms_quiz", qs);
+  setResult(id, "Listo. Responde y luego presiona Calificar.");
+}
+if(id === "have_diag"){
+  const qs = pickN(haveDiagQuestions, 4);
+  makeQuiz("quiz_have_diag", qs);
+  setResult(id, "Diagnóstico listo. Responde y luego presiona Calificar.");
+}
+if(id === "tenses_quiz"){
       const qs = pickN(tensesAux.map(x=>{
         return {prompt:x.p, options: x.opts, correct: x.c};
       }), 10);
@@ -897,6 +933,8 @@ function updateHUD(){
       pronouns_quiz:"quiz_pronouns_quiz",
       thirdperson_quiz:"quiz_thirdperson_quiz",
       have_quiz:"quiz_have_quiz",
+      have_forms_quiz:"quiz_have_forms_quiz",
+      have_diag:"quiz_have_diag",
       tenses_quiz:"quiz_tenses_quiz",
       linking_quiz:"quiz_linking_quiz"
     };
@@ -907,13 +945,16 @@ function updateHUD(){
     const isNewAttempt = (sig !== prevSig);
     _attemptCache[id] = sig;
 
-    const pass = r.total>0 ? (r.score >= 8) : false;
+    const need = (id==="have_diag") ? Math.max(1, r.total-1) : 8;
+    const pass = r.total>0 ? (r.score >= need) : false;
     const already = isDone(id);
 
     const awardById = {
       pronouns_quiz: 40,
       thirdperson_quiz: 40,
       have_quiz: 50,
+      have_forms_quiz: 50,
+      have_diag: 40,
       tenses_quiz: 50,
       linking_quiz: 40
     };
@@ -946,7 +987,7 @@ function updateHUD(){
     }else if(pass && already){
       setResult(id, `<span style="color:var(--success)">✅ ${r.score}/${r.total} • Aprobado, pero ya reclamaste el premio.</span>`);
     }else{
-      setResult(id, `<span style="color:var(--error)">❌ ${r.score}/${r.total} • Te faltan ${Math.max(0,8-r.score)} para aprobar. Intenta de nuevo.</span>`);
+      setResult(id, `<span style="color:var(--error)">❌ ${r.score}/${r.total} • Te faltan ${Math.max(0,need-r.score)} para aprobar. Intenta de nuevo.</span>`);
     }
     updateHUD();
   }
@@ -2178,14 +2219,14 @@ function removeAudioFromCell(cell){
       const css = document.createElement("style");
       css.id = "kpTtsStyle";
       css.textContent = `
-        .${WRAP_CLASS}{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px}
-        .${TEXT_CLASS}{flex:1;min-width:0}
+        .${WRAP_CLASS}{display:inline-flex;align-items:center;justify-content:flex-start;gap:6px;flex-wrap:wrap;max-width:100%;}
+        .${TEXT_CLASS}{flex:0 1 auto;min-width:0;max-width:100%;}
       table.kpTable td{overflow:visible;}
         .${BTN_CLASS}{
-          width:26px;height:26px;border-radius:999px;border:1px solid rgba(255,255,255,.25);
+          width:22px;height:22px;border-radius:999px;border:1px solid rgba(255,255,255,.25);
           background:linear-gradient(135deg,#5ec8ff,#9aa0ff);
           display:inline-flex;align-items:center;justify-content:center;
-          font-size:13px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.25);
+          font-size:12px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.25);
         }
         .${BTN_CLASS}:active{transform:scale(.98)}
       `;
