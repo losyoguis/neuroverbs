@@ -1952,9 +1952,19 @@ function init(){
   const TEXT_CLASS = "kpAudioText";
 
   const STOP_HEADERS = new Set([
-    "traduccion","traducción","espanol","español","tipo","usuario","persona",
-    "presente","pasado","futuro"
-  ]);
+      "traduccion",
+      "traducción",
+      "espanol",
+      "español",
+      "tipo",
+      "usuario",
+      "persona",
+      "presente",
+      "pasado",
+      "futuro",
+      "translation",
+      "spanish"
+    ]);
 
   function normalize(s){
     return (s||"")
@@ -2054,7 +2064,20 @@ function init(){
     cell.appendChild(wrap);
   }
 
-  function tableHeaders(table){
+  
+function removeAudioFromCell(cell){
+  const btn = cell.querySelector("button."+BTN_CLASS);
+  if(!btn) return;
+  const wrap = btn.closest("."+WRAP_CLASS);
+  if(wrap){
+    const t = wrap.querySelector("."+TEXT_CLASS);
+    cell.innerHTML = t ? t.innerHTML : cell.innerHTML;
+  }
+  btn.remove();
+}
+
+
+    function tableHeaders(table){
     const ths = Array.from(table.querySelectorAll("thead th"));
     if(ths.length) return ths.map(headerText);
     // fallback: first row in tbody
@@ -2066,6 +2089,8 @@ function init(){
   function processTable(table){
     if(!table || table.dataset.kpTtsDone === "1") return;
     const headers = tableHeaders(table);
+      const stopCols = headers.map((h,i)=>STOP_HEADERS.has(h)?i:-1).filter(i=>i>=0);
+
     if(!headers.length) return;
 
     const hasLinking = headers.some(h=>h.includes("linking word") || h === "linking");
@@ -2111,6 +2136,12 @@ function init(){
 
     rows.forEach(row=>{
       const cells = Array.from(row.cells || []);
+        // Remove audio buttons in forbidden columns (e.g., Español/Traducción/Tipo)
+        stopCols.forEach((colIndex)=>{
+          const c = cells[colIndex];
+          if(c) removeAudioFromCell(c);
+        });
+
       audioCols.forEach(ci=>{
         const cell = cells[ci];
         if(!cell) return;
@@ -2137,7 +2168,8 @@ function init(){
       css.id = "kpTtsStyle";
       css.textContent = `
         .${WRAP_CLASS}{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px}
-        .${TEXT_CLASS}{min-width:0}
+        .${TEXT_CLASS}{flex:1;min-width:0}
+      table.kpTable td{overflow:visible;}
         .${BTN_CLASS}{
           width:26px;height:26px;border-radius:999px;border:1px solid rgba(255,255,255,.25);
           background:linear-gradient(135deg,#5ec8ff,#9aa0ff);
