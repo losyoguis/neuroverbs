@@ -1987,6 +1987,7 @@ function init(){
     if(h.includes("english")) return true;
     if(h.includes("verbo") && (h.includes("ingles") || h.includes("ingl"))) return true; // "Verbo (Inglés)"
     if(h === "v1" || h === "v2" || h === "v3") return true;
+    if(h.includes("infinitivo")) return true; // Spanish header for base form column
     if(h.includes("infinitive") || h.includes("base form") || h === "verb") return true;
     if(h.includes("past participle") || h.includes("participle")) return true;
     if(h.includes("past") || h.includes("present") || h.includes("future") || h.includes("perfect")) return true; // tenses
