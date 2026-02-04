@@ -2094,6 +2094,8 @@ function init(){
     let s = String(t||"").replace(/\s+/g," ").trim();
     // remove warning / emoji symbols that confuse speech
     s = s.replace(/[⚠️🚫✅❌🔊🎧📌📍⭐️⭐✳️]/g,"").trim();
+    // remove trailing markers like * or punctuation-only
+    s = s.replace(/\*+$/g,"").trim();
     // special-case "I"
     if(/^i$/i.test(s)) return "eye";
     return s;
@@ -2120,22 +2122,22 @@ function init(){
     const x = normalize(h);
     if(!x) return false;
 
-    // English-related headers
+    // avoid Spanish columns explicitly
+    if(x.includes("traduccion") || x.includes("espanol") || x.includes("tipo") || x.includes("persona")) return false;
+
+    // English-related headers (NOTE: "subject" excluded on purpose)
     const keys = [
       "english", "ingles", "ingls", "ingl", "verbo (ingles)", "verb (english)",
       "v1", "v2", "v3",
-      "present", "past", "future", "subject",
+      "present", "past", "future",
       "3a persona", "3ª persona", "tercera persona",
-      "he/she/it", "he", "she", "it"
+      "he/she/it"
     ];
-
-    // avoid Spanish columns explicitly
-    if(x.includes("traduccion") || x.includes("espanol") || x.includes("tipo")) return false;
 
     return keys.some(k => x.includes(k));
   }
 
-  function addBtnToCell(cell, text){
+  function addBtnToCell(cell, displayText, speakText){
     if(!cell) return;
     if(cell.querySelector("button."+BTN_CLASS)) return;
 
@@ -2145,10 +2147,11 @@ function init(){
     btn.setAttribute("aria-label","Escuchar pronunciación");
     btn.title = "Listen (EN)";
     btn.innerHTML = "🔊";
+    const toSpeak = (speakText != null ? speakText : displayText);
     btn.addEventListener("click", (e)=>{
       e.preventDefault();
       e.stopPropagation();
-      speakEN(text);
+      speakEN(toSpeak);
     });
 
     cell.classList.add(CELL_CLASS);
@@ -2161,25 +2164,73 @@ function init(){
     const thead = table.querySelector("thead");
     const headRow = thead ? thead.querySelector("tr") : null;
     const ths = headRow ? Array.from(headRow.querySelectorAll("th")) : [];
-    const headers = ths.map(th => th.textContent || "");
+    const headers = ths.map(th => (th.textContent || "").trim());
+    const headersN = headers.map(h => normalize(h));
 
     if(headers.length === 0) return;
 
+    // identify special columns
+    const subjIdx = headersN.findIndex(h => h === "subject");
+    const transIdx = headersN.findIndex(h => h.includes("traduccion"));
+    const ejemploIdx = headersN.findIndex(h => h === "ejemplo");
+
+    // base audio columns by header heuristics
     const audioCols = [];
     headers.forEach((h, idx)=>{
       if(shouldAudioForHeader(h)) audioCols.push(idx);
     });
+
+    // Special case: Spanish header "Ejemplo" usually contains the English phrase (e.g., "I work")
+    if(ejemploIdx >= 0 && subjIdx >= 0 && transIdx >= 0 && !audioCols.includes(ejemploIdx)){
+      audioCols.push(ejemploIdx);
+    }
+
+    // Special case: conjugation tables with Subject + (Present/Past/Future)
+    const tenseCols = [];
+    headersN.forEach((h, idx)=>{
+      if(h === "present" || h === "past" || h === "future") tenseCols.push(idx);
+    });
+
+    // If we have subject+tense, we ensure tense cols are included, and we speak "Subject + cell"
+    if(subjIdx >= 0 && tenseCols.length){
+      tenseCols.forEach(ci=>{
+        if(!audioCols.includes(ci)) audioCols.push(ci);
+      });
+    }
+
     if(audioCols.length === 0) return;
 
     const rows = Array.from(table.querySelectorAll("tbody tr"));
     rows.forEach(r=>{
       const cells = Array.from(r.querySelectorAll("td"));
+      if(!cells.length) return;
+
+      const subjectVal = (subjIdx >= 0 && cells[subjIdx]) 
+        ? (cells[subjIdx].textContent || "").replace(/\s+/g," ").trim()
+        : "";
+
       audioCols.forEach(ci=>{
         const cell = cells[ci];
         if(!cell) return;
+
         const raw = (cell.textContent || "").replace(/\s+/g," ").trim();
         if(!raw) return;
-        addBtnToCell(cell, raw);
+
+        // For tense tables: speak "Subject + tense"
+        if(subjIdx >= 0 && subjectVal && (headersN[ci] === "present" || headersN[ci] === "past" || headersN[ci] === "future")){
+          const combined = `${subjectVal} ${raw}`.replace(/\s+/g," ").trim();
+          addBtnToCell(cell, raw, combined);
+          return;
+        }
+
+        // For example tables: cell already contains the full English phrase (e.g., "I work")
+        if(ejemploIdx === ci){
+          addBtnToCell(cell, raw, raw);
+          return;
+        }
+
+        // Default: speak cell text as-is
+        addBtnToCell(cell, raw, raw);
       });
     });
 
