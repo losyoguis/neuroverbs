@@ -1157,3 +1157,53 @@ a.roundbtn{
   align-items: center;
   justify-content: center;
 }
+
+/* ================================
+   🔊 Audio (pronunciación en inglés)
+   ================================ */
+.kpTtsBtn{
+  margin-left: 8px;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255,255,255,.22);
+  background: linear-gradient(135deg, rgba(56,189,248,.95), rgba(168,85,247,.85));
+  color: #07101d;
+  font-weight: 900;
+  box-shadow: 0 10px 22px rgba(0,0,0,.28);
+  cursor: pointer;
+  user-select: none;
+}
+.kpTtsBtn:hover{ filter: brightness(1.06); transform: translateY(-1px); }
+.kpTtsBtn:active{ transform: translateY(0px); }
+
+/* Inline (después de <b> o <strong>) */
+.kpTtsBtnInline{
+  width: 30px;
+  height: 30px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+/* Pequeño para títulos */
+.kpTtsBtnTiny{
+  width: 28px;
+  height: 28px;
+  margin-left: 10px;
+  font-size: 13px;
+}
+
+/* En tablas: mantén el botón alineado sin romper el layout */
+table.kpTable td .kpTtsBtn,
+table.kpTable th .kpTtsBtn{
+  float: right;
+  margin-left: 10px;
+}
+
+@media (max-width: 520px){
+  .kpTtsBtn{ width: 36px; height: 36px; }
+  .kpTtsBtnInline{ width: 32px; height: 32px; }
+}

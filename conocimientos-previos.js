@@ -1557,6 +1557,9 @@ function updateHUD(){
         <td>${escapeHtml(x.es)}</td>
       </tr>
     `).join("");
+
+    // ✅ Después de renderizar, agrega botones de audio (si el módulo TTS está activo)
+    try{ if(typeof window.NVKP_attachTTS === "function") window.NVKP_attachTTS(); }catch(_){ }
   }
 
   async function loadRegularVerbs(){
@@ -1905,6 +1908,160 @@ function updateHUD(){
     }
   }
 
+  // ================================
+  // 🔊 Botones de audio (pronunciación en inglés)
+  // - Se agregan automáticamente a tablas y ejemplos en inglés.
+  // - Usa SpeechSynthesis nativo del navegador (sin Worker).
+  // ================================
+  let __nvkpEnVoice = null;
+
+  function __nvkpLoadVoices(){
+    try{
+      if(!window.speechSynthesis) return;
+      const vs = window.speechSynthesis.getVoices ? window.speechSynthesis.getVoices() : [];
+      if(!vs || !vs.length) return;
+      __nvkpEnVoice = vs.find(v=>/en(-|_)?US/i.test(v.lang))
+        || vs.find(v=>/^en/i.test(v.lang))
+        || null;
+    }catch(_){ /* no-op */ }
+  }
+  try{
+    if(window.speechSynthesis){
+      __nvkpLoadVoices();
+      window.speechSynthesis.onvoiceschanged = __nvkpLoadVoices;
+    }
+  }catch(_){ /* no-op */ }
+
+  function __nvkpSpeakEN(text){
+    const t = String(text||"").replace(/\s+/g," ").trim();
+    if(!t) return;
+    if(!window.speechSynthesis || !window.SpeechSynthesisUtterance){
+      try{ toast("Audio no disponible","Tu navegador no soporta lectura en voz alta."); }catch(_){ }
+      return;
+    }
+    try{ window.speechSynthesis.cancel(); }catch(_){ }
+    const u = new SpeechSynthesisUtterance(t);
+    u.lang = "en-US";
+    if(__nvkpEnVoice) u.voice = __nvkpEnVoice;
+    u.rate = 1;
+    u.pitch = 1;
+    try{ window.speechSynthesis.speak(u); }catch(_){ }
+  }
+
+  function __nvkpTextLooksEN(s){
+    const t = String(s||"").trim();
+    if(!t) return false;
+    if(/[áéíóúñü¿¡]/i.test(t)) return false;
+    if(/\b(pronouns?|verbs?|tenses?|linking|subject|object|present|past|future|perfect|have|has|had|will|do|does|did|am|is|are|was|were|been)\b/i.test(t)) return true;
+    // Palabras/frases cortas (tabla) con solo caracteres típicos en inglés
+    if(/^[A-Za-z]+(?:[\s'\-\/.\/][A-Za-z]+){0,6}$/.test(t)) return true;
+    return false;
+  }
+
+  function __nvkpMakeTTSBtn(text, extraClass){
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = `kpTtsBtn${extraClass?" "+extraClass:""}`;
+    b.title = "Escuchar pronunciación";
+    b.setAttribute("aria-label","Escuchar pronunciación");
+    b.textContent = "🔊";
+    b.addEventListener("click", (e)=>{
+      e.preventDefault();
+      e.stopPropagation();
+      __nvkpSpeakEN(text);
+    });
+    return b;
+  }
+
+  function __nvkpAddBtnInto(el, text){
+    if(!el || !text) return;
+    if(el.dataset && el.dataset.ttsApplied === "1") return;
+    const t = String(text||"").replace(/\s+/g," ").trim();
+    if(!t || t.length > 140) return;
+    if(el.querySelector && el.querySelector(".kpTtsBtn")) return;
+    el.appendChild(__nvkpMakeTTSBtn(t));
+    if(el.dataset) el.dataset.ttsApplied = "1";
+  }
+
+  function __nvkpAddInlineAfter(el, text){
+    if(!el || !text) return;
+    const t = String(text||"").replace(/\s+/g," ").trim();
+    if(!t || t.length > 100) return;
+    // Evita duplicados
+    const nxt = el.nextElementSibling;
+    if(nxt && nxt.classList && nxt.classList.contains("kpTtsBtnInline")) return;
+    el.insertAdjacentElement("afterend", __nvkpMakeTTSBtn(t, "kpTtsBtnInline"));
+  }
+
+  function initEnglishAudioButtons(){
+    const root = document.querySelector(".kpContent") || document.body;
+
+    // 1) Tablas
+    const tables = Array.from(root.querySelectorAll("table.kpTable"));
+    tables.forEach(tbl=>{
+      const head = Array.from(tbl.querySelectorAll("thead th"));
+      let englishCols = [];
+
+      if(head.length){
+        const hs = head.map(th => th.textContent.replace(/\s+/g," ").trim().toLowerCase());
+
+        const idxEnglish = hs.indexOf("english");
+        if(idxEnglish >= 0) englishCols.push(idxEnglish+1);
+
+        const idxIngles = hs.findIndex(h => h.includes("ingl"));
+        if(idxIngles >= 0 && !englishCols.includes(idxIngles+1)) englishCols.push(idxIngles+1);
+
+        const idxEspanol = hs.findIndex(h => h.includes("espa"));
+        if(idxEspanol >= 0){
+          hs.forEach((_,i)=>{ if(i !== idxEspanol && !englishCols.includes(i+1)) englishCols.push(i+1); });
+        }else{
+          // Si el header parece completamente en inglés, toma todas las columnas
+          const anySpanish = hs.some(h=>h.includes("tipo")||h.includes("tradu")||h.includes("usuario")||h.includes("actividad")||h.includes("clase")||h.includes("presente")||h.includes("pasado")||h.includes("futuro"));
+          if(!anySpanish) hs.forEach((_,i)=>{ if(!englishCols.includes(i+1)) englishCols.push(i+1); });
+        }
+      }
+
+      const rows = Array.from(tbl.querySelectorAll("tr"));
+      rows.forEach(row=>{
+        const cells = Array.from(row.children || []);
+        if(!cells.length) return;
+
+        if(englishCols.length){
+          englishCols.forEach(ci=>{
+            const cell = cells[ci-1];
+            if(!cell) return;
+            const txt = cell.textContent.replace(/\s+/g," ").trim();
+            if(__nvkpTextLooksEN(txt)) __nvkpAddBtnInto(cell, txt);
+          });
+        }else{
+          // Fallback
+          cells.forEach(cell=>{
+            const txt = cell.textContent.replace(/\s+/g," ").trim();
+            if(txt && txt.length <= 60 && __nvkpTextLooksEN(txt)) __nvkpAddBtnInto(cell, txt);
+          });
+        }
+      });
+    });
+
+    // 2) Ejemplos en negrilla dentro de texto
+    const inline = Array.from(root.querySelectorAll("p.kpText b, .kpHint b, p.kpText strong, p.kpText em"));
+    inline.forEach(el=>{
+      const txt = el.textContent.replace(/\s+/g," ").trim();
+      if(__nvkpTextLooksEN(txt)) __nvkpAddInlineAfter(el, txt);
+    });
+
+    // 3) Labels cortos de secciones (Pronouns/Verbs/Tenses/Linking)
+    const labels = Array.from(root.querySelectorAll(".kpSecBtn, .kpAccTitle, .kpSectionH3"));
+    labels.forEach(el=>{
+      const txt = el.textContent.replace(/\s+/g," ").trim();
+      if(!txt || txt.length > 42) return;
+      if(!/\b(pronouns|verbs|tenses|linking)\b/i.test(txt)) return;
+      if(el.querySelector && el.querySelector(".kpTtsBtn")) return;
+      const speakTxt = txt.replace(/^[0-9.\s]+/,"").replace(/\s+/g," ").trim();
+      el.appendChild(__nvkpMakeTTSBtn(speakTxt, "kpTtsBtnTiny"));
+    });
+  }
+
 function init(){
     kickHUD();
     initStatsCarousel();
@@ -1926,6 +2083,10 @@ function init(){
     setupClassMode();
     loadRegularVerbs();
     setStudentHUD();
+
+    // ✅ Botones de audio para todo lo que esté en inglés (pronunciación)
+    try{ window.NVKP_attachTTS = initEnglishAudioButtons; }catch(_){ }
+    try{ initEnglishAudioButtons(); }catch(_){ }
   }
 
   
