@@ -910,8 +910,8 @@ details[open].kpAcc > summary .kpAccChevron::before{ content:"▴"; }
   align-items: center;
 }
 .kpBottomTabs .kpTabBtn{
-  width: 44px;
-  height: 44px;
+  width: 34px;
+  height: 34px;
   border-radius: 999px;
   border: 1px solid rgba(255,255,255,.16);
   background: rgba(255,255,255,.08);
@@ -1161,12 +1161,12 @@ a.roundbtn{
 
 /* Pronouns table audio buttons (EN) */
 .kpSpeakCol{
-  width: 58px;
+  width: 46px;
   text-align: right;
 }
 .kpSpeakBtn{
-  width: 44px;
-  height: 44px;
+  width: 34px;
+  height: 34px;
   border-radius: 999px;
   border: 1px solid rgba(255,255,255,.22);
   background: radial-gradient(circle at 30% 30%, rgba(95,210,255,.95), rgba(135,120,255,.85));
@@ -1177,13 +1177,15 @@ a.roundbtn{
   display: inline-flex;
   align-items: center;
   justify-content: center;
+
+  font-size: 14px;
 }
 .kpSpeakBtn:hover{ filter: brightness(1.05); transform: translateY(-1px); }
 .kpSpeakBtn:active{ transform: translateY(0px); }
 
 @media (max-width: 520px){
-  .kpSpeakCol{ width: 52px; }
-  .kpSpeakBtn{ width: 40px; height: 40px; }
+  .kpSpeakCol{ width: 40px; }
+  .kpSpeakBtn{ width: 30px; height: 30px; font-size: 13px; }
 }
 
 
@@ -1191,7 +1193,7 @@ a.roundbtn{
 .kpCellAudio{
   position: relative;
   overflow: hidden;
-  padding-right: 62px !important;
+  padding-right: 50px !important;
 }
 .kpCellAudio .kpSpeakBtn{
   position: absolute;
@@ -1200,6 +1202,6 @@ a.roundbtn{
   transform: translateY(-50%);
 }
 @media (max-width: 520px){
-  .kpCellAudio{ padding-right: 56px !important; }
+  .kpCellAudio{ padding-right: 44px !important; }
   .kpCellAudio .kpSpeakBtn{ right: 8px; }
 }

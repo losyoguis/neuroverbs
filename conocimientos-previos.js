@@ -2202,7 +2202,7 @@ function init(){
     // Special case: conjugation tables with Subject + (Present/Past/Future)
     const tenseCols = [];
     headersN.forEach((h, idx)=>{
-      if(h === "present" || h === "past" || h === "future") tenseCols.push(idx);
+      if(h === "present" || h === "past" || h === "future" || h === "present perfect") tenseCols.push(idx);
     });
 
     // If we have subject+tense, we ensure tense cols are included, and we speak "Subject + cell"
@@ -2231,7 +2231,7 @@ function init(){
         if(!raw) return;
 
         // For tense tables: speak "Subject + tense"
-        if(subjIdx >= 0 && subjectVal && (headersN[ci] === "present" || headersN[ci] === "past" || headersN[ci] === "future")){
+        if(subjIdx >= 0 && subjectVal && (headersN[ci] === "present" || headersN[ci] === "past" || headersN[ci] === "future" || headersN[ci] === "present perfect")){
           const combined = `${subjectVal} ${raw}`.replace(/\s+/g," ").trim();
           addBtnToCell(cell, raw, combined);
           return;
