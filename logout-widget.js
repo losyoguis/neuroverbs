@@ -396,16 +396,13 @@
       zIndex: "99999",
       padding: "10px 14px",
       borderRadius: "999px",
-      border: "1px solid rgba(255,170,60,.55)",
-      background: "linear-gradient(135deg,#ffb84a,#ff7a00)",
+      border: "1px solid rgba(255,90,90,.55)",
+      background: "#ff5a5a",
       color: "#1b1430",
       fontWeight: "900",
       cursor: "pointer",
       boxShadow: "0 10px 24px rgba(0,0,0,.30)",
-      userSelect: "none",
-      letterSpacing: ".2px",
-      minWidth: "140px"
-    
+      userSelect: "none"
     });
     btn.addEventListener("click", (e)=>{ try{ e.preventDefault(); }catch(_){} logout(); });
     document.body.appendChild(btn);
@@ -592,6 +589,4 @@
   // Light refresh loop (profile picture may appear later)
   setInterval(()=>{ try{ updateUI(); }catch(_){} }, 1500);
 
-
-  try{ window.NVLogout = logout; }catch(_){}
 })();
