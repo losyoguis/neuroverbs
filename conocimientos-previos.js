@@ -2136,7 +2136,17 @@ function removeAudioFromCell(cell){
     const rows = tbody ? Array.from(tbody.rows) : Array.from(table.querySelectorAll("tr")).slice(1);
 
     rows.forEach(row=>{
+      // Skip title/section rows inside tbody (they should NOT have audio buttons)
+      // Examples: "1. Comunicación y Expresión" rows in Tenses tables.
+      if(row.classList && (row.classList.contains("kp-themeRow") || row.classList.contains("kp-sectionRow") || row.classList.contains("kp-titleRow"))){
+        Array.from(row.cells || []).forEach(c=>removeAudioFromCell(c));
+        return;
+      }
       const cells = Array.from(row.cells || []);
+      if(cells.length===1 && cells[0] && cells[0].colSpan && cells[0].colSpan>1){
+        removeAudioFromCell(cells[0]);
+        return;
+      }
         // Remove audio buttons in forbidden columns (e.g., Español/Traducción/Tipo)
         stopCols.forEach((colIndex)=>{
           const c = cells[colIndex];
