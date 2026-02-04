@@ -811,12 +811,14 @@ const haveDiagQuestions = [
       <thead><tr><th>Verb</th><th>Traducción</th><th>Present</th><th>Past</th><th>Present Perfect</th></tr></thead>
       <tbody>${themeRows(2)}</tbody>
     `;
+    // Nota: mantenemos "Present Perfect" en el título para que el detector de columnas en inglés
+    // (TTS) pueda asignar correctamente los botones de audio a la columna del presente perfecto.
     neg.innerHTML = `
-      <thead><tr><th>Verb</th><th>Traducción</th><th>Present (don't)</th><th>Past (didn't)</th><th>Perfect (haven't)</th></tr></thead>
+      <thead><tr><th>Verb</th><th>Traducción</th><th>Present (don't)</th><th>Past (didn't)</th><th>Present Perfect (haven't)</th></tr></thead>
       <tbody>${themeRows(5)}</tbody>
     `;
     itg.innerHTML = `
-      <thead><tr><th>Verb</th><th>Traducción</th><th>Present (Do)</th><th>Past (Did)</th><th>Perfect (Have)</th></tr></thead>
+      <thead><tr><th>Verb</th><th>Traducción</th><th>Present (Do)</th><th>Past (Did)</th><th>Present Perfect (Have)</th></tr></thead>
       <tbody>${themeRows(8)}</tbody>
     `;
   }
