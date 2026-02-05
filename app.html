@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>NeuroVerbs – App</title>
+  <link rel="stylesheet" href="ui.css">
+</head>
+<body>
+
+<h1>NeuroVerbs – Práctica</h1>
+
+<p>Simulación de acciones del estudiante:</p>
+
+<button onclick="sendXP(10, 0.9)">
+  ✅ Respuesta correcta (+10 XP)
+</button>
+
+<button onclick="sendXP(25, 0.8)">
+  🏁 Completar ronda (+25 XP)
+</button>
+
+<button onclick="verRanking()">
+  🏆 Ver Ranking
+</button>
+
+<pre id="rankingBox"></pre>
+
+<script src="neuroverbs.js"></script>
+
+<script>
+async function verRanking(){
+  const ranking = await loadRanking(10);
+  document.getElementById('rankingBox').textContent =
+    JSON.stringify(ranking, null, 2);
+}
+</script>
+
+</body>
+</html>

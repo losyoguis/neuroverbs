@@ -209,5 +209,17 @@
 </script>
 
 <script src="logout-widget.js"></script>
+
+<!-- 🔗 NeuroVerbs Backend Bridge -->
+<script src="neuroverbs.js"></script>
+
+<script>
+/* Recibe el idToken del login que YA existe */
+function onGoogleLoginSuccess(idToken){
+  window.idToken = idToken;
+  console.log("ID TOKEN listo para backend");
+}
+</script>
+
 </body>
 </html>
