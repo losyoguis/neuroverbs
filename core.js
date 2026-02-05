@@ -2,7 +2,7 @@
 // =========================
 // Google Auth (GSI) + Sheets (Apps Script WebApp)
 // =========================
-const DEFAULT_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwr6lTi3yZhkfB64fjBY1hUhU7_vg2MHAOeI4VGZ1WocQvPxR516I1kf293GgHsuob2/exec";
+const DEFAULT_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzg9PQtkDrs1Xux51CXVm39l4lAOt2V0Q7TOWE2EVwe4oI1kLwWwMHtCYtMoMzGaEQ/exec";
 // Tip: si vuelves a implementar el Web App, puedes pasar la nueva URL así:
 //   tuapp.html?webapp=PASTE_AQUI_LA_URL
 // y queda guardada en localStorage automáticamente.
@@ -114,31 +114,13 @@ function postToSheets(payload) {
       // Fallback POST silencioso
       const body = JSON.stringify(payload);
       try {
-
         fetch(WEB_APP_URL, {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify({
-    action: "upsert",
-    sub: user.sub,          // ID único del usuario
-    name: user.name,        // Nombre visible en ranking
-    xpDelta: xpGanado       // SOLO lo que ganó en esa acción
-  })
-})
-.then(r => r.json())
-.then(data => {
-  if (!data.ok) {
-    console.error("❌ Backend XP error:", data);
-  } else {
-    console.log("✅ XP sincronizado:", data);
-  }
-})
-.catch(err => {
-  console.error("🔥 Error de red XP:", err);
-});
-
+          method: "POST",
+          mode: "no-cors",
+          keepalive: true,
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body
+        }).catch(()=>{});
       } catch(e) {}
 
       // Fallback beacon
