@@ -2,7 +2,7 @@
 // =========================
 // Google Auth (GSI) + Sheets (Apps Script WebApp)
 // =========================
-const DEFAULT_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzg9PQtkDrs1Xux51CXVm39l4lAOt2V0Q7TOWE2EVwe4oI1kLwWwMHtCYtMoMzGaEQ/exec";
+const DEFAULT_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxzvacNIub41O-yYhqzdsjJC5nysLVY2_GRnvKbvtD6gkttn34yztfXq19I1TXxGk3ANg/exec";
 // Tip: si vuelves a implementar el Web App, puedes pasar la nueva URL así:
 //   tuapp.html?webapp=PASTE_AQUI_LA_URL
 // y queda guardada en localStorage automáticamente.
