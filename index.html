@@ -4,27 +4,35 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>NEUROVERBS</title>
-  <link rel="stylesheet" href="ui.css"/>
+
+  <!-- Google Identity Services -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 
-<h1>NEUROVERBS</h1>
+<h1>NEUROVERBS – Login</h1>
+<p>Inicia sesión con tu correo institucional.</p>
 
 <div id="g_id_onload"
-     data-client_id="TU_CLIENT_ID.apps.googleusercontent.com"
+     data-client_id="637468265896-5olh8rhf76setm52743tashi3vq1la67.apps.googleusercontent.com"
      data-callback="onLogin">
 </div>
-<div class="g_id_signin"></div>
+<div class="g_id_signin" data-type="standard"></div>
+
+<hr>
+
+<button onclick="sendXP(10,0.9)">Enviar +10 XP</button>
+<button onclick="sendXP(25,0.8)">Enviar +25 XP</button>
 
 <script>
+/* === LOGIN CALLBACK === */
 function onLogin(resp){
   window.idToken = resp.credential;
   console.log("ID TOKEN LISTO:", window.idToken);
-  window.location.href = "app.html";
 }
 </script>
 
+<!-- ORDEN CORRECTO -->
 <script src="core.js"></script>
 <script src="neuroverbs.js"></script>
 
