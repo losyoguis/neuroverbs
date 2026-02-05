@@ -114,13 +114,31 @@ function postToSheets(payload) {
       // Fallback POST silencioso
       const body = JSON.stringify(payload);
       try {
+
         fetch(WEB_APP_URL, {
-          method: "POST",
-          mode: "no-cors",
-          keepalive: true,
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body
-        }).catch(()=>{});
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    action: "upsert",
+    sub: user.sub,          // ID único del usuario
+    name: user.name,        // Nombre visible en ranking
+    xpDelta: xpGanado       // SOLO lo que ganó en esa acción
+  })
+})
+.then(r => r.json())
+.then(data => {
+  if (!data.ok) {
+    console.error("❌ Backend XP error:", data);
+  } else {
+    console.log("✅ XP sincronizado:", data);
+  }
+})
+.catch(err => {
+  console.error("🔥 Error de red XP:", err);
+});
+
       } catch(e) {}
 
       // Fallback beacon
