@@ -1,0 +1,1 @@
+document.addEventListener("DOMContentLoaded",()=>{fetch(NEUROVERBS_SHEETS.WEB_APP_URL+'?action=leaderboard&limit=50').then(r=>r.json()).then(d=>{leaderboard.innerHTML='';d.rows.forEach(u=>{leaderboard.innerHTML+=`#${u.rank} ${u.name} (${u.xp})<br>`})})});
