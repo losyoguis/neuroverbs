@@ -1,0 +1,29 @@
+body {
+  font-family: Arial, sans-serif;
+  background: #0b0b0f;
+  color: #fff;
+  padding: 20px;
+}
+.leaderboard {
+  max-width: 600px;
+  margin: auto;
+}
+.rank-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-bottom: 1px solid #222;
+}
+.rank {
+  width: 40px;
+  font-weight: bold;
+}
+.rank-row img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+}
+.gold { background: linear-gradient(90deg, #ffd70033, transparent); }
+.silver { background: linear-gradient(90deg, #c0c0c033, transparent); }
+.bronze { background: linear-gradient(90deg, #cd7f3233, transparent); }
