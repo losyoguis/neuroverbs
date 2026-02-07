@@ -3,7 +3,8 @@
 // Google Auth (GSI) + Sheets (Apps Script WebApp)
 // =========================
 // Usar la configuración de sheets-config.js si está disponible
-const DEFAULT_WEB_APP_URL = window.NEUROVERBS_SHEETS?.WEB_APP_URL || "https://script.google.com/macros/s/AKfycbw8gquODhKmDx83ON7Vb_wlJ7a-2s_QbsS6AW3uJaqqR3XXpEMZVK4XkZYSPuQl2oCu4Q/exec";
+const DEFAULT_WEB_APP_URL = window.NEUROVERBS_SHEETS?.WEB_APP_URL || "https://script.google.com/macros/s/AKfycbw8guQDhKmDx83QN7Vb_wIJ7a-2s_QbsS6AW3uJaqoR3XQpEMZVK4XkZYSPuQl2oCu4Q/exec";
+
 // Tip: si vuelves a implementar el Web App, puedes pasar la nueva URL así:
 //   tuapp.html?webapp=PASTE_AQUI_LA_URL
 // y queda guardada en localStorage automáticamente.
