@@ -1,0 +1,29 @@
+// =====================================================
+// NEUROVERBS - Configuración de Google Sheets
+// =====================================================
+
+(function() {
+  // 🔧 PEGA AQUÍ LA URL DE TU WEB APP
+  const PRODUCTION_URL = "https://script.google.com/macros/s/AKfycbw8gquODhKmDx83ON7Vb_wlJ7a-2s_QbsS6AW3uJaqqR3XXpEMZVK4XkZYSPuQl2oCu4Q/exec";
+  
+  // Permitir override desde URL o localStorage
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlOverride = urlParams.get("webapp");
+  
+  if (urlOverride) {
+    localStorage.setItem("WEB_APP_URL_V5", urlOverride);
+    console.log("[Sheets] URL actualizada desde parámetro:", urlOverride);
+  }
+  
+  const storedUrl = localStorage.getItem("WEB_APP_URL_V5");
+  const finalUrl = storedUrl || PRODUCTION_URL;
+  
+  // Configuración global
+  window.NEUROVERBS_SHEETS = {
+    WEB_APP_URL: finalUrl,
+    ALLOWED_DOMAIN: "iemanueljbetancur.edu.co",
+    DEBUG: false // Cambia a true para ver logs detallados
+  };
+  
+  console.log("[Sheets] Configurado:", finalUrl);
+})();
