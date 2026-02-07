@@ -4,7 +4,7 @@
 (function() {
   // 🔧 IMPORTANTE: Reemplaza esta URL con la de tu Web App de Google Apps Script
   // Instrucciones en DOCS/INSTALACION.md
-  const PRODUCTION_URL = "https://script.google.com/macros/s/AKfycbwvzXIdeUJeMiiU7LlESd2lt0eN1s3LkxCnGMyXIa0krujKkuk64_92_4Z4CDVLxvUz/exec";
+  const PRODUCTION_URL = "https://script.google.com/macros/s/AKfycby7UgPVUosKXfH12acbTG--VUR0u9JRzX1QhMt3L2u9-QpuihJjl0Zoq5SJAjBicFnA/exec";
   
   // Permitir override desde URL (útil para testing)
   const urlParams = new URLSearchParams(window.location.search);
