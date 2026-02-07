@@ -4,7 +4,7 @@
 
 (function() {
   // 🔧 PEGA AQUÍ LA URL DE TU WEB APP
-  const PRODUCTION_URL = "https://script.google.com/macros/s/AKfycbw8gquODhKmDx83ON7Vb_wlJ7a-2s_QbsS6AW3uJaqqR3XXpEMZVK4XkZYSPuQl2oCu4Q/exec";
+  const PRODUCTION_URL = "https://script.google.com/macros/s/AKfycbyAVCS78Gqg6RXyn7IkF_lLomtJR6NowoJ5xVCiribhV9X4LDA1S8SkmLmzSAflH6g5KA/exec";
   
   // Permitir override desde URL o localStorage
   const urlParams = new URLSearchParams(window.location.search);
