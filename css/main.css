@@ -1,21 +1,76 @@
 
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
-  font-family: Arial, Helvetica, sans-serif;
-  background: #0b0b0f;
-  color: #fff;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: radial-gradient(circle at top, #111 0%, #050505 70%);
+  color: #ffffff;
 }
+
 header {
-  padding: 20px;
-  background: #111;
+  padding: 32px 16px 24px;
   text-align: center;
 }
+
+header h1 {
+  margin: 0;
+  font-size: 2.2rem;
+  letter-spacing: 0.5px;
+}
+
+header p {
+  margin-top: 12px;
+  font-size: 1rem;
+  color: #4caf50;
+}
+
 main {
-  max-width: 600px;
-  margin: 30px auto;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 24px 16px 40px;
 }
-.rank {
-  padding: 10px;
-  border-bottom: 1px solid #333;
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.3rem;
+  margin-bottom: 16px;
 }
-.status-ok { color: #4caf50; }
+
+.rank-card {
+  background: linear-gradient(180deg, #111, #0a0a0a);
+  border-radius: 14px;
+  padding: 18px 20px;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.05);
+}
+
+.rank-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  font-size: 1rem;
+}
+
+.rank-row:last-child {
+  border-bottom: none;
+}
+
+.rank-num {
+  font-weight: 600;
+  min-width: 36px;
+}
+
+.rank-name {
+  flex: 1;
+  padding-left: 10px;
+}
+
+.rank-xp {
+  font-weight: 600;
+  color: #ffd54f;
+}
