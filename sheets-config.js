@@ -22,7 +22,7 @@
   window.NEUROVERBS_SHEETS = {
     WEB_APP_URL: finalUrl,
     ALLOWED_DOMAIN: "iemanueljbetancur.edu.co",
-    DEBUG: false // Cambia a true para ver logs detallados
+    DEBUG: true // Cambia a true para ver logs detallados
   };
   
   console.log("[Sheets] Configurado:", finalUrl);
