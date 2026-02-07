@@ -1,0 +1,21 @@
+
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #0b0b0f;
+  color: #fff;
+}
+header {
+  padding: 20px;
+  background: #111;
+  text-align: center;
+}
+main {
+  max-width: 600px;
+  margin: 30px auto;
+}
+.rank {
+  padding: 10px;
+  border-bottom: 1px solid #333;
+}
+.status-ok { color: #4caf50; }
