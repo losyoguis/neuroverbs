@@ -1,11 +1,10 @@
 // =====================================================
 // NEUROVERBS - Configuración de Google Sheets
 // =====================================================
-
 (function() {
   // 🔧 IMPORTANTE: Reemplaza esta URL con la de tu Web App de Google Apps Script
   // Instrucciones en DOCS/INSTALACION.md
-  const PRODUCTION_URL = "https://script.google.com/macros/s/AKfycbwO70z6c6x7fvrQ5kkYrWzQkmbNxTnSxQFABxds34keDfTO-w4K_19jY-W55Kw0z0L6fQ/exec";
+  const PRODUCTION_URL = "const PRODUCTION_URL = "https://script.google.com/macros/s/AKfycbwO70z6c6x7fvrQ5kkYrWzQkmbNxTnSxQFABxds34keDfTO-w4K_19jY-W55Kw0z0L6fQ/exec";";
   
   // Permitir override desde URL (útil para testing)
   const urlParams = new URLSearchParams(window.location.search);
