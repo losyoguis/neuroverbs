@@ -1,5 +1,10 @@
 
 (function () {
   const WEB_APP_EXEC = "https://script.google.com/macros/s/AKfycbwFYYMybfaF7ac9yxP7shnIZZaiKxgnO6BvHNaXfcOk-oQ2jSUUGnrBWyinXuhko20/exec";
-  window.NEUROVERBS_SHEETS = { WEB_APP_URL: WEB_APP_EXEC, VERSION:"3.1.1" };
+  window.NEUROVERBS_SHEETS = {
+    WEB_APP_URL: WEB_APP_EXEC,
+    VERSION: "3.1.1",
+    ENV: "production"
+  };
+  console.log("[Neuroverbs] Backend:", WEB_APP_EXEC);
 })();
