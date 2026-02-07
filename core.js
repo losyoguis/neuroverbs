@@ -2,13 +2,13 @@
 // =========================
 // Google Auth (GSI) + Sheets (Apps Script WebApp)
 // =========================
-// Usar la configuración de sheets-config.js si está disponible
-const DEFAULT_WEB_APP_URL = window.NEUROVERBS_SHEETS?.WEB_APP_URL || "https://script.google.com/macros/s/AKfycbw8guQDhKmDx83QN7Vb_wIJ7a-2s_QbsS6AW3uJaqoR3XQpEMZVK4XkZYSPuQl2oCu4Q/exec";
-
+const DEFAULT_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwh3qTioH-xVnVL43V5_Y7_lc-Ng6BYCvNsj3E6IPDpanwUGa6cgqYpbR6yt724E5UF/exec";
 // Tip: si vuelves a implementar el Web App, puedes pasar la nueva URL así:
 //   tuapp.html?webapp=PASTE_AQUI_LA_URL
 // y queda guardada en localStorage automáticamente.
-const WEB_APP_URL = DEFAULT_WEB_APP_URL;
+const WEB_APP_URL = (new URLSearchParams(location.search).get("webapp")
+  || localStorage.getItem("WEB_APP_URL_V5")
+  || DEFAULT_WEB_APP_URL);
 console.log("[Neuroverbs] WEB_APP_URL =", WEB_APP_URL);
 try{ localStorage.setItem("WEB_APP_URL_V5", WEB_APP_URL); }catch(_){ }
 const ALLOWED_DOMAIN = "iemanueljbetancur.edu.co";
@@ -5983,36 +5983,8 @@ function awardXP(base, reason="xp"){
   actualizarStats();
   updateGamificationUI();
   persistState();
-  
-  // ✅ Sincronizar XP con Google Sheets
-  try {
-    const profile = localStorage.getItem("user_profile");
-    if (profile && gained > 0) {
-      const user = JSON.parse(profile);
-      const idToken = localStorage.getItem("google_id_token");
-      
-      if (idToken) {
-        // Evitar spam - solo sincronizar cada 2 segundos
-        const now = Date.now();
-        if (!window.__lastXpSync || (now - window.__lastXpSync) > 2000) {
-          window.__lastXpSync = now;
-          queueXpDelta(idToken, gained);
-          
-          if (window.NEUROVERBS_SHEETS?.DEBUG) {
-            console.log("[XP→Sheets] Sincronizando +", gained, "XP");
-          }
-        }
-      }
-    }
-  } catch (e) {
-    if (window.NEUROVERBS_SHEETS?.DEBUG) {
-      console.warn("[XP→Sheets] Error:", e);
-    }
-  }
-  
   return gained;
 }
-
 function spendHeart(){
   regenHearts();
   if(hearts <= 0) return false;
