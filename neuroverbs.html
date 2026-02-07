@@ -1,1 +1,53 @@
-<!DOCTYPE html><html lang='es'><head><meta charset='UTF-8'><title>Neuroverbs</title><script src='js/sheets-config.js'></script></head><body><h1>Neuroverbs</h1><div id='status'>Conectando…</div><div id='rank'></div><script>fetch(NEUROVERBS_SHEETS.WEB_APP_URL+'?action=ping').then(r=>r.json()).then(d=>status.innerText=d.ok?'Conectado':'Error');fetch(NEUROVERBS_SHEETS.WEB_APP_URL+'?action=leaderboard&limit=5').then(r=>r.json()).then(d=>{rank.innerHTML='';d.rows.forEach(u=>{rank.innerHTML+=`#${u.rank} ${u.name} (${u.xp})<br>`})})</script></body></html>
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Neuroverbs</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="css/main.css">
+<script src="js/sheets-config.js"></script>
+</head>
+<body>
+
+<header>
+  <h1>🧠 Neuroverbs</h1>
+  <p id="status">Conectando con Google Sheets…</p>
+</header>
+
+<main>
+  <h2>🏆 Top Ranking</h2>
+  <div id="ranking"></div>
+</main>
+
+<script>
+const statusEl = document.getElementById("status");
+const rankingEl = document.getElementById("ranking");
+const BACKEND = NEUROVERBS_SHEETS.WEB_APP_URL;
+
+fetch(BACKEND + "?action=ping")
+  .then(r => r.json())
+  .then(d => {
+    if (d.ok) {
+      statusEl.textContent = "✅ Conectado a Google Sheets";
+      statusEl.className = "status-ok";
+    } else {
+      statusEl.textContent = "❌ Error de conexión";
+    }
+  });
+
+fetch(BACKEND + "?action=leaderboard&limit=5")
+  .then(r => r.json())
+  .then(d => {
+    rankingEl.innerHTML = "";
+    d.rows.forEach(u => {
+      const div = document.createElement("div");
+      div.className = "rank";
+      div.textContent = `#${u.rank} ${u.name} — ${u.xp} XP`;
+      rankingEl.appendChild(div);
+    });
+  });
+</script>
+
+</body>
+</html>
