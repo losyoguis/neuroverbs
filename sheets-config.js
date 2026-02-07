@@ -3,10 +3,11 @@
 // =====================================================
 
 (function() {
-  // 🔧 PEGA AQUÍ LA URL DE TU WEB APP
-  const PRODUCTION_URL = "https://script.google.com/macros/s/AKfycbyAVCS78Gqg6RXyn7IkF_lLomtJR6NowoJ5xVCiribhV9X4LDA1S8SkmLmzSAflH6g5KA/exec";
+  // 🔧 IMPORTANTE: Reemplaza esta URL con la de tu Web App de Google Apps Script
+  // Instrucciones en DOCS/INSTALACION.md
+  const PRODUCTION_URL = "https://script.google.com/macros/s/AKfycbw8guQDhKmDx83QN7Vb_wIJ7a-2s_QbsS6AW3uJaqoR3XQpEMZVK4XkZYSPuQl2oCu4Q/exec";
   
-  // Permitir override desde URL o localStorage
+  // Permitir override desde URL (útil para testing)
   const urlParams = new URLSearchParams(window.location.search);
   const urlOverride = urlParams.get("webapp");
   
@@ -22,7 +23,7 @@
   window.NEUROVERBS_SHEETS = {
     WEB_APP_URL: finalUrl,
     ALLOWED_DOMAIN: "iemanueljbetancur.edu.co",
-    DEBUG: true // Cambia a true para ver logs detallados
+    DEBUG: false // Cambiar a true para ver logs detallados en consola
   };
   
   console.log("[Sheets] Configurado:", finalUrl);

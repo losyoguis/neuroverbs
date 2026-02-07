@@ -1,3 +1,5 @@
+
+
 <!DOCTYPE html>
 
 <html lang="es">
@@ -35,16 +37,6 @@
     window.addEventListener('pageshow', forceTopSettled);
   })();
 </script>
-
-
-<!-- Google Sign-In -->
-<script async defer src="https://accounts.google.com/gsi/client"></script>
-
-<!-- Configuración de Google Sheets -->
-<script src="sheets-config.js"></script>
-
-<!-- Core JavaScript -->
-<script src="core.js"></script>
 
 <!-- Favicon Yoguis (embebido) -->
 
@@ -486,10 +478,7 @@
   })();
 </script>
 
-<!-- Configuración de Google Sheets -->
-<script src="sheets-config.js"></script>
 <script src="core.js"></script>
-
   <!-- DB helpers (hidden) -->
   <a href="verbs.html" style="display:none">verbs</a>
   <a href="verbs2.html" style="display:none">verbs2</a>
@@ -517,17 +506,290 @@
   })();
 </script>
 <script src="logout-widget.js"></script>
+<!-- Configuración de Google Sheets -->
+<script src="sheets-config.js"></script>
 
-<div class="sync-widget" id="syncWidget">
-  <!-- ... botón de sincronización ... -->
+<!-- ========================================
+     BOTÓN DE SINCRONIZACIÓN MANUAL
+     ======================================== -->
+<style>
+.sync-widget {
+  position: fixed;
+  bottom: 80px;
+  right: 20px;
+  z-index: 9998;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.sync-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 14px 20px;
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.sync-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+.sync-button:active {
+  transform: translateY(0);
+}
+
+.sync-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.sync-button .icon {
+  font-size: 18px;
+}
+
+.sync-button.syncing .icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.sync-status {
+  background: rgba(0, 0, 0, 0.85);
+  color: white;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  max-width: 280px;
+  text-align: right;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.3s ease;
+  pointer-events: none;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.sync-status.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.sync-status.success {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.sync-status.error {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+.sync-status.info {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+.sync-info {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.8);
+  max-width: 200px;
+  text-align: right;
+}
+
+@media (max-width: 640px) {
+  .sync-widget {
+    bottom: 20px;
+    right: 10px;
+  }
+}
+</style>
+
+<div class="sync-widget">
+  <div class="sync-status" id="syncStatus"></div>
+  <button class="sync-button" id="syncButton" onclick="syncWithSheets()">
+    <span class="icon">📊</span>
+    <span class="text">Sincronizar con Sheets</span>
+  </button>
+  <div class="sync-info" id="syncInfo">Último sync: nunca</div>
 </div>
 
 <script>
-// ... función syncWithSheets ...
+let syncTimeout = null;
+
+function showSyncStatus(message, type = 'info', duration = 3000) {
+  const statusEl = document.getElementById('syncStatus');
+  if (!statusEl) return;
+  
+  statusEl.textContent = message;
+  statusEl.className = 'sync-status show ' + type;
+  
+  if (syncTimeout) clearTimeout(syncTimeout);
+  
+  syncTimeout = setTimeout(() => {
+    statusEl.className = 'sync-status';
+  }, duration);
+}
+
+function updateSyncInfo(success = false) {
+  const infoEl = document.getElementById('syncInfo');
+  if (!infoEl) return;
+  
+  if (success) {
+    const now = new Date();
+    const time = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+    infoEl.textContent = `✓ Último sync: ${time}`;
+    localStorage.setItem('last_sync', now.toISOString());
+  }
+}
+
+async function syncWithSheets() {
+  const button = document.getElementById('syncButton');
+  const buttonText = button?.querySelector('.text');
+  const buttonIcon = button?.querySelector('.icon');
+  
+  if (!button) return;
+  
+  const profile = localStorage.getItem("user_profile");
+  const idToken = localStorage.getItem("google_id_token");
+  
+  if (!profile || !idToken) {
+    showSyncStatus('⚠️ Debes iniciar sesión primero', 'error', 4000);
+    return;
+  }
+  
+  const currentXP = parseInt(localStorage.getItem("xp") || 0, 10);
+  
+  if (currentXP === 0) {
+    showSyncStatus('ℹ️ No hay XP para sincronizar aún', 'info', 3000);
+    return;
+  }
+  
+  button.disabled = true;
+  button.classList.add('syncing');
+  if (buttonText) buttonText.textContent = 'Sincronizando...';
+  if (buttonIcon) buttonIcon.textContent = '⏳';
+  
+  showSyncStatus(`Enviando ${currentXP} XP a Sheets...`, 'info', 10000);
+  
+  try {
+    const webAppUrl = window.NEUROVERBS_SHEETS?.WEB_APP_URL || 
+                      (typeof WEB_APP_URL !== 'undefined' ? WEB_APP_URL : null);
+    
+    if (!webAppUrl) {
+      throw new Error('URL de Web App no configurada');
+    }
+    
+    const callbackName = 'syncCallback_' + Date.now();
+    
+    const params = new URLSearchParams({
+      action: 'upsert',
+      idToken: idToken,
+      xpDelta: currentXP.toString(),
+      callback: callbackName,
+      _: Date.now().toString()
+    });
+    
+    const url = webAppUrl + '?' + params.toString();
+    
+    const syncPromise = new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        cleanup();
+        reject(new Error('Timeout: El servidor no respondió'));
+      }, 15000);
+      
+      window[callbackName] = function(data) {
+        clearTimeout(timeout);
+        cleanup();
+        resolve(data);
+      };
+      
+      const script = document.createElement('script');
+      script.src = url;
+      script.onerror = () => {
+        clearTimeout(timeout);
+        cleanup();
+        reject(new Error('Error al cargar el script'));
+      };
+      
+      function cleanup() {
+        try {
+          delete window[callbackName];
+          if (script.parentNode) {
+            script.parentNode.removeChild(script);
+          }
+        } catch(e) {}
+      }
+      
+      document.body.appendChild(script);
+    });
+    
+    const data = await syncPromise;
+    
+    if (data.ok) {
+      const userXP = data.user?.xp || currentXP;
+      const userLevel = data.user?.level || Math.floor(currentXP / 250) + 1;
+      
+      showSyncStatus(
+        `✅ Sincronizado: ${userXP} XP (Nivel ${userLevel})`, 
+        'success', 
+        5000
+      );
+      
+      updateSyncInfo(true);
+    } else {
+      throw new Error(data.error || 'Error desconocido');
+    }
+    
+  } catch (error) {
+    console.error('[Sync] Error:', error);
+    showSyncStatus(
+      `❌ Error: ${error.message}`, 
+      'error', 
+      5000
+    );
+  } finally {
+    button.disabled = false;
+    button.classList.remove('syncing');
+    if (buttonText) buttonText.textContent = 'Sincronizar con Sheets';
+    if (buttonIcon) buttonIcon.textContent = '📊';
+  }
+}
+
+window.addEventListener('load', () => {
+  const lastSync = localStorage.getItem('last_sync');
+  const infoEl = document.getElementById('syncInfo');
+  
+  if (lastSync && infoEl) {
+    const date = new Date(lastSync);
+    const time = date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+    infoEl.textContent = `✓ ${time}`;
+  }
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.ctrlKey && e.shiftKey && e.key === 'S') {
+    e.preventDefault();
+    syncWithSheets();
+  }
+});
 </script>
-
-</body>
-
 
 </body>
 
