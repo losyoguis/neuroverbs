@@ -8,16 +8,20 @@
 <link rel="stylesheet" href="css/main.css">
 <script src="js/sheets-config.js"></script>
 </head>
+
 <body>
 
 <header>
   <h1>🧠 Neuroverbs</h1>
-  <p id="status">Conectando con Google Sheets…</p>
+  <p id="status">Conectando a Google Sheets…</p>
 </header>
 
 <main>
-  <h2>🏆 Top Ranking</h2>
-  <div id="ranking"></div>
+  <div class="section-title">🏆 Top Ranking</div>
+
+  <div class="rank-card" id="ranking">
+    Cargando ranking…
+  </div>
 </main>
 
 <script>
@@ -25,27 +29,40 @@ const statusEl = document.getElementById("status");
 const rankingEl = document.getElementById("ranking");
 const BACKEND = NEUROVERBS_SHEETS.WEB_APP_URL;
 
+// Ping
 fetch(BACKEND + "?action=ping")
   .then(r => r.json())
   .then(d => {
     if (d.ok) {
       statusEl.textContent = "✅ Conectado a Google Sheets";
-      statusEl.className = "status-ok";
     } else {
       statusEl.textContent = "❌ Error de conexión";
+      statusEl.style.color = "#ff5252";
     }
+  })
+  .catch(() => {
+    statusEl.textContent = "❌ No se pudo conectar con Google Sheets";
+    statusEl.style.color = "#ff5252";
   });
 
+// Ranking
 fetch(BACKEND + "?action=leaderboard&limit=5")
   .then(r => r.json())
   .then(d => {
     rankingEl.innerHTML = "";
     d.rows.forEach(u => {
-      const div = document.createElement("div");
-      div.className = "rank";
-      div.textContent = `#${u.rank} ${u.name} — ${u.xp} XP`;
-      rankingEl.appendChild(div);
+      const row = document.createElement("div");
+      row.className = "rank-row";
+      row.innerHTML = `
+        <div class="rank-num">#${u.rank}</div>
+        <div class="rank-name">${u.name}</div>
+        <div class="rank-xp">${u.xp} XP</div>
+      `;
+      rankingEl.appendChild(row);
     });
+  })
+  .catch(() => {
+    rankingEl.textContent = "Error cargando ranking";
   });
 </script>
 
