@@ -602,31 +602,6 @@ function updateHUD(){
     {s:"I have to wash the car.", a:"HAVE TO"},
   ];
 
-// Quiz B: Choose the correct FORM (have/has/had/have to/has to/had to/have had/has had/have had to/has had to)
-const haveFormsQuestions = [
-  {prompt:'___ eaten pizza. (present perfect)', options:['have','has','had','have to'], correct:'have'},
-  {prompt:'She ___ eaten pizza. (present perfect)', options:['have','has','had','has to'], correct:'has'},
-  {prompt:'We ___ finish the project. (obligation)', options:['have','have to','have had','had'], correct:'have to'},
-  {prompt:'He ___ finish the project. (obligation)', options:['has','has to','had to','has had'], correct:'has to'},
-  {prompt:'They ___ a new car. (present)', options:['have','has','have to','had'], correct:'have'},
-  {prompt:'It ___ a new battery. (present)', options:['has','have','had','has to'], correct:'has'},
-  {prompt:'I ___ time yesterday. (past)', options:['have','had','have had','had to'], correct:'had'},
-  {prompt:'You ___ a cold last week. (past)', options:['have','had','have to','have had'], correct:'had'},
-  {prompt:'We ___ had many problems. (present perfect - tener)', options:['have had','have','had','have to'], correct:'have had'},
-  {prompt:'She ___ had a good day. (present perfect - tener)', options:['has had','has','had','has to'], correct:'has had'},
-  {prompt:'They ___ had to study a lot. (present perfect - obligation)', options:['have had to','had to','have to','have had'], correct:'have had to'},
-  {prompt:'He ___ had to work late. (present perfect - obligation)', options:['has had to','had to','has to','has had'], correct:'has had to'},
-];
-
-// Diagnóstico (B): multiple-choice translations
-const haveDiagQuestions = [
-  {prompt:'Traduce: "He tenido tiempo"', options:['I have had time.','I have time.','I have to time.','I had have time.'], correct:'I have had time.'},
-  {prompt:'Traduce: "Tengo una idea"', options:['I have an idea.','I have had an idea.','I have to an idea.','I had an idea.'], correct:'I have an idea.'},
-  {prompt:'Traduce: "Tengo que trabajar hoy"', options:['I have to work today.','I have work today.','I have had to work today.','I had to working today.'], correct:'I have to work today.'},
-  {prompt:'Traduce: "Hemos tenido que estudiar mucho"', options:['We have had to study a lot.','We have to study a lot.','We had study a lot.','We have had study a lot.'], correct:'We have had to study a lot.'},
-];
-
-
   const tensesAux = [
     {p:"___ I ask? (present)", opts:["Do", "Did", "Have"], c:"Do"},
     {p:"___ I ask? (past)", opts:["Do", "Did", "Have"], c:"Did"},
@@ -642,37 +617,37 @@ const haveDiagQuestions = [
 
   const linkingTables = {
     add: [
-      ["And", "Y", "I work in the morning and I study at night.", "Trabajo en la mañana y estudio en la noche.", "Present Simple"],
-      ["Also", "También", "She walked to the park. She also visited the museum.", "Ella caminó al parque. También visitó el museo.", "Past Simple"],
-      ["In addition", "Además", "He has finished the report. In addition, he has printed the files.", "Él ha terminado el informe. Además, ha impreso los archivos.", "Present Perfect"],
-      ["Moreover", "Además", "The computer works fast. Moreover, it prints quickly.", "La computadora funciona rápido. Además, imprime rápido.", "Present Simple"],
-      ["Too", "También", "I washed the car. I cleaned the room too.", "Lavé el carro. También limpié el cuarto.", "Past Simple"],
+      ["And", "Y", "I work in the morning and I study at night.", "Present Simple"],
+      ["Also", "También", "She walked to the park. She also visited the museum.", "Past Simple"],
+      ["In addition", "Además", "He has finished the report. In addition, he has printed the files.", "Present Perfect"],
+      ["Moreover", "Además", "The computer works fast. Moreover, it prints quickly.", "Present Simple"],
+      ["Too", "También", "I washed the car. I cleaned the room too.", "Past Simple"],
     ],
     contrast: [
-      ["But", "Pero", "I have studied a lot, but I failed the test.", "He estudiado mucho, pero reprobé el examen.", "Present Perfect + Past Simple"],
-      ["However", "Sin embargo", "It rained all day. However, we played soccer.", "Llovió todo el día. Sin embargo, jugamos fútbol.", "Past Simple"],
-      ["Although", "Aunque", "Although she works hard, she doesn't earn much money.", "Aunque ella trabaja duro, no gana mucho dinero.", "Present Simple"],
-      ["On the other hand", "Por otro lado", "I have lived here for years. On the other hand, I have never traveled.", "He vivido aquí por años. Por otro lado, nunca he viajado.", "Present Perfect"],
-      ["Despite", "A pesar de", "We walked home despite the rain.", "Caminamos a casa a pesar de la lluvia.", "Past Simple"],
+      ["But", "Pero", "I have studied a lot, but I failed the test.", "Present Perfect + Past Simple"],
+      ["However", "Sin embargo", "It rained all day. However, we played soccer.", "Past Simple"],
+      ["Although", "Aunque", "Although she works hard, she doesn't earn much money.", "Present Simple"],
+      ["On the other hand", "Por otro lado", "I have lived here for years. On the other hand, I have never traveled.", "Present Perfect"],
+      ["Despite", "A pesar de", "We walked home despite the rain.", "Past Simple"],
     ],
     cause: [
-      ["Because", "Porque", "I smile because I have passed the exam.", "Sonrío porque he aprobado el examen.", "Present Simple + Present Perfect"],
-      ["So", "Así que", "It rained heavily, so I stayed home.", "Llovió fuerte, así que me quedé en casa.", "Past Simple"],
-      ["Therefore", "Por lo tanto", "He doesn't listen. Therefore, he fails the exams.", "Él no escucha. Por lo tanto, reprueba los exámenes.", "Present Simple"],
-      ["As a result", "Como resultado", "The store closed. As a result, they looked for new jobs.", "La tienda cerró. Como resultado, buscaron nuevos trabajos.", "Past Simple"],
-      ["Due to", "Debido a", "We have canceled the trip due to the storm.", "Hemos cancelado el viaje debido a la tormenta.", "Present Perfect"],
+      ["Because", "Porque", "I smile because I have passed the exam.", "Present Simple + Present Perfect"],
+      ["So", "Así que", "It rained heavily, so I stayed home.", "Past Simple"],
+      ["Therefore", "Por lo tanto", "He doesn't listen. Therefore, he fails the exams.", "Present Simple"],
+      ["As a result", "Como resultado", "The store closed. As a result, they looked for new jobs.", "Past Simple"],
+      ["Due to", "Debido a", "We have canceled the trip due to the storm.", "Present Perfect"],
     ],
     seq: [
-      ["First", "Primero", "First, I wash the vegetables.", "Primero, lavo las verduras.", "Present Simple"],
-      ["Next", "Siguiente", "Next, I mixed the sugar and butter.", "Luego, mezclé el azúcar y la mantequilla.", "Past Simple"],
-      ["Then", "Luego", "I walked to the gym. Then, I exercised for an hour.", "Caminé al gimnasio. Luego, hice ejercicio por una hora.", "Past Simple"],
-      ["Finally", "Finalmente", "I have finally finished the project.", "Por fin he terminado el proyecto.", "Present Perfect"],
-      ["Meanwhile", "Mientras tanto", "I cook dinner. Meanwhile, he cleans the table.", "Yo cocino la cena. Mientras tanto, él limpia la mesa.", "Present Simple"],
+      ["First", "Primero", "First, I wash the vegetables.", "Present Simple"],
+      ["Next", "Siguiente", "Next, I mixed the sugar and butter.", "Past Simple"],
+      ["Then", "Luego", "I walked to the gym. Then, I exercised for an hour.", "Past Simple"],
+      ["Finally", "Finalmente", "I have finally finished the project.", "Present Perfect"],
+      ["Meanwhile", "Mientras tanto", "I cook dinner. Meanwhile, he cleans the table.", "Present Simple"],
     ],
     illus: [
-      ["For example", "Por ejemplo", "I have visited many cities, for example, Rome and Paris.", "He visitado muchas ciudades, por ejemplo, Roma y París.", "Present Perfect"],
-      ["For instance", "Por ejemplo", "Bright colors help. For instance, red attracts attention.", "Los colores brillantes ayudan. Por ejemplo, el rojo atrae la atención.", "Present Simple"],
-      ["Such as", "Tal como", "She cooked Italian dishes such as lasagna.", "Ella cocinó platos italianos, como lasaña.", "Past Simple"],
+      ["For example", "Por ejemplo", "I have visited many cities, for example, Rome and Paris.", "Present Perfect"],
+      ["For instance", "Por ejemplo", "Bright colors help. For instance, red attracts attention.", "Present Simple"],
+      ["Such as", "Tal como", "She cooked Italian dishes such as lasagna.", "Past Simple"],
     ],
   };
 
@@ -811,14 +786,12 @@ const haveDiagQuestions = [
       <thead><tr><th>Verb</th><th>Traducción</th><th>Present</th><th>Past</th><th>Present Perfect</th></tr></thead>
       <tbody>${themeRows(2)}</tbody>
     `;
-    // Nota: mantenemos "Present Perfect" en el título para que el detector de columnas en inglés
-    // (TTS) pueda asignar correctamente los botones de audio a la columna del presente perfecto.
     neg.innerHTML = `
-      <thead><tr><th>Verb</th><th>Traducción</th><th>Present (don't)</th><th>Past (didn't)</th><th>Present Perfect (haven't)</th></tr></thead>
+      <thead><tr><th>Verb</th><th>Traducción</th><th>Present (don't)</th><th>Past (didn't)</th><th>Perfect (haven't)</th></tr></thead>
       <tbody>${themeRows(5)}</tbody>
     `;
     itg.innerHTML = `
-      <thead><tr><th>Verb</th><th>Traducción</th><th>Present (Do)</th><th>Past (Did)</th><th>Present Perfect (Have)</th></tr></thead>
+      <thead><tr><th>Verb</th><th>Traducción</th><th>Present (Do)</th><th>Past (Did)</th><th>Perfect (Have)</th></tr></thead>
       <tbody>${themeRows(8)}</tbody>
     `;
   }
@@ -828,8 +801,8 @@ const haveDiagQuestions = [
       const t=document.getElementById(id);
       if(!t) return;
       t.innerHTML = `
-        <thead><tr><th>Linking Word (ENGLISH)</th><th>Traducción (ESPAÑOL)</th><th>Example (ENGLISH)</th><th>Ejemplo (ESPAÑOL)</th><th>Tiempos utilizados</th></tr></thead>
-        <tbody>${rows.map(r=>`<tr><td><b>${escapeHtml(r[0])}</b></td><td>${escapeHtml(r[1])}</td><td>${escapeHtml(r[2])}</td><td>${escapeHtml(r[3])}</td><td>${escapeHtml(r[4])}</td></tr>`).join("")}</tbody>
+        <thead><tr><th>Linking Word</th><th>Traducción</th><th>Ejemplo (solo verbos regulares)</th><th>Tiempos utilizados</th></tr></thead>
+        <tbody>${rows.map(r=>`<tr><td><b>${escapeHtml(r[0])}</b></td><td>${escapeHtml(r[1])}</td><td>${escapeHtml(r[2])}</td><td>${escapeHtml(r[3])}</td></tr>`).join("")}</tbody>
       `;
     }
     fill("tbl_linking_add", linkingTables.add);
@@ -840,7 +813,7 @@ const haveDiagQuestions = [
   }
 
   function updateBadges(){
-    const ids = ["roadmap_check","pronouns_quiz","thirdperson_quiz","have_quiz","have_forms_quiz","have_diag","tenses_quiz","linking_quiz","writing_challenge"];
+    const ids = ["roadmap_check","pronouns_quiz","thirdperson_quiz","have_quiz","tenses_quiz","linking_quiz","writing_challenge"];
     ids.forEach((id)=>{
       const nodes = document.querySelectorAll(`.kpBadge[data-badge="${id}"]`);
       if(!nodes || !nodes.length) return;
@@ -897,18 +870,7 @@ const haveDiagQuestions = [
       makeQuiz("quiz_have_quiz", qs);
       setResult(id, "Listo. Responde y luego presiona Calificar.");
     }
-    
-if(id === "have_forms_quiz"){
-  const qs = pickN(haveFormsQuestions, 10);
-  makeQuiz("quiz_have_forms_quiz", qs);
-  setResult(id, "Listo. Responde y luego presiona Calificar.");
-}
-if(id === "have_diag"){
-  const qs = pickN(haveDiagQuestions, 4);
-  makeQuiz("quiz_have_diag", qs);
-  setResult(id, "Diagnóstico listo. Responde y luego presiona Calificar.");
-}
-if(id === "tenses_quiz"){
+    if(id === "tenses_quiz"){
       const qs = pickN(tensesAux.map(x=>{
         return {prompt:x.p, options: x.opts, correct: x.c};
       }), 10);
@@ -935,8 +897,6 @@ if(id === "tenses_quiz"){
       pronouns_quiz:"quiz_pronouns_quiz",
       thirdperson_quiz:"quiz_thirdperson_quiz",
       have_quiz:"quiz_have_quiz",
-      have_forms_quiz:"quiz_have_forms_quiz",
-      have_diag:"quiz_have_diag",
       tenses_quiz:"quiz_tenses_quiz",
       linking_quiz:"quiz_linking_quiz"
     };
@@ -947,16 +907,13 @@ if(id === "tenses_quiz"){
     const isNewAttempt = (sig !== prevSig);
     _attemptCache[id] = sig;
 
-    const need = (id==="have_diag") ? Math.max(1, r.total-1) : 8;
-    const pass = r.total>0 ? (r.score >= need) : false;
+    const pass = r.total>0 ? (r.score >= 8) : false;
     const already = isDone(id);
 
     const awardById = {
       pronouns_quiz: 40,
       thirdperson_quiz: 40,
       have_quiz: 50,
-      have_forms_quiz: 50,
-      have_diag: 40,
       tenses_quiz: 50,
       linking_quiz: 40
     };
@@ -989,7 +946,7 @@ if(id === "tenses_quiz"){
     }else if(pass && already){
       setResult(id, `<span style="color:var(--success)">✅ ${r.score}/${r.total} • Aprobado, pero ya reclamaste el premio.</span>`);
     }else{
-      setResult(id, `<span style="color:var(--error)">❌ ${r.score}/${r.total} • Te faltan ${Math.max(0,need-r.score)} para aprobar. Intenta de nuevo.</span>`);
+      setResult(id, `<span style="color:var(--error)">❌ ${r.score}/${r.total} • Te faltan ${Math.max(0,8-r.score)} para aprobar. Intenta de nuevo.</span>`);
     }
     updateHUD();
   }
@@ -2023,34 +1980,22 @@ function init(){
   }
 
   function isEnglishHeader(h){
-    const hh = normalize(h);
-    if(!hh) return false;
-
-    // Stop-columns (Spanish-only / metadata)
-    if(STOP_HEADERS.has(hh)) return false;
-
-    // If the header explicitly mentions Spanish, do NOT add audio
-    if(hh.includes('espanol') || hh.includes('spanish')) return false;
-    if(hh.includes('traduccion') || hh.includes('traducion')) return false;
-
-    // Typical English headers
-    if(hh.includes('english')) return true;
-    // Some tables use Spanish label "inglés" to indicate English columns
-    if(hh.includes('ingles')) return true;
-    if(hh.includes('example')) return true;
-
-    // Spanish "Ejemplo (Español)" columns must be excluded
-    if(hh.startsWith('ejemplo')) return !hh.includes('espanol') && !hh.includes('spanish');
-
-    // Linking Words
-    if(hh.includes('linking word') || hh.startsWith('linking')) return true;
-
-    // Verb/tenses columns
-    // Some sections label the base column simply as "VERB" and 3rd-person columns as "3ª persona (he/she/it)"
-    if(hh === 'verb') return true;
-    if(hh.includes('he/she/it') || hh.includes('he / she / it') || hh.includes('3a persona') || hh.includes('3ª persona') || hh.includes('3a persona')) return true;
-    if(/infinitivo|v1|v2|v3|past|partic|present|future|present perfect|have to|haber|tener/.test(hh)) return true;
-
+    if(!h) return false;
+    if(STOP_HEADERS.has(h)) return false;
+    if(h === "subject") return false; // usually just pronouns; user asked to remove these audios
+    // English-ish / columns with English forms
+    if(h.includes("english")) return true;
+    if(h.includes("verbo") && (h.includes("ingles") || h.includes("ingl"))) return true; // "Verbo (Inglés)"
+    if(h === "v1" || h === "v2" || h === "v3") return true;
+    if(h.includes("infinitivo")) return true; // Spanish header for base form column
+    if(h.includes("infinitive") || h.includes("base form") || h === "verb") return true;
+    if(h.includes("past participle") || h.includes("participle")) return true;
+    if(h.includes("past") || h.includes("present") || h.includes("future") || h.includes("perfect")) return true; // tenses
+    if(h.includes("3a persona") || h.includes("3rd person") || h.includes("third person") || h.includes("he/she/it")) return true;
+    if(h.includes("linking word") || h.includes("linking")) return true;
+    if(h.includes("example") || h.includes("sentence")) return true;
+    // Spanish header "Ejemplo" but the cell content is English sentences in several sections
+    if(h.startsWith("ejemplo")) return true;
     return false;
   }
 
@@ -2087,8 +2032,6 @@ function init(){
 
   // Make button + wrap without destroying existing formatting
   function ensureAudioInCell(cell, sayText){
-    // Avoid adding audio buttons to group/title rows (usually a single cell spanning many columns)
-    if(cell && cell.colSpan && cell.colSpan > 1) return;
     if(!cell || cell.querySelector("button."+BTN_CLASS)) return;
 
     // Keep original nodes to preserve <b>, <i>, etc.
@@ -2161,12 +2104,12 @@ function removeAudioFromCell(cell){
     if(subjIdx >= 0 && transIdx >= 0 && exampleIdx >= 0){
       audioCols = [exampleIdx];
     }
-    // 2) Linking tables: speak linking word + ENGLISH example sentence (NOT the Spanish example)
+    // 2) Linking tables: speak linking word + example sentence
     else if(hasLinking){
       headers.forEach((h, i)=>{
-        // normalize() already removed accents + trimmed
-        if(h.includes("linking word") || h === "linking") audioCols.push(i);
-        if(h.startsWith("example")) audioCols.push(i);
+        if(h.includes("linking word") || h === "linking" || h.startsWith("ejemplo")){
+          audioCols.push(i);
+        }
       });
     }
     // 3) Generic: speak English-looking columns
@@ -2224,16 +2167,9 @@ function removeAudioFromCell(cell){
     table.dataset.kpTtsDone = "1";
   }
 
-  let scanning = false;
   function scan(){
-    if(scanning) return;
-    scanning = true;
-    try{
-      const tables = Array.from(document.querySelectorAll("table.kpTable"));
-      tables.forEach(processTable);
-    } finally {
-      scanning = false;
-    }
+    const tables = Array.from(document.querySelectorAll("table.kpTable"));
+    tables.forEach(processTable);
   }
 
   function init(){
@@ -2242,14 +2178,14 @@ function removeAudioFromCell(cell){
       const css = document.createElement("style");
       css.id = "kpTtsStyle";
       css.textContent = `
-        .${WRAP_CLASS}{display:inline-flex;align-items:center;justify-content:flex-start;gap:6px;flex-wrap:wrap;max-width:100%;}
-        .${TEXT_CLASS}{flex:0 1 auto;min-width:0;max-width:100%;}
+        .${WRAP_CLASS}{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px}
+        .${TEXT_CLASS}{flex:1;min-width:0}
       table.kpTable td{overflow:visible;}
         .${BTN_CLASS}{
-          width:22px;height:22px;border-radius:999px;border:1px solid rgba(255,255,255,.25);
+          width:26px;height:26px;border-radius:999px;border:1px solid rgba(255,255,255,.25);
           background:linear-gradient(135deg,#5ec8ff,#9aa0ff);
           display:inline-flex;align-items:center;justify-content:center;
-          font-size:12px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.25);
+          font-size:13px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.25);
         }
         .${BTN_CLASS}:active{transform:scale(.98)}
       `;
@@ -2264,21 +2200,6 @@ function removeAudioFromCell(cell){
     setTimeout(scan, 600);
     setTimeout(scan, 1400);
     document.addEventListener("click", ()=>setTimeout(scan, 200), {passive:true});
-
-    // Observe dynamic DOM updates (some sections/tables are injected after initial render)
-    if(!window.__kpTtsObserver){
-      let t = null;
-      window.__kpTtsObserver = new MutationObserver(()=>{
-        if(scanning) return;
-        clearTimeout(t);
-        t = setTimeout(scan, 250);
-      });
-      try{
-        window.__kpTtsObserver.observe(document.body, {childList:true, subtree:true});
-      }catch(e){}
-    }
-
-    // (Observer already set up above)
   }
 
   if(document.readyState === "loading"){
