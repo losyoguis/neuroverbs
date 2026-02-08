@@ -1,70 +1,26 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>Neuroverbs</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="css/main.css">
-<script src="js/sheets-config.js"></script>
+  <meta charset="UTF-8">
+  <title>Neuroverbs</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="css/ui.css">
 </head>
-
 <body>
 
-<header>
-  <h1>🧠 Neuroverbs</h1>
-  <p id="status">Conectando a Google Sheets…</p>
-</header>
+<div class="app">
+  <header>
+    <h1>🧠 Neuroverbs</h1>
+    <p id="status">Conectando a Google Sheets...</p>
+  </header>
 
-<main>
-  <div class="section-title">🏆 Top Ranking</div>
+  <section>
+    <h2>🏆 Ranking Global</h2>
+    <div id="leaderboardList">Cargando...</div>
+  </section>
+</div>
 
-  <div class="rank-card" id="ranking">
-    Cargando ranking…
-  </div>
-</main>
-
-<script>
-const statusEl = document.getElementById("status");
-const rankingEl = document.getElementById("ranking");
-const BACKEND = NEUROVERBS_SHEETS.WEB_APP_URL;
-
-// Ping
-fetch(BACKEND + "?action=ping")
-  .then(r => r.json())
-  .then(d => {
-    if (d.ok) {
-      statusEl.textContent = "✅ Conectado a Google Sheets";
-    } else {
-      statusEl.textContent = "❌ Error de conexión";
-      statusEl.style.color = "#ff5252";
-    }
-  })
-  .catch(() => {
-    statusEl.textContent = "❌ No se pudo conectar con Google Sheets";
-    statusEl.style.color = "#ff5252";
-  });
-
-// Ranking
-fetch(BACKEND + "?action=leaderboard&limit=5")
-  .then(r => r.json())
-  .then(d => {
-    rankingEl.innerHTML = "";
-    d.rows.forEach(u => {
-      const row = document.createElement("div");
-      row.className = "rank-row";
-      row.innerHTML = `
-        <div class="rank-num">#${u.rank}</div>
-        <div class="rank-name">${u.name}</div>
-        <div class="rank-xp">${u.xp} XP</div>
-      `;
-      rankingEl.appendChild(row);
-    });
-  })
-  .catch(() => {
-    rankingEl.textContent = "Error cargando ranking";
-  });
-</script>
-
+<script src="js/core.js"></script>
+<script src="js/leaderboard-patch.js"></script>
 </body>
 </html>
